@@ -1,0 +1,104 @@
+import api from './api';
+import { IUser, RegisterDto, ApiResponse, PaginatedResponse } from '@/types';
+
+export interface UserFilters {
+  role?: string;
+  isActive?: boolean;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+// Minimal user info for dropdowns/assignments
+export interface IUserMinimal {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  email: string;
+  avatar?: string;
+  role: string;
+  department?: string;
+  jobTitle?: string;
+}
+
+export const usersService = {
+  async getUsers(filters: UserFilters = {}): Promise<PaginatedResponse<IUser>> {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, String(value));
+      }
+    });
+
+    const response = await api.get<PaginatedResponse<IUser>>(`/users?${params.toString()}`);
+    return response.data;
+  },
+
+  async getUser(id: string): Promise<IUser> {
+    const response = await api.get<ApiResponse<IUser>>(`/users/${id}`);
+    return response.data.data;
+  },
+
+  async createUser(data: RegisterDto): Promise<IUser> {
+    const response = await api.post<ApiResponse<{ user: IUser }>>('/auth/register', data);
+    return response.data.data.user;
+  },
+
+  async updateUser(id: string, data: Partial<IUser>): Promise<IUser> {
+    const response = await api.put<ApiResponse<IUser>>(`/users/${id}`, data);
+    return response.data.data;
+  },
+
+  async deleteUser(id: string): Promise<void> {
+    await api.delete(`/users/${id}`);
+  },
+
+  async getUserStats(id: string): Promise<{
+    ticketsCompleted: number;
+    ticketsInProgress: number;
+    averageCompletionTime: number;
+    reviewPassRate: number;
+    recentActivity: any[];
+  }> {
+    const response = await api.get<ApiResponse<any>>(`/users/${id}/stats`);
+    return response.data.data;
+  },
+
+  async getUserTickets(id: string): Promise<any[]> {
+    const response = await api.get<ApiResponse<any[]>>(`/users/${id}/tickets`);
+    return response.data.data;
+  },
+
+  async assignClientToUser(userId: string, clientId: string): Promise<IUser> {
+    const response = await api.post<ApiResponse<IUser>>(`/users/${userId}/clients`, { clientId });
+    return response.data.data;
+  },
+
+  async removeClientFromUser(userId: string, clientId: string): Promise<IUser> {
+    const response = await api.delete<ApiResponse<IUser>>(`/users/${userId}/clients/${clientId}`);
+    return response.data.data;
+  },
+
+  // Search users for autocomplete/assignment
+  async searchAssignableUsers(query: string, options?: { clientId?: string; limit?: number }): Promise<IUserMinimal[]> {
+    const params = new URLSearchParams();
+    params.append('q', query);
+    if (options?.clientId) params.append('clientId', options.clientId);
+    if (options?.limit) params.append('limit', String(options.limit));
+
+    const response = await api.get<ApiResponse<IUserMinimal[]>>(`/users/search/assignable?${params.toString()}`);
+    return response.data.data;
+  },
+
+  // Get minimal user list for dropdowns
+  async getMinimalUserList(options?: { clientId?: string; role?: string }): Promise<IUserMinimal[]> {
+    const params = new URLSearchParams();
+    if (options?.clientId) params.append('clientId', options.clientId);
+    if (options?.role) params.append('role', options.role);
+
+    const response = await api.get<ApiResponse<IUserMinimal[]>>(`/users/list/minimal?${params.toString()}`);
+    return response.data.data;
+  },
+};
+
