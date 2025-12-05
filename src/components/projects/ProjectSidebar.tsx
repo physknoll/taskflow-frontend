@@ -278,25 +278,27 @@ export function ProjectSidebar({ project, stats, onClose }: ProjectSidebarProps)
                 <span className="text-xs font-medium text-surface-500 dark:text-surface-400">
                   Project Lead
                 </span>
-                <div className="flex items-center gap-2 mt-1">
-                  <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center">
-                    {project.projectLead?.avatar ? (
-                      <img
-                        src={project.projectLead.avatar}
-                        alt={project.projectLead.firstName}
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
-                        {project.projectLead?.firstName?.[0]}
-                      </span>
-                    )}
+                {typeof project.projectLead === 'object' && project.projectLead && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center">
+                      {project.projectLead.avatar ? (
+                        <img
+                          src={project.projectLead.avatar}
+                          alt={project.projectLead.firstName}
+                          className="w-full h-full rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
+                          {project.projectLead.firstName?.[0]}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-sm text-surface-900 dark:text-white">
+                      {project.projectLead.firstName}{' '}
+                      {project.projectLead.lastName}
+                    </span>
                   </div>
-                  <span className="text-sm text-surface-900 dark:text-white">
-                    {project.projectLead?.firstName}{' '}
-                    {project.projectLead?.lastName}
-                  </span>
-                </div>
+                )}
               </div>
 
               {/* Team Members */}
@@ -306,21 +308,26 @@ export function ProjectSidebar({ project, stats, onClose }: ProjectSidebarProps)
                     Team Members ({project.teamMembers.length})
                   </span>
                   <div className="space-y-2 mt-1">
-                    {project.teamMembers.map((member) => (
-                      <div
-                        key={member._id}
-                        className="flex items-center gap-2"
-                      >
-                        <div className="w-6 h-6 rounded-full bg-surface-100 dark:bg-surface-800 flex items-center justify-center">
-                          <span className="text-xs font-medium text-surface-600 dark:text-surface-400">
-                            {member.firstName?.[0]}
+                    {project.teamMembers.map((member, index) => {
+                      const memberId = typeof member === 'string' ? member : member._id;
+                      const firstName = typeof member === 'string' ? '' : member.firstName;
+                      const lastName = typeof member === 'string' ? '' : member.lastName;
+                      return (
+                        <div
+                          key={memberId || index}
+                          className="flex items-center gap-2"
+                        >
+                          <div className="w-6 h-6 rounded-full bg-surface-100 dark:bg-surface-800 flex items-center justify-center">
+                            <span className="text-xs font-medium text-surface-600 dark:text-surface-400">
+                              {firstName?.[0] || '?'}
+                            </span>
+                          </div>
+                          <span className="text-sm text-surface-700 dark:text-surface-300">
+                            {firstName} {lastName}
                           </span>
                         </div>
-                        <span className="text-sm text-surface-700 dark:text-surface-300">
-                          {member.firstName} {member.lastName}
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

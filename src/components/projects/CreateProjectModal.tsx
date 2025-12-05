@@ -17,7 +17,7 @@ import { GuidelineEditorModal } from './GuidelineEditorModal';
 import { useProjects } from '@/hooks/useProjects';
 import { useClients } from '@/hooks/useClients';
 import { usersService } from '@/services/users.service';
-import { IProject, ITicket, Guideline } from '@/types';
+import { IProject, ITicket, Guideline, CreatedProject, CreatedTicket } from '@/types';
 import {
   PROJECT_TYPES,
   PROJECT_PRIORITIES,
@@ -240,7 +240,7 @@ export function CreateProjectModal({
     onClose();
   };
 
-  const handleAIProjectCreated = (project: IProject, tickets: ITicket[]) => {
+  const handleAIProjectCreated = (project: CreatedProject, tickets: CreatedTicket[]) => {
     // Project created via AI - just close the modal
     // The queries are already invalidated in the hook
     handleClose();

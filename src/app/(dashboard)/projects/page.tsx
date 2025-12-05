@@ -34,7 +34,12 @@ export default function ProjectsPage() {
   );
 
   const { projects, isLoading: isListLoading } = useProjects({
-    ...filters,
+    client: filters.client || undefined,
+    status: filters.status || undefined,
+    priority: filters.priority || undefined,
+    projectLead: filters.projectLead || undefined,
+    type: filters.type || undefined,
+    isArchived: filters.isArchived,
     search: searchQuery || undefined,
   });
 
@@ -297,17 +302,22 @@ function ProjectListView({
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex -space-x-2">
-                    {project.teamMembers?.slice(0, 3).map((member) => (
-                      <div
-                        key={member._id}
-                        className="w-6 h-6 rounded-full bg-surface-200 dark:bg-surface-600 border-2 border-white dark:border-surface-900 flex items-center justify-center"
-                        title={`${member.firstName} ${member.lastName}`}
-                      >
-                        <span className="text-xs font-medium text-surface-600 dark:text-surface-300">
-                          {member.firstName?.[0]}
-                        </span>
-                      </div>
-                    ))}
+                    {project.teamMembers?.slice(0, 3).map((member, index) => {
+                      const memberId = typeof member === 'string' ? member : member._id;
+                      const memberName = typeof member === 'string' ? '' : `${member.firstName} ${member.lastName}`;
+                      const memberInitial = typeof member === 'string' ? '?' : member.firstName?.[0];
+                      return (
+                        <div
+                          key={memberId || index}
+                          className="w-6 h-6 rounded-full bg-surface-200 dark:bg-surface-600 border-2 border-white dark:border-surface-900 flex items-center justify-center"
+                          title={memberName}
+                        >
+                          <span className="text-xs font-medium text-surface-600 dark:text-surface-300">
+                            {memberInitial}
+                          </span>
+                        </div>
+                      );
+                    })}
                     {project.teamMembers && project.teamMembers.length > 3 && (
                       <div className="w-6 h-6 rounded-full bg-surface-100 dark:bg-surface-700 border-2 border-white dark:border-surface-900 flex items-center justify-center">
                         <span className="text-xs text-surface-500">

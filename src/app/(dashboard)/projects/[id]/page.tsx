@@ -197,9 +197,9 @@ export default function ProjectDetailPage() {
                         id={column.key}
                         title={column.name}
                         color={column.color}
-                        icon={column.icon}
+                        icon={(column as { icon?: string }).icon}
                         count={tickets.length}
-                        wipLimit={column.wipLimit}
+                        wipLimit={(column as { wipLimit?: number }).wipLimit}
                       >
                         {tickets.map((ticket) => (
                           <TicketCard

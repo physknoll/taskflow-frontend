@@ -6,7 +6,7 @@ import { useProjectAgent } from '@/hooks/useProjectAgent';
 import { ProjectConfirmationCard } from './ProjectConfirmationCard';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { IProject, ITicket } from '@/types';
+import { CreatedProject, CreatedTicket } from '@/types';
 import {
   Send,
   Loader2,
@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 interface AIProjectChatProps {
-  onProjectCreated: (project: IProject, tickets: ITicket[]) => void;
+  onProjectCreated: (project: CreatedProject, tickets: CreatedTicket[]) => void;
   onCancel: () => void;
   selectedGuidelineId?: string | null;
 }
@@ -56,7 +56,7 @@ export function AIProjectChat({ onProjectCreated, onCancel, selectedGuidelineId 
   useEffect(() => {
     if (createdProject) {
       // Project was created - close the modal
-      onProjectCreated(createdProject as any, createdTickets as any);
+      onProjectCreated(createdProject, createdTickets);
     }
   }, [createdProject, createdTickets, onProjectCreated]);
 

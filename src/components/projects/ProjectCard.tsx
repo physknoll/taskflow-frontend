@@ -148,25 +148,31 @@ export function ProjectCard({ project, onClick, isDragging = false }: ProjectCar
 
         {/* Team avatars */}
         <div className="flex -space-x-2">
-          {project.teamMembers?.slice(0, 3).map((member) => (
-            <div
-              key={member._id}
-              className="w-6 h-6 rounded-full bg-surface-200 dark:bg-surface-600 border-2 border-white dark:border-surface-800 flex items-center justify-center"
-              title={`${member.firstName} ${member.lastName}`}
-            >
-              {member.avatar ? (
-                <img
-                  src={member.avatar}
-                  alt={member.firstName}
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <span className="text-xs font-medium text-surface-600 dark:text-surface-300">
-                  {member.firstName?.[0]}
-                </span>
-              )}
-            </div>
-          ))}
+          {project.teamMembers?.slice(0, 3).map((member, index) => {
+            const memberId = typeof member === 'string' ? member : member._id;
+            const memberName = typeof member === 'string' ? '' : `${member.firstName} ${member.lastName}`;
+            const memberAvatar = typeof member === 'string' ? undefined : member.avatar;
+            const memberInitial = typeof member === 'string' ? '?' : member.firstName?.[0];
+            return (
+              <div
+                key={memberId || index}
+                className="w-6 h-6 rounded-full bg-surface-200 dark:bg-surface-600 border-2 border-white dark:border-surface-800 flex items-center justify-center"
+                title={memberName}
+              >
+                {memberAvatar ? (
+                  <img
+                    src={memberAvatar}
+                    alt={memberName}
+                    className="w-full h-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xs font-medium text-surface-600 dark:text-surface-300">
+                    {memberInitial}
+                  </span>
+                )}
+              </div>
+            );
+          })}
           {project.teamMembers && project.teamMembers.length > 3 && (
             <div className="w-6 h-6 rounded-full bg-surface-100 dark:bg-surface-700 border-2 border-white dark:border-surface-800 flex items-center justify-center">
               <span className="text-xs text-surface-600 dark:text-surface-400">

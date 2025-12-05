@@ -245,16 +245,16 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
                   ticket.comments.map((comment, index) => (
                     <div key={index} className="flex gap-3">
                       <Avatar
-                        src={typeof comment.author === 'object' ? comment.author.avatar : undefined}
-                        firstName={typeof comment.author === 'object' ? comment.author.firstName : 'U'}
-                        lastName={typeof comment.author === 'object' ? comment.author.lastName : ''}
+                        src={typeof comment.user === 'object' ? comment.user.avatar : undefined}
+                        firstName={typeof comment.user === 'object' ? comment.user.firstName : 'U'}
+                        lastName={typeof comment.user === 'object' ? comment.user.lastName : ''}
                         size="sm"
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium text-surface-900 dark:text-white">
-                            {typeof comment.author === 'object'
-                              ? `${comment.author.firstName} ${comment.author.lastName}`
+                            {typeof comment.user === 'object'
+                              ? `${comment.user.firstName} ${comment.user.lastName}`
                               : 'Unknown'}
                           </span>
                           <span className="text-xs text-surface-400">

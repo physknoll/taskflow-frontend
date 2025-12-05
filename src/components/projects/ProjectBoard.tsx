@@ -129,9 +129,9 @@ export function ProjectBoard({
               id={column.key}
               title={column.name}
               color={column.color}
-              icon={column.icon}
+              icon={(column as { icon?: string }).icon}
               count={projects.length}
-              wipLimit={column.wipLimit}
+              wipLimit={(column as { wipLimit?: number }).wipLimit}
             >
               {projects.map((project) => (
                 <ProjectCard
