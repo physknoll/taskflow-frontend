@@ -22,10 +22,12 @@ import {
   LogOut,
   X,
   Sparkles,
+  FolderKanban,
 } from 'lucide-react';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard, permission: null },
+  { name: 'Projects', href: '/projects', icon: FolderKanban, permission: null },
   { name: 'Tickets', href: '/tickets', icon: Ticket, permission: null },
   { name: 'Clients', href: '/clients', icon: Building2, permission: 'clients.view' },
   { name: 'Review Queue', href: '/review', icon: CheckSquare, permission: 'reviews.conduct', badge: true },

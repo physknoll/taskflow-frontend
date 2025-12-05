@@ -136,3 +136,84 @@ export const ALLOWED_FILE_TYPES = {
   code: ['application/zip', 'application/x-zip-compressed'],
 };
 
+// ============================================
+// Project Constants
+// ============================================
+
+export const PROJECT_STATUSES = [
+  {
+    id: 'planning',
+    label: 'Planning',
+    color: 'bg-surface-100 dark:bg-surface-800',
+    textColor: 'text-surface-600 dark:text-surface-400',
+    icon: 'clipboard-list',
+    hexColor: '#9CA3AF',
+  },
+  {
+    id: 'in_progress',
+    label: 'In Progress',
+    color: 'bg-amber-50 dark:bg-amber-900/30',
+    textColor: 'text-amber-700 dark:text-amber-300',
+    icon: 'rocket',
+    hexColor: '#F59E0B',
+  },
+  {
+    id: 'review',
+    label: 'Review',
+    color: 'bg-violet-50 dark:bg-violet-900/30',
+    textColor: 'text-violet-700 dark:text-violet-300',
+    icon: 'users',
+    hexColor: '#8B5CF6',
+  },
+  {
+    id: 'completed',
+    label: 'Completed',
+    color: 'bg-emerald-50 dark:bg-emerald-900/30',
+    textColor: 'text-emerald-700 dark:text-emerald-300',
+    icon: 'trophy',
+    hexColor: '#10B981',
+  },
+] as const;
+
+export const PROJECT_PRIORITIES = [
+  { id: 'low', label: 'Low', color: 'bg-gray-100 text-gray-700' },
+  { id: 'medium', label: 'Medium', color: 'bg-blue-100 text-blue-700' },
+  { id: 'high', label: 'High', color: 'bg-orange-100 text-orange-700' },
+  { id: 'critical', label: 'Critical', color: 'bg-red-100 text-red-700' },
+] as const;
+
+export const PROJECT_TYPES = [
+  { id: 'campaign', label: 'Campaign', icon: '📣' },
+  { id: 'product_launch', label: 'Product Launch', icon: '🚀' },
+  { id: 'content_series', label: 'Content Series', icon: '📚' },
+  { id: 'website', label: 'Website', icon: '🌐' },
+  { id: 'rebrand', label: 'Rebrand', icon: '🎯' },
+  { id: 'video', label: 'Video', icon: '🎬' },
+  { id: 'event', label: 'Event', icon: '🎉' },
+  { id: 'retainer', label: 'Retainer', icon: '🔄' },
+  { id: 'other', label: 'Other', icon: '📁' },
+] as const;
+
+export const PROJECT_COLORS = [
+  '#6366F1', // Indigo
+  '#8B5CF6', // Violet
+  '#EC4899', // Pink
+  '#EF4444', // Red
+  '#F97316', // Orange
+  '#F59E0B', // Amber
+  '#84CC16', // Lime
+  '#10B981', // Emerald
+  '#14B8A6', // Teal
+  '#06B6D4', // Cyan
+  '#3B82F6', // Blue
+  '#6B7280', // Gray
+] as const;
+
+export const EXTERNAL_LINK_TYPES = [
+  { id: 'figma', label: 'Figma', icon: '🎨' },
+  { id: 'drive', label: 'Google Drive', icon: '📁' },
+  { id: 'notion', label: 'Notion', icon: '📝' },
+  { id: 'github', label: 'GitHub', icon: '💻' },
+  { id: 'other', label: 'Other', icon: '🔗' },
+] as const;
+

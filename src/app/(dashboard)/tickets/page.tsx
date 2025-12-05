@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTickets } from '@/hooks/useTickets';
 import { useClients } from '@/hooks/useClients';
+import { useProjects } from '@/hooks/useProjects';
 import { useUIStore } from '@/stores/uiStore';
 import { useTicketStore } from '@/stores/ticketStore';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -13,6 +14,7 @@ import { Badge } from '@/components/ui/Badge';
 import { TicketBoard } from '@/components/tickets/TicketBoard';
 import { CreateTicketModal } from '@/components/tickets/CreateTicketModal';
 import { TICKET_PRIORITIES, TICKET_TYPES, TICKET_STATUSES } from '@/lib/constants';
+import { ITicketProject } from '@/types';
 import {
   Plus,
   Search,
@@ -21,11 +23,18 @@ import {
   List,
   X,
   SlidersHorizontal,
+  FolderKanban,
 } from 'lucide-react';
+
+// Helper to check if project is populated
+function isPopulatedProject(project: any): project is ITicketProject {
+  return project !== null && typeof project === 'object' && 'name' in project;
+}
 
 export default function TicketsPage() {
   const { tickets, isLoading, updateTicketStatus, filters, updateFilters } = useTickets();
   const { clients } = useClients();
+  const { projects, isLoading: projectsLoading } = useProjects();
   const { ticketViewMode, setTicketViewMode } = useUIStore();
   const { isCreateModalOpen } = useTicketStore();
   const [showFilters, setShowFilters] = useState(false);
@@ -38,6 +47,7 @@ export default function TicketsPage() {
   const clearFilters = () => {
     updateFilters({
       client: undefined,
+      project: undefined,
       status: undefined,
       priority: undefined,
       type: undefined,
@@ -45,7 +55,7 @@ export default function TicketsPage() {
     });
   };
 
-  const hasActiveFilters = filters.client || filters.status || filters.priority || filters.type || filters.search;
+  const hasActiveFilters = filters.client || filters.project || filters.status || filters.priority || filters.type || filters.search;
 
   return (
     <div className="space-y-6">
@@ -127,7 +137,7 @@ export default function TicketsPage() {
               </Button>
             )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <Select
               label="Client"
               options={[
@@ -136,6 +146,19 @@ export default function TicketsPage() {
               ]}
               value={filters.client || ''}
               onChange={(val) => updateFilters({ client: val || undefined })}
+            />
+            <Select
+              label="Project"
+              options={[
+                { value: '', label: 'All projects' },
+                { value: 'standalone', label: '📌 Standalone Tasks' },
+                ...projects.map((p) => ({ 
+                  value: p._id, 
+                  label: p.name,
+                })),
+              ]}
+              value={filters.project || ''}
+              onChange={(val) => updateFilters({ project: val || undefined })}
             />
             <Select
               label="Status"
@@ -218,6 +241,7 @@ function TicketListView({ tickets, isLoading }: { tickets: any[]; isLoading: boo
         <thead className="bg-surface-50 dark:bg-surface-800 border-b border-surface-200 dark:border-surface-700">
           <tr>
             <th className="text-left py-3 px-4 text-sm font-medium text-surface-600 dark:text-surface-400">Ticket</th>
+            <th className="text-left py-3 px-4 text-sm font-medium text-surface-600 dark:text-surface-400">Project</th>
             <th className="text-left py-3 px-4 text-sm font-medium text-surface-600 dark:text-surface-400">Client</th>
             <th className="text-left py-3 px-4 text-sm font-medium text-surface-600 dark:text-surface-400">Status</th>
             <th className="text-left py-3 px-4 text-sm font-medium text-surface-600 dark:text-surface-400">Priority</th>
@@ -236,6 +260,21 @@ function TicketListView({ tickets, isLoading }: { tickets: any[]; isLoading: boo
                     {ticket.title}
                   </span>
                 </a>
+              </td>
+              <td className="py-3 px-4">
+                {isPopulatedProject(ticket.project) ? (
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: ticket.project.color }}
+                    />
+                    <span className="text-sm text-surface-600 dark:text-surface-400 truncate max-w-[120px]">
+                      {ticket.project.name}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-sm text-surface-400 dark:text-surface-500">—</span>
+                )}
               </td>
               <td className="py-3 px-4 text-sm text-surface-600 dark:text-surface-400">
                 {typeof ticket.client === 'object' ? ticket.client.name : 'Unknown'}

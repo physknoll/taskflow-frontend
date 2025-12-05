@@ -2,13 +2,18 @@
 
 import { useRouter } from 'next/navigation';
 import { useDraggable } from '@dnd-kit/core';
-import { ITicket } from '@/types';
+import { ITicket, ITicketProject } from '@/types';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar, AvatarGroup } from '@/components/ui/Avatar';
 import { Progress } from '@/components/ui/Progress';
-import { Calendar, CheckSquare, MessageCircle, Paperclip } from 'lucide-react';
+import { Calendar, CheckSquare, MessageCircle, Paperclip, FolderKanban } from 'lucide-react';
 import { formatRelativeTime, getTypeIcon, getPriorityColor, calculateProgress, isOverdue, isDueSoon } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+
+// Helper to check if project is populated (has project details vs just ID)
+function isPopulatedProject(project: ITicket['project']): project is ITicketProject {
+  return project !== null && typeof project === 'object' && 'name' in project;
+}
 
 interface TicketCardProps {
   ticket: ITicket;
@@ -58,6 +63,19 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
       {...listeners}
     >
       <div onClick={handleCardClick} className="cursor-pointer">
+        {/* Project Indicator */}
+        {ticket.project && isPopulatedProject(ticket.project) && (
+          <div className="flex items-center gap-1.5 mb-2 -mx-1 px-1 py-1 rounded-md bg-surface-50 dark:bg-surface-700/50">
+            <span
+              className="w-2 h-2 rounded-full flex-shrink-0"
+              style={{ backgroundColor: ticket.project.color }}
+            />
+            <span className="text-xs font-medium text-surface-600 dark:text-surface-300 truncate">
+              {ticket.project.name}
+            </span>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-2">
           <span className="text-xs font-mono text-surface-500 dark:text-surface-400">

@@ -3,6 +3,7 @@ import { ITicket, ITicketTask, CreateTicketDto, ApiResponse, PaginatedResponse }
 
 export interface TicketFilters {
   client?: string;
+  project?: string;  // Filter by project ID, 'standalone' for tickets without project
   status?: string;
   assignedTo?: string;
   priority?: string;
