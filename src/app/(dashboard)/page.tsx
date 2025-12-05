@@ -56,7 +56,7 @@ export default function DashboardPage() {
             Welcome back, {user?.firstName}! 👋
           </h1>
           <p className="text-surface-600 dark:text-surface-400 mt-1">
-            Here's what's happening with your projects today.
+            Here is what is happening with your projects today.
           </p>
         </div>
         <div className="flex gap-3">

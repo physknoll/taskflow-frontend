@@ -229,7 +229,7 @@ export default function TicketDetailPage() {
           Ticket not found
         </h2>
         <p className="text-surface-500 mb-4">
-          The ticket you're looking for doesn't exist or you don't have access.
+          The ticket you are looking for does not exist or you do not have access.
         </p>
         <Button onClick={() => router.push('/tickets')}>
           <ArrowLeft className="h-4 w-4 mr-2" />

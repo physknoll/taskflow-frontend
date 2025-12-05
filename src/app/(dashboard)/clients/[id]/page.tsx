@@ -1117,7 +1117,7 @@ function BrandTab({ client }: { client: any }) {
           No Brand Guidelines
         </h3>
         <p className="text-surface-500 mb-4">
-          Brand guidelines haven't been set up for this client yet.
+          Brand guidelines have not been set up for this client yet.
         </p>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
@@ -1188,11 +1188,11 @@ function BrandTab({ client }: { client: any }) {
         </p>
       </Card>
 
-      {/* Do's and Don'ts */}
+      {/* Dos and Donts */}
       <Card>
         <h3 className="font-semibold text-green-600 mb-4 flex items-center gap-2">
           <CheckCircle className="h-5 w-5" />
-          Do's
+          Dos
         </h3>
         {brand.doList?.length > 0 ? (
           <ul className="space-y-2">
@@ -1211,7 +1211,7 @@ function BrandTab({ client }: { client: any }) {
       <Card>
         <h3 className="font-semibold text-red-600 mb-4 flex items-center gap-2">
           <AlertTriangle className="h-5 w-5" />
-          Don'ts
+          Donts
         </h3>
         {brand.dontList?.length > 0 ? (
           <ul className="space-y-2">

@@ -66,6 +66,7 @@ export function AIProjectChat({ onProjectCreated, onCancel, selectedGuidelineId 
     return () => {
       resetSession();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedGuidelineId]);
 
   // Auto-scroll to latest message (only when in chat mode)
