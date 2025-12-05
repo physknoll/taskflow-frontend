@@ -229,7 +229,7 @@ export default function TicketDetailPage() {
           Ticket not found
         </h2>
         <p className="text-surface-500 mb-4">
-          The ticket you're looking for doesn't exist or you don't have access.
+          The ticket you are looking for does not exist or you do not have access.
         </p>
         <Button onClick={() => router.push('/tickets')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -510,7 +510,7 @@ export default function TicketDetailPage() {
                     </div>
                     {ticket.assignedTo.length > 0 && (
                       <span className="text-surface-600 dark:text-surface-400">
-                        {ticket.assignedTo[0].firstName}
+                        {typeof ticket.assignedTo[0] === 'string' ? ticket.assignedTo[0] : ticket.assignedTo[0].firstName}
                         {ticket.assignedTo.length > 1 && ` +${ticket.assignedTo.length - 1}`}
                       </span>
                     )}
@@ -758,16 +758,16 @@ export default function TicketDetailPage() {
                   {ticket.comments.map((comment, index) => (
                     <div key={index} className="flex gap-3">
                       <Avatar
-                        src={typeof comment.author === 'object' ? comment.author.avatar : undefined}
-                        firstName={typeof comment.author === 'object' ? comment.author.firstName : 'U'}
-                        lastName={typeof comment.author === 'object' ? comment.author.lastName : ''}
+                        src={typeof comment.user === 'object' ? comment.user.avatar : undefined}
+                        firstName={typeof comment.user === 'object' ? comment.user.firstName : 'U'}
+                        lastName={typeof comment.user === 'object' ? comment.user.lastName : ''}
                         size="sm"
                       />
                       <div className="flex-1 bg-surface-50 dark:bg-surface-900 rounded-xl p-3">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-sm font-medium text-surface-900 dark:text-white">
-                            {typeof comment.author === 'object'
-                              ? `${comment.author.firstName} ${comment.author.lastName}`
+                            {typeof comment.user === 'object'
+                              ? `${comment.user.firstName} ${comment.user.lastName}`
                               : 'Unknown'}
                           </span>
                           <span className="text-xs text-surface-400">

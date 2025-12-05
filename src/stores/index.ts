@@ -3,4 +3,5 @@ export { useUIStore } from './uiStore';
 export { useTicketStore } from './ticketStore';
 export { useNotificationStore } from './notificationStore';
 export { useAICheckinStore } from './aiCheckinStore';
+export { useProjectStore } from './projectStore';
 

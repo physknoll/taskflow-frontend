@@ -93,6 +93,16 @@ export interface IClient {
 }
 
 // Ticket Types
+
+// Minimal project reference for ticket associations
+export interface ITicketProject {
+  _id: string;
+  projectNumber: string;
+  name: string;
+  slug: string;
+  color: string;
+}
+
 export interface ITicketTask {
   _id: string;
   title: string;
@@ -121,6 +131,7 @@ export interface ITicket {
   _id: string;
   ticketNumber: string;
   client: IClient | string;
+  project?: ITicketProject | string | null;  // Populated project details or ObjectId, null for standalone tickets
   title: string;
   description: string;
   type: 'feature' | 'bug' | 'content' | 'design' | 'maintenance' | 'other';
@@ -502,4 +513,211 @@ export interface RegisterDto {
   lastName: string;
   role: 'manager' | 'employee';
 }
+
+// ============================================
+// Project Types
+// ============================================
+
+export type ProjectStatus = 'planning' | 'in_progress' | 'review' | 'completed';
+export type ProjectPriority = 'low' | 'medium' | 'high' | 'critical';
+export type ProjectType = 
+  | 'campaign' 
+  | 'product_launch' 
+  | 'content_series' 
+  | 'website' 
+  | 'rebrand' 
+  | 'video' 
+  | 'event' 
+  | 'retainer' 
+  | 'other';
+
+export interface IProjectTask {
+  _id: string;
+  title: string;
+  description?: string;
+  order: number;
+  isCompleted: boolean;
+  completedAt?: string;
+  completedBy?: IUser | string;
+  linkedTicket?: ITicket | string;
+}
+
+export interface IProjectMilestone {
+  _id: string;
+  title: string;
+  description?: string;
+  dueDate?: string;
+  isCompleted: boolean;
+  completedAt?: string;
+  linkedTickets: (ITicket | string)[];
+}
+
+export interface IExternalLink {
+  title: string;
+  url: string;
+  type: 'figma' | 'drive' | 'notion' | 'github' | 'other';
+}
+
+export interface IProjectProgress {
+  totalTickets: number;
+  completedTickets: number;
+  percentage: number;
+  lastCalculatedAt: string;
+}
+
+export interface IProjectBudget {
+  estimated: number;
+  actual: number;
+  currency: string;
+}
+
+export interface IProject {
+  _id: string;
+  projectNumber: string;
+  slug: string;
+  name: string;
+  description: string;
+  client: IClient | string;
+  status: ProjectStatus;
+  columnId?: string;
+  useCustomColumns: boolean;
+  startDate?: string;
+  targetEndDate?: string;
+  actualEndDate?: string;
+  projectLead: IUser | string;
+  teamMembers: (IUser | string)[];
+  objectives: string[];
+  deliverables: string[];
+  tasks: IProjectTask[];
+  milestones: IProjectMilestone[];
+  attachments: IAsset[];
+  externalLinks: IExternalLink[];
+  aiGeneratedBrief?: string;
+  aiGeneratedAt?: string;
+  progress: IProjectProgress;
+  budget?: IProjectBudget;
+  estimatedHours?: number;
+  actualHours?: number;
+  priority: ProjectPriority;
+  type: ProjectType;
+  tags: string[];
+  color: string;
+  isArchived: boolean;
+  archivedAt?: string;
+  archivedBy?: IUser | string;
+  createdBy: IUser | string;
+  createdAt: string;
+  updatedAt: string;
+  tickets?: ITicket[];
+}
+
+export interface CreateProjectDto {
+  name: string;
+  description: string;
+  client: string;
+  projectLead: string;
+  teamMembers?: string[];
+  objectives?: string[];
+  deliverables?: string[];
+  startDate?: string;
+  targetEndDate?: string;
+  priority?: ProjectPriority;
+  type?: ProjectType;
+  color?: string;
+  generateAIBrief?: boolean;
+}
+
+export interface UpdateProjectDto extends Partial<CreateProjectDto> {
+  status?: ProjectStatus;
+  tags?: string[];
+  externalLinks?: IExternalLink[];
+}
+
+export interface ProjectFilters {
+  client?: string;
+  status?: string;
+  projectLead?: string;
+  teamMember?: string;
+  priority?: string;
+  type?: string;
+  isArchived?: boolean;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+// Workflow Column Types
+export type WorkflowScope = 'system' | 'client' | 'project';
+
+export interface IWorkflowColumn {
+  _id: string;
+  scope: WorkflowScope;
+  scopeId?: string;
+  name: string;
+  key: string;
+  color: string;
+  icon?: string;
+  order: number;
+  isDefault: boolean;
+  isFinal: boolean;
+  isHidden: boolean;
+  autoMoveAfterDays?: number;
+  requiresReview?: boolean;
+  notifyOnEnter?: boolean;
+  wipLimit?: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateWorkflowColumnDto {
+  scope: 'client' | 'project';
+  scopeId: string;
+  name: string;
+  color?: string;
+  icon?: string;
+  order?: number;
+  isDefault?: boolean;
+  isFinal?: boolean;
+  wipLimit?: number;
+  requiresReview?: boolean;
+}
+
+export interface ProjectBoardColumn {
+  column: IWorkflowColumn;
+  projects: IProject[];
+}
+
+export interface ProjectBoardData {
+  columns: IWorkflowColumn[];
+  board: ProjectBoardColumn[];
+}
+
+export interface TicketBoardColumn {
+  column: IWorkflowColumn;
+  tickets: ITicket[];
+}
+
+export interface ProjectDetailBoard {
+  project: IProject;
+  columns: IWorkflowColumn[];
+  board: TicketBoardColumn[];
+}
+
+export interface ProjectStats {
+  ticketsByStatus: Record<string, number>;
+  ticketsByAssignee: Array<{ user: IUser; count: number }>;
+  hoursLogged: number;
+  overdueTickets: number;
+}
+
+// ============================================
+// Project Agent Types (AI Project Creation)
+// ============================================
+export * from './projectAgent';
+
+// ============================================
+// Guidelines/SOP Types
+// ============================================
+export * from './guidelines';
 

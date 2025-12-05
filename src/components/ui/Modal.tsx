@@ -14,6 +14,8 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   showCloseButton?: boolean;
   className?: string;
+  /** When true, content won't have overflow-y-auto - use when child handles its own scrolling */
+  disableContentScroll?: boolean;
 }
 
 const sizeClasses = {
@@ -33,6 +35,7 @@ export function Modal({
   size = 'md',
   showCloseButton = true,
   className,
+  disableContentScroll = false,
 }: ModalProps) {
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -95,7 +98,10 @@ export function Modal({
         )}
 
         {/* Content */}
-        <div className="p-6 max-h-[70vh] overflow-y-auto">{children}</div>
+        <div className={cn(
+          "p-6",
+          !disableContentScroll && "max-h-[70vh] overflow-y-auto"
+        )}>{children}</div>
       </div>
     </div>
   );

@@ -57,13 +57,13 @@ export default function ForgotPasswordPage() {
               Check Your Email
             </h1>
             <p className="text-surface-600 dark:text-surface-400 mb-2">
-              We've sent a password reset link to:
+              We have sent a password reset link to:
             </p>
             <p className="font-medium text-surface-900 dark:text-white mb-6">
               {email}
             </p>
             <p className="text-sm text-surface-500 mb-6">
-              Didn't receive the email? Check your spam folder or{' '}
+              Did not receive the email? Check your spam folder or{' '}
               <button
                 onClick={() => setIsSuccess(false)}
                 className="text-primary-600 hover:underline"
@@ -96,7 +96,7 @@ export default function ForgotPasswordPage() {
               Forgot Password?
             </h1>
             <p className="text-surface-600 dark:text-surface-400">
-              No worries! Enter your email and we'll send you a reset link.
+              No worries! Enter your email and we will send you a reset link.
             </p>
           </div>
 

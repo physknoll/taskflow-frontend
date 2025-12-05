@@ -8,8 +8,13 @@ export { notificationsService } from './notifications.service';
 export { usersService } from './users.service';
 export { analyticsService } from './analytics.service';
 export { assetsService } from './assets.service';
+export { projectsService, workflowColumnsService } from './projects.service';
+export { projectAgentService } from './projectAgent.service';
+export { guidelinesService } from './guidelines.service';
+export { sopAgentService } from './sopAgent.service';
 
 export type { TicketFilters, AIGeneratedContent } from './tickets.service';
+export type { GuidelinesFilters } from './guidelines.service';
 export type { ClientFilters } from './clients.service';
 export type { ReviewFilters, CompleteReviewDto } from './reviews.service';
 export type { ChatMessage, SendMessageDto, ChatResponse, ParseUpdateResponse, GeneratedTicketContent, ComposeEmailResponse } from './ai.service';

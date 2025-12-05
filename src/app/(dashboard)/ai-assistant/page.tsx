@@ -252,7 +252,7 @@ export default function AIAssistantPage() {
                 )}
                 {selectedClient && (
                   <p className="text-xs text-green-600 dark:text-green-400 mt-2">
-                    ✓ Searching {clients.find(c => c._id === selectedClient)?.name}'s knowledge base
+                    {`✓ Searching ${clients.find(c => c._id === selectedClient)?.name}'s knowledge base`}
                   </p>
                 )}
               </CardContent>

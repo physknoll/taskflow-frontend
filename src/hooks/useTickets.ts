@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 
 interface UseTicketsOptions {
   clientId?: string;
+  projectId?: string;
   status?: string;
   assignedTo?: string;
   enabled?: boolean;
@@ -17,6 +18,7 @@ export function useTickets(options: UseTicketsOptions = {}) {
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<TicketFilters>({
     client: options.clientId,
+    project: options.projectId,
     status: options.status,
     assignedTo: options.assignedTo,
   });
