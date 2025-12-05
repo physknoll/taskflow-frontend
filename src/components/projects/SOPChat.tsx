@@ -62,6 +62,7 @@ export function SOPChat({ onSOPCreated, onCancel }: SOPChatProps) {
     return () => {
       resetSession();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-scroll
@@ -151,7 +152,7 @@ export function SOPChat({ onSOPCreated, onCancel }: SOPChatProps) {
             Create a New SOP
           </h3>
           <p className="text-sm text-surface-500 dark:text-surface-400 text-center max-w-md mb-5">
-            Describe what kind of project workflow you want to document and I'll help create a reusable SOP.
+            Describe what kind of project workflow you want to document and I will help create a reusable SOP.
           </p>
 
           {/* Suggestion chips */}

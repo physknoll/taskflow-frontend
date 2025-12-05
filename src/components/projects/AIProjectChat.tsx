@@ -146,14 +146,14 @@ export function AIProjectChat({ onProjectCreated, onCancel, selectedGuidelineId 
             Create a Project with AI
           </h3>
           <p className="text-sm text-surface-500 dark:text-surface-400 text-center max-w-md mb-5">
-            Describe your project in natural language and I'll help you set it up with all the details and tickets.
+            Describe your project in natural language and I will help you set it up with all the details and tickets.
           </p>
 
           {/* Suggestion chips */}
           <div className="flex flex-wrap justify-center gap-2 mb-5">
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-100 dark:bg-surface-700 text-xs text-surface-600 dark:text-surface-400">
               <MessageSquare className="w-3 h-3" />
-              What it's about
+              What it is about
             </div>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-100 dark:bg-surface-700 text-xs text-surface-600 dark:text-surface-400">
               <Target className="w-3 h-3" />

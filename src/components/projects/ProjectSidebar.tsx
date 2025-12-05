@@ -508,7 +508,7 @@ export function ProjectSidebar({ project, stats, onClose }: ProjectSidebarProps)
 
           <p className="text-sm text-surface-600 dark:text-surface-400">
             Are you sure you want to delete <span className="font-semibold text-surface-900 dark:text-white">{project.name}</span>? 
-            The project will be permanently deleted. Tickets associated with this project will become standalone tickets and won't be deleted.
+            The project will be permanently deleted. Tickets associated with this project will become standalone tickets and will not be deleted.
           </p>
 
           <div className="flex justify-end gap-3 pt-2">
