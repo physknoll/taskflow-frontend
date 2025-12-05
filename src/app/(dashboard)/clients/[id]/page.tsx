@@ -78,7 +78,7 @@ export default function ClientDetailPage() {
           Client not found
         </h2>
         <p className="text-surface-500 mb-4">
-          The client you're looking for doesn't exist or you don't have access.
+          The client you are looking for does not exist or you do not have access.
         </p>
         <Button onClick={() => router.push('/clients')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -850,7 +850,7 @@ function DocumentsTab({ clientId }: { clientId: string }) {
               No documents yet
             </h3>
             <p className="text-surface-500 mb-6 max-w-md mx-auto">
-              Upload files or add text documents to build this client's knowledge base for AI assistance.
+              {`Upload files or add text documents to build this client's knowledge base for AI assistance.`}
             </p>
             <div className="flex gap-3 justify-center">
               <Button variant="outline" onClick={() => setShowAddTextModal(true)}>
