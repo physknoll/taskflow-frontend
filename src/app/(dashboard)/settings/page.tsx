@@ -8,6 +8,7 @@ import { Input, Textarea } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
 import { useAuthStore } from '@/stores/authStore';
 import { useUIStore } from '@/stores/uiStore';
 import { authService } from '@/services/auth.service';
@@ -25,8 +26,22 @@ import {
   Shield,
   Clock,
   Save,
+  Crown,
+  Briefcase,
+  UserCircle,
+  Eye,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// Role configuration for display
+const roleConfig: Record<string, { label: string; variant: 'primary' | 'success' | 'info' | 'secondary'; icon: React.ComponentType<{ className?: string }> }> = {
+  owner: { label: 'Owner', variant: 'primary', icon: Crown },
+  manager: { label: 'Manager', variant: 'success', icon: Briefcase },
+  employee: { label: 'Team Member', variant: 'info', icon: UserCircle },
+  client_viewer: { label: 'Client', variant: 'secondary', icon: Eye },
+};
 
 const profileSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
@@ -149,21 +164,46 @@ function ProfileSettings() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Avatar */}
+          {/* Avatar & Role */}
           <div className="flex items-center gap-6">
-            <Avatar
-              firstName={user?.firstName}
-              lastName={user?.lastName}
-              src={user?.avatar}
-              size="xl"
-            />
-            <div>
-              <Button variant="outline" size="sm">
-                Change Avatar
-              </Button>
-              <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
-                JPG, PNG or GIF. Max 2MB.
+            <div className="relative">
+              <Avatar
+                firstName={user?.firstName}
+                lastName={user?.lastName}
+                src={user?.avatar}
+                size="xl"
+              />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-2">
+                <h3 className="text-lg font-semibold text-surface-900 dark:text-white">
+                  {user?.firstName} {user?.lastName}
+                </h3>
+                {user?.role && roleConfig[user.role] && (
+                  <Badge 
+                    variant={roleConfig[user.role].variant} 
+                    size="md"
+                    className="flex items-center gap-1.5"
+                  >
+                    {(() => {
+                      const RoleIcon = roleConfig[user.role].icon;
+                      return <RoleIcon className="h-3 w-3" />;
+                    })()}
+                    {roleConfig[user.role].label}
+                  </Badge>
+                )}
+              </div>
+              <p className="text-sm text-surface-500 dark:text-surface-400 mb-3">
+                {user?.email}
               </p>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" size="sm">
+                  Change Avatar
+                </Button>
+                <span className="text-xs text-surface-400 dark:text-surface-500">
+                  JPG, PNG or GIF. Max 2MB.
+                </span>
+              </div>
             </div>
           </div>
 
@@ -414,6 +454,12 @@ function AppearanceSettings() {
 }
 
 function SecuritySettings() {
+  const { user, logout } = useAuthStore();
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+
   const {
     register,
     handleSubmit,
@@ -435,6 +481,19 @@ function SecuritySettings() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (data: { password?: string; confirmDelete: string }) =>
+      authService.deleteAccount(data),
+    onSuccess: () => {
+      toast.success('Your account has been deleted');
+      logout();
+      window.location.href = '/login';
+    },
+    onError: (error: any) => {
+      setDeleteError(error.response?.data?.message || 'Failed to delete account');
+    },
+  });
+
   const onSubmit = (data: PasswordForm) => {
     passwordMutation.mutate({
       currentPassword: data.currentPassword,
@@ -442,47 +501,180 @@ function SecuritySettings() {
     });
   };
 
+  const handleDeleteAccount = () => {
+    setDeleteError('');
+    
+    if (deleteConfirmText !== 'DELETE') {
+      setDeleteError('Please type DELETE to confirm');
+      return;
+    }
+
+    const isLocalAuth = user?.authProvider === 'local';
+    if (isLocalAuth && !deletePassword) {
+      setDeleteError('Password is required to delete your account');
+      return;
+    }
+
+    deleteMutation.mutate({
+      password: isLocalAuth ? deletePassword : undefined,
+      confirmDelete: 'DELETE',
+    });
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setDeletePassword('');
+    setDeleteConfirmText('');
+    setDeleteError('');
+  };
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Security</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div>
-            <h4 className="font-medium text-surface-900 dark:text-white mb-4">
-              Change Password
-            </h4>
-            <div className="space-y-4">
-              <Input
-                {...register('currentPassword')}
-                type="password"
-                label="Current Password"
-                error={errors.currentPassword?.message}
-              />
-              <Input
-                {...register('newPassword')}
-                type="password"
-                label="New Password"
-                error={errors.newPassword?.message}
-              />
-              <Input
-                {...register('confirmPassword')}
-                type="password"
-                label="Confirm New Password"
-                error={errors.confirmPassword?.message}
-              />
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Security</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div>
+              <h4 className="font-medium text-surface-900 dark:text-white mb-4">
+                Change Password
+              </h4>
+              <div className="space-y-4">
+                <Input
+                  {...register('currentPassword')}
+                  type="password"
+                  label="Current Password"
+                  error={errors.currentPassword?.message}
+                />
+                <Input
+                  {...register('newPassword')}
+                  type="password"
+                  label="New Password"
+                  error={errors.newPassword?.message}
+                />
+                <Input
+                  {...register('confirmPassword')}
+                  type="password"
+                  label="Confirm New Password"
+                  error={errors.confirmPassword?.message}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button type="submit" isLoading={passwordMutation.isPending}>
+                Update Password
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Delete Account Section */}
+      <Card className="border-red-200 dark:border-red-900/50">
+        <CardHeader>
+          <CardTitle className="text-red-600 dark:text-red-400 flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" />
+            Danger Zone
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-medium text-surface-900 dark:text-white">
+                Delete Account
+              </h4>
+              <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
+                Permanently delete your account and all associated data. This action cannot be undone.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteModalOpen(true)}
+              className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Account
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Delete Account Modal */}
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={closeDeleteModal}
+        title="Delete Account"
+      >
+        <div className="space-y-6">
+          <div className="flex items-start gap-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+            <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-red-800 dark:text-red-300">
+                This action is irreversible
+              </h4>
+              <p className="text-sm text-red-700 dark:text-red-400 mt-1">
+                Your account, profile, and all associated data will be permanently deleted.
+                {user?.role === 'owner' && (
+                  <span className="block mt-2 font-medium">
+                    As an organization owner, you must remove all team members before deleting your account.
+                  </span>
+                )}
+              </p>
             </div>
           </div>
 
-          <div className="flex justify-end">
-            <Button type="submit" isLoading={passwordMutation.isPending}>
-              Update Password
+          {user?.authProvider === 'local' && (
+            <div>
+              <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                Enter your password to confirm
+              </label>
+              <Input
+                type="password"
+                placeholder="Your current password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+              Type <span className="font-bold text-red-600 dark:text-red-400">DELETE</span> to confirm
+            </label>
+            <Input
+              type="text"
+              placeholder="Type DELETE"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+            />
+          </div>
+
+          {deleteError && (
+            <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-sm text-red-600 dark:text-red-400">{deleteError}</p>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-700">
+            <Button variant="outline" onClick={closeDeleteModal}>
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleDeleteAccount}
+              isLoading={deleteMutation.isPending}
+              disabled={deleteConfirmText !== 'DELETE'}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete My Account
             </Button>
           </div>
-        </form>
-      </CardContent>
-    </Card>
+        </div>
+      </Modal>
+    </div>
   );
 }
+
 

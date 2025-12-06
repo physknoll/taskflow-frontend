@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { authService } from '@/services/auth.service';
 import { getTokens } from '@/services/api';
+import { SignupDto, CompleteProfileDto, CreateOrganizationDto } from '@/types';
 import toast from 'react-hot-toast';
 
 export function useAuth() {
@@ -72,6 +73,79 @@ export function useAuth() {
     []
   );
 
+  // ============================================
+  // Multi-Step Signup Flow
+  // ============================================
+
+  const getSignupOptions = useCallback(async () => {
+    try {
+      return await authService.getSignupOptions();
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Failed to load signup options';
+      toast.error(message);
+      throw error;
+    }
+  }, []);
+
+  // Step 1: Create account
+  const signup = useCallback(
+    async (data: SignupDto) => {
+      try {
+        const response = await authService.signup(data);
+        setTokens(response.token, response.refreshToken);
+        setUser(response.user);
+        toast.success('Account created! Please complete your profile.');
+        return response;
+      } catch (error: any) {
+        const message = error.response?.data?.message || 'Signup failed';
+        toast.error(message);
+        throw error;
+      }
+    },
+    [setTokens, setUser]
+  );
+
+  // Step 2: Complete profile
+  const completeProfile = useCallback(
+    async (data: CompleteProfileDto) => {
+      try {
+        const response = await authService.completeProfile(data);
+        setUser(response.user);
+        toast.success('Profile updated!');
+        return response;
+      } catch (error: any) {
+        const message = error.response?.data?.message || 'Failed to update profile';
+        toast.error(message);
+        throw error;
+      }
+    },
+    [setUser]
+  );
+
+  // Step 3: Create organization
+  const createOrganization = useCallback(
+    async (data: CreateOrganizationDto) => {
+      try {
+        const response = await authService.createOrganization(data);
+        setUser(response.user);
+        toast.success('Organization created! Welcome to TaskFlow AI.');
+        router.push('/');
+        return response;
+      } catch (error: any) {
+        const message = error.response?.data?.message || 'Failed to create organization';
+        toast.error(message);
+        throw error;
+      }
+    },
+    [router, setUser]
+  );
+
+  // Google OAuth
+  const initiateGoogleAuth = useCallback(() => {
+    const url = authService.getGoogleOAuthUrl();
+    window.location.href = url;
+  }, []);
+
   return {
     user,
     isAuthenticated,
@@ -79,6 +153,12 @@ export function useAuth() {
     login,
     logout,
     register,
+    // Signup flow
+    getSignupOptions,
+    signup,
+    completeProfile,
+    createOrganization,
+    initiateGoogleAuth,
   };
 }
 

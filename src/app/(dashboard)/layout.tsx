@@ -6,6 +6,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { useAuth } from '@/hooks/useAuth';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
+import { AIPMProvider } from '@/components/providers';
+import { AIPMChatDialog, AIPMCheckInResultModal } from '@/components/aipm';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -36,15 +38,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="flex h-screen bg-surface-50 dark:bg-surface-900">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
-        </main>
+    <AIPMProvider>
+      <div className="flex h-screen bg-surface-50 dark:bg-surface-900">
+        <Sidebar />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <Header />
+          <main className="flex-1 overflow-y-auto p-6">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+      
+      {/* AIPM Modals */}
+      <AIPMChatDialog />
+      <AIPMCheckInResultModal />
+    </AIPMProvider>
   );
 }
+
 

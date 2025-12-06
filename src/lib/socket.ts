@@ -78,3 +78,43 @@ export interface NotificationData {
   };
 }
 
+// AIPM Socket Event Types
+export interface AIPMCheckInStartedData {
+  sessionId: string;
+  message: string;
+}
+
+export interface AIPMCheckInMessageData {
+  sessionId: string;
+  message: string;
+  status: 'pending' | 'in_progress' | 'completed' | 'skipped' | 'failed';
+}
+
+export interface AIPMCheckInCompletedData {
+  sessionId: string;
+  summary: string;
+  sentiment: 'positive' | 'neutral' | 'negative';
+}
+
+export interface AIPMSessionFlaggedData {
+  sessionId: string;
+  userId: string;
+  reason?: string;
+  priority?: 'low' | 'medium' | 'high';
+}
+
+export interface AIPMReportGeneratedData {
+  reportId: string;
+  type: 'daily_digest' | 'weekly_retrospective';
+  title: string;
+}
+
+// AIPM Socket Event Names
+export const AIPM_SOCKET_EVENTS = {
+  CHECKIN_STARTED: 'aipm:checkin:started',
+  CHECKIN_MESSAGE: 'aipm:checkin:message',
+  CHECKIN_COMPLETED: 'aipm:checkin:completed',
+  SESSION_FLAGGED: 'aipm:session:flagged',
+  REPORT_GENERATED: 'aipm:report:generated',
+} as const;
+

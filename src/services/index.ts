@@ -12,6 +12,7 @@ export { projectsService, workflowColumnsService } from './projects.service';
 export { projectAgentService } from './projectAgent.service';
 export { guidelinesService } from './guidelines.service';
 export { sopAgentService } from './sopAgent.service';
+export { aipmService } from './aipm.service';
 
 export type { TicketFilters, AIGeneratedContent } from './tickets.service';
 export type { GuidelinesFilters } from './guidelines.service';

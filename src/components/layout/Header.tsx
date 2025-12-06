@@ -8,6 +8,7 @@ import { useNotificationStore } from '@/stores/notificationStore';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Button } from '@/components/ui/Button';
 import { Dropdown, DropdownItem, DropdownDivider, DropdownLabel } from '@/components/ui/Dropdown';
+import { AIPMStatusBar } from '@/components/aipm';
 import {
   Menu,
   Bell,
@@ -33,6 +34,7 @@ const pageTitles: Record<string, string> = {
   '/team': 'Team',
   '/analytics': 'Analytics',
   '/ai-assistant': 'AI Assistant',
+  '/ai-manager': 'AI Manager',
   '/settings': 'Settings',
 };
 
@@ -90,6 +92,12 @@ export function Header() {
 
       {/* Right side */}
       <div className="flex items-center gap-2">
+        {/* AIPM Status Bar */}
+        <AIPMStatusBar />
+
+        {/* Divider */}
+        <div className="h-6 w-px bg-surface-200 dark:bg-surface-700 mx-1" />
+
         {/* Search */}
         <Button
           variant="ghost"
