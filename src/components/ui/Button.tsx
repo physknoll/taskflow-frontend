@@ -14,6 +14,10 @@ const buttonVariants = cva(
           'bg-primary-600 text-white hover:bg-primary-700 shadow-sm hover:shadow-md',
         destructive:
           'bg-red-600 text-white hover:bg-red-700 shadow-sm hover:shadow-md',
+        danger:
+          'bg-red-600 text-white hover:bg-red-700 shadow-sm hover:shadow-md',
+        warning:
+          'bg-amber-600 text-white hover:bg-amber-700 shadow-sm hover:shadow-md',
         outline:
           'border-2 border-surface-300 bg-transparent hover:bg-surface-100 hover:border-surface-400 dark:border-surface-600 dark:hover:bg-surface-800 dark:hover:border-surface-500',
         secondary:
@@ -88,4 +92,5 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 export { Button, buttonVariants };
+
 

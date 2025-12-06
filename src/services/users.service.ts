@@ -50,8 +50,22 @@ export const usersService = {
     return response.data.data;
   },
 
-  async deleteUser(id: string): Promise<void> {
-    await api.delete(`/users/${id}`);
+  // Soft delete (deactivate) - sets isActive: false
+  async deactivateUser(id: string): Promise<{ message: string }> {
+    const response = await api.delete<ApiResponse<{ message: string }>>(`/users/${id}`);
+    return response.data.data;
+  },
+
+  // Permanently delete user
+  async permanentlyDeleteUser(id: string): Promise<{ message: string }> {
+    const response = await api.delete<ApiResponse<{ message: string }>>(`/users/${id}/permanent`);
+    return response.data.data;
+  },
+
+  // Reactivate a deactivated user
+  async reactivateUser(id: string): Promise<IUser> {
+    const response = await api.put<ApiResponse<IUser>>(`/users/${id}`, { isActive: true });
+    return response.data.data;
   },
 
   async getUserStats(id: string): Promise<{

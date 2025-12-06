@@ -23,6 +23,7 @@ import {
   X,
   Sparkles,
   FolderKanban,
+  Bot,
 } from 'lucide-react';
 
 const navigation = [
@@ -34,6 +35,7 @@ const navigation = [
   { name: 'Team', href: '/team', icon: Users, permission: 'users.view' },
   { name: 'Analytics', href: '/analytics', icon: BarChart3, permission: 'analytics.view_all' },
   { name: 'AI Assistant', href: '/ai-assistant', icon: MessageSquare, permission: 'ai.use_chat' },
+  { name: 'AI Manager', href: '/ai-manager', icon: Bot, permission: 'aipm.view' },
   { name: 'Settings', href: '/settings', icon: Settings, permission: null },
 ];
 

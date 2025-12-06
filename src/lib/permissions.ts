@@ -46,6 +46,13 @@ const PERMISSIONS: Record<string, string[]> = {
   'ai.configure_prompts': ['owner', 'manager'],
   'ai.view_interactions': ['owner', 'manager'],
 
+  // AIPM (AI Project Manager)
+  'aipm.view': ['owner', 'manager', 'employee'],
+  'aipm.configure': ['owner'],
+  'aipm.view_all_sessions': ['owner', 'manager'],
+  'aipm.view_reports': ['owner', 'manager'],
+  'aipm.resolve_interventions': ['owner', 'manager'],
+
   // System Settings
   'settings.view': ['owner', 'manager'],
   'settings.edit': ['owner'],

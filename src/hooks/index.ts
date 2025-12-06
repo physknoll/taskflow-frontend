@@ -9,4 +9,13 @@ export { useProjects, useProjectsBoard, useProject, useWorkflowColumns } from '.
 export { useProjectAgent } from './useProjectAgent';
 export { useGuidelines, useGuideline } from './useGuidelines';
 export { useSOPAgent } from './useSOPAgent';
+export {
+  useAIPMConfig,
+  useAIPMCheckIn,
+  useAIPMSessions,
+  useAIPMReports,
+  useAIPMDashboard,
+  useNextCheckIn,
+  useFlaggedSessions,
+} from './useAIPM';
 

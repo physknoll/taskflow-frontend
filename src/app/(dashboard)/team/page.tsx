@@ -12,7 +12,9 @@ import { Modal } from '@/components/ui/Modal';
 import { Progress } from '@/components/ui/Progress';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { usersService } from '@/services/users.service';
+import { useAuthStore } from '@/stores/authStore';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { IUser } from '@/types';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -28,6 +30,14 @@ import {
   TrendingUp,
   Calendar,
   MoreVertical,
+  UserX,
+  Trash2,
+  RefreshCw,
+  AlertTriangle,
+  Crown,
+  Briefcase,
+  UserCircle,
+  Eye as EyeIcon,
 } from 'lucide-react';
 import { Dropdown, DropdownItem, DropdownDivider } from '@/components/ui/Dropdown';
 import { formatDate } from '@/lib/utils';
@@ -42,11 +52,27 @@ const createUserSchema = z.object({
 
 type CreateUserForm = z.infer<typeof createUserSchema>;
 
+// Role configuration for display
+const roleConfig: Record<string, { label: string; variant: 'primary' | 'success' | 'info' | 'secondary'; icon: React.ComponentType<{ className?: string }> }> = {
+  owner: { label: 'Owner', variant: 'primary', icon: Crown },
+  manager: { label: 'Manager', variant: 'success', icon: Briefcase },
+  employee: { label: 'Team Member', variant: 'info', icon: UserCircle },
+  client_viewer: { label: 'Client', variant: 'secondary', icon: EyeIcon },
+};
+
 export default function TeamPage() {
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuthStore();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<IUser | null>(null);
+  const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  // Check if current user is owner (can manage users)
+  const isOwner = currentUser?.role === 'owner';
 
   const { data, isLoading } = useQuery({
     queryKey: ['users', { search, role: roleFilter }],
@@ -65,6 +91,60 @@ export default function TeamPage() {
       toast.error(error.response?.data?.message || 'Failed to create user');
     },
   });
+
+  const deactivateMutation = useMutation({
+    mutationFn: (userId: string) => usersService.deactivateUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('User deactivated successfully');
+      setDeactivateModalOpen(false);
+      setSelectedUser(null);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to deactivate user');
+    },
+  });
+
+  const reactivateMutation = useMutation({
+    mutationFn: (userId: string) => usersService.reactivateUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('User reactivated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to reactivate user');
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (userId: string) => usersService.permanentlyDeleteUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('User permanently deleted');
+      setDeleteModalOpen(false);
+      setSelectedUser(null);
+      setDeleteConfirmText('');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to delete user');
+    },
+  });
+
+  const handleDeactivateClick = (user: IUser) => {
+    setSelectedUser(user);
+    setDeactivateModalOpen(true);
+  };
+
+  const handleDeleteClick = (user: IUser) => {
+    setSelectedUser(user);
+    setDeleteModalOpen(true);
+    setDeleteConfirmText('');
+  };
+
+  const handlePermanentDelete = () => {
+    if (deleteConfirmText !== 'DELETE' || !selectedUser) return;
+    deleteMutation.mutate(selectedUser._id);
+  };
 
   const {
     register,
@@ -173,27 +253,62 @@ export default function TeamPage() {
                       <p className="text-sm text-surface-500 dark:text-surface-400">
                         {user.jobTitle || user.role}
                       </p>
-                      <Badge
-                        variant={user.role === 'owner' ? 'primary' : user.role === 'manager' ? 'info' : 'secondary'}
-                        size="sm"
-                        className="mt-1 capitalize"
-                      >
-                        {user.role.replace('_', ' ')}
-                      </Badge>
+                      {user.role && roleConfig[user.role] && (
+                        <Badge 
+                          variant={roleConfig[user.role].variant} 
+                          size="sm"
+                          className="mt-1 flex items-center gap-1 w-fit"
+                        >
+                          {(() => {
+                            const RoleIcon = roleConfig[user.role].icon;
+                            return <RoleIcon className="h-3 w-3" />;
+                          })()}
+                          {roleConfig[user.role].label}
+                        </Badge>
+                      )}
+                      {!user.isActive && (
+                        <Badge variant="warning" size="sm" className="mt-1">
+                          Inactive
+                        </Badge>
+                      )}
                     </div>
                   </div>
-                  <Dropdown
-                    trigger={
-                      <button className="p-1 rounded hover:bg-surface-100 dark:hover:bg-surface-700">
-                        <MoreVertical className="h-4 w-4 text-surface-500" />
-                      </button>
-                    }
-                  >
-                    <DropdownItem>View Profile</DropdownItem>
-                    <DropdownItem>Edit</DropdownItem>
-                    <DropdownDivider />
-                    <DropdownItem variant="danger">Deactivate</DropdownItem>
-                  </Dropdown>
+                  {isOwner && user._id !== currentUser?._id && user.role !== 'owner' && (
+                    <Dropdown
+                      trigger={
+                        <button className="p-1 rounded hover:bg-surface-100 dark:hover:bg-surface-700">
+                          <MoreVertical className="h-4 w-4 text-surface-500" />
+                        </button>
+                      }
+                    >
+                      <DropdownItem>View Profile</DropdownItem>
+                      <DropdownItem>Edit</DropdownItem>
+                      <DropdownDivider />
+                      {user.isActive ? (
+                        <DropdownItem 
+                          variant="danger" 
+                          onClick={() => handleDeactivateClick(user)}
+                        >
+                          <UserX className="h-4 w-4 mr-2" />
+                          Deactivate
+                        </DropdownItem>
+                      ) : (
+                        <DropdownItem 
+                          onClick={() => reactivateMutation.mutate(user._id)}
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Reactivate
+                        </DropdownItem>
+                      )}
+                      <DropdownItem 
+                        variant="danger" 
+                        onClick={() => handleDeleteClick(user)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Permanently
+                      </DropdownItem>
+                    </Dropdown>
+                  )}
                 </div>
 
                 {/* Contact Info */}
@@ -322,7 +437,113 @@ export default function TeamPage() {
           </div>
         </form>
       </Modal>
+
+      {/* Deactivate User Modal */}
+      <Modal
+        isOpen={deactivateModalOpen}
+        onClose={() => {
+          setDeactivateModalOpen(false);
+          setSelectedUser(null);
+        }}
+        title="Deactivate User"
+      >
+        <div className="space-y-6">
+          <div className="flex items-start gap-4 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+            <UserX className="h-6 w-6 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-amber-800 dark:text-amber-300">
+                Deactivate this user?
+              </h4>
+              <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
+                <strong>{selectedUser?.firstName} {selectedUser?.lastName}</strong> will no longer be able to access the system.
+                Their data will be preserved and you can reactivate them later.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-700">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeactivateModalOpen(false);
+                setSelectedUser(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="warning"
+              onClick={() => selectedUser && deactivateMutation.mutate(selectedUser._id)}
+              isLoading={deactivateMutation.isPending}
+            >
+              <UserX className="h-4 w-4 mr-2" />
+              Deactivate User
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Permanently Delete User Modal */}
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setSelectedUser(null);
+          setDeleteConfirmText('');
+        }}
+        title="Permanently Delete User"
+      >
+        <div className="space-y-6">
+          <div className="flex items-start gap-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+            <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-red-800 dark:text-red-300">
+                This action is irreversible
+              </h4>
+              <p className="text-sm text-red-700 dark:text-red-400 mt-1">
+                <strong>{selectedUser?.firstName} {selectedUser?.lastName}</strong>&apos;s account and all associated data will be permanently deleted.
+                This cannot be undone.
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+              Type <span className="font-bold text-red-600 dark:text-red-400">DELETE</span> to confirm
+            </label>
+            <Input
+              type="text"
+              placeholder="Type DELETE"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-700">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setSelectedUser(null);
+                setDeleteConfirmText('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handlePermanentDelete}
+              isLoading={deleteMutation.isPending}
+              disabled={deleteConfirmText !== 'DELETE'}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Permanently
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
+
 

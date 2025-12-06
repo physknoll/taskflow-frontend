@@ -119,3 +119,4 @@ export const useProjectStore = create<ProjectState>((set) => ({
   setViewMode: (mode) => set({ viewMode: mode }),
 }));
 
+

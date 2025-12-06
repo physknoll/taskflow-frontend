@@ -33,6 +33,13 @@ export interface IUser {
   lastLogin?: Date;
   createdAt: Date;
   updatedAt: Date;
+  // Onboarding fields
+  organizationId?: string;
+  authProvider?: 'local' | 'google';
+  isEmailVerified?: boolean;
+  onboardingCompleted?: boolean;
+  onboardingStep?: number;
+  referralSource?: string;
 }
 
 // Client Types
@@ -515,6 +522,73 @@ export interface RegisterDto {
 }
 
 // ============================================
+// Signup/Registration Types
+// ============================================
+
+export interface SignupOptionsResponse {
+  industries: string[];
+  organizationSizes: string[];
+  referralSources: string[];
+}
+
+export interface SignupDto {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface SignupResponse {
+  user: IUser;
+  token: string;
+  refreshToken: string;
+  message: string;
+  nextStep: string;
+}
+
+export interface CompleteProfileDto {
+  phone?: string;
+  jobTitle?: string;
+  referralSource?: string;
+  timezone?: string;
+}
+
+export interface CompleteProfileResponse {
+  user: IUser;
+  message: string;
+  nextStep: string;
+}
+
+export interface CreateOrganizationDto {
+  name: string;
+  industry?: string;
+  size?: string;
+}
+
+export interface IOrganization {
+  _id: string;
+  name: string;
+  slug: string;
+  industry?: string;
+  size?: string;
+  owner: string;
+  members: string[];
+  subscriptionStatus: 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid';
+  seatCount: number;
+  trialEndsAt?: string;
+  billingEmail?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateOrganizationResponse {
+  user: IUser;
+  organization: IOrganization;
+  message: string;
+  trialEndsAt?: string;
+}
+
+// ============================================
 // Project Types
 // ============================================
 
@@ -720,4 +794,9 @@ export * from './projectAgent';
 // Guidelines/SOP Types
 // ============================================
 export * from './guidelines';
+
+// ============================================
+// AIPM (AI Project Manager) Types
+// ============================================
+export * from './aipm';
 

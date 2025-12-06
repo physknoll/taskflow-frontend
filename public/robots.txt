@@ -1,0 +1,20 @@
+# TaskFlow AI - robots.txt
+# https://www.robotstxt.org/robotstxt.html
+
+User-agent: *
+Allow: /
+
+# Disallow authentication pages from indexing
+Disallow: /login
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /setup-account
+Disallow: /verify-email
+
+# Disallow API routes
+Disallow: /api/
+
+# Sitemap location (if you add a sitemap later)
+# Sitemap: https://taskflow.ai/sitemap.xml
+
+
