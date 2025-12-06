@@ -345,8 +345,18 @@ export interface UpdateAIPMConfigDto {
   deepWorkHours?: Partial<IDeepWorkHours>;
   personalityMode?: PersonalityMode;
   customInstructions?: string;
-  reporting?: Partial<IReportingConfig>;
-  features?: Partial<ISmartFeatures>;
+  reporting?: {
+    dailyDigest?: Partial<IDailyDigestConfig>;
+    weeklyRetrospective?: Partial<IWeeklyRetroConfig>;
+    deliveryMethod?: DeliveryMethod;
+    recipients?: string[];
+  };
+  features?: {
+    staleTicketCleanup?: Partial<ISmartFeatures['staleTicketCleanup']>;
+    resourceBalancing?: Partial<ISmartFeatures['resourceBalancing']>;
+    meetingPrep?: Partial<ISmartFeatures['meetingPrep']>;
+    calendarIntegration?: Partial<ISmartFeatures['calendarIntegration']>;
+  };
   isActive?: boolean;
 }
 

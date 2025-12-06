@@ -257,7 +257,7 @@ function TabNotConfiguredState() {
           AIPM Not Configured
         </h3>
         <p className="text-surface-500 dark:text-surface-400 mb-4">
-          The AI Project Manager hasn't been set up for your organization yet.
+          The AI Project Manager hasn&apos;t been set up for your organization yet.
           Contact your administrator to enable AIPM.
         </p>
       </div>

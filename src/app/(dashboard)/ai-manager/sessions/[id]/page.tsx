@@ -283,7 +283,7 @@ export default function SessionDetailPage() {
                     <Badge
                       variant={
                         blocker.severity === 'high'
-                          ? 'destructive'
+                          ? 'danger'
                           : blocker.severity === 'medium'
                           ? 'warning'
                           : 'secondary'
@@ -327,7 +327,7 @@ export default function SessionDetailPage() {
       >
         <div className="space-y-4">
           <p className="text-surface-600 dark:text-surface-400">
-            This feedback will be included in the employee's next check-in context.
+            This feedback will be included in the employee&apos;s next check-in context.
           </p>
           <Textarea
             value={feedback}

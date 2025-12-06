@@ -1,11 +1,13 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
-import { Sparkles, AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react';
+import { Button, buttonVariants } from '@/components/ui/Button';
+import { cn } from '@/lib/utils';
+import { Sparkles, AlertTriangle, ArrowLeft, RefreshCw, Loader2 } from 'lucide-react';
 
-export default function AuthErrorPage() {
+function AuthErrorContent() {
   const searchParams = useSearchParams();
   const message = searchParams.get('message') || 'An error occurred during authentication.';
 
@@ -95,12 +97,13 @@ export default function AuthErrorPage() {
           <p className="text-lg text-surface-600 dark:text-surface-400 mb-8">{message}</p>
 
           <div className="space-y-3">
-            <Button asChild className="w-full" size="lg">
-              <Link href="/login">
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                Back to Sign In
-              </Link>
-            </Button>
+            <Link
+              href="/login"
+              className={cn(buttonVariants({ size: 'lg' }), 'w-full')}
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Back to Sign In
+            </Link>
 
             <Button
               variant="outline"
@@ -130,3 +133,33 @@ export default function AuthErrorPage() {
   );
 }
 
+function LoadingFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-surface-50 dark:bg-surface-900">
+      <div className="text-center">
+        <div className="flex items-center gap-3 justify-center mb-8">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
+            <Sparkles className="w-8 h-8 text-white" />
+          </div>
+          <span className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
+            TaskFlow AI
+          </span>
+        </div>
+        <div className="flex justify-center mb-4">
+          <Loader2 className="w-12 h-12 text-primary-500 animate-spin" />
+        </div>
+        <h2 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
+          Loading...
+        </h2>
+      </div>
+    </div>
+  );
+}
+
+export default function AuthErrorPage() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <AuthErrorContent />
+    </Suspense>
+  );
+}

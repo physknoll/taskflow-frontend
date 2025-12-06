@@ -195,7 +195,7 @@ function SessionCard({ session }: { session: any }) {
     negative: { icon: TrendingDown, color: 'text-amber-500', label: 'Needs Attention' },
   };
 
-  const status = statusConfig[session.status];
+  const status = statusConfig[session.status as SessionStatus];
   const StatusIcon = status.icon;
   const sentiment = session.analysis?.sentimentLabel ? sentimentConfig[session.analysis.sentimentLabel as keyof typeof sentimentConfig] : null;
   const SentimentIcon = sentiment?.icon;

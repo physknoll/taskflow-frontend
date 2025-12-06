@@ -232,7 +232,7 @@ export default function AIPMPersonalityConfig({
 
           <div className="flex items-center justify-between mt-2">
             <p className="text-xs text-surface-500">
-              These instructions are appended to the AI's base personality.
+              These instructions are appended to the AI&apos;s base personality.
             </p>
             <p className="text-xs text-surface-500">
               {customInstructions?.length || 0} / 2000
@@ -245,10 +245,10 @@ export default function AIPMPersonalityConfig({
               Example instructions:
             </p>
             <ul className="text-sm text-surface-500 dark:text-surface-400 space-y-1">
-              <li>• "Always ask about any blockers that need escalation"</li>
-              <li>• "Remind the design team about asset delivery deadlines"</li>
-              <li>• "Be extra encouraging with new team members"</li>
-              <li>• "Focus on code review status for engineering tasks"</li>
+              <li>• &ldquo;Always ask about any blockers that need escalation&rdquo;</li>
+              <li>• &ldquo;Remind the design team about asset delivery deadlines&rdquo;</li>
+              <li>• &ldquo;Be extra encouraging with new team members&rdquo;</li>
+              <li>• &ldquo;Focus on code review status for engineering tasks&rdquo;</li>
             </ul>
           </div>
         </CardContent>
