@@ -372,3 +372,217 @@ export interface ReportFilters {
   limit?: number;
 }
 
+// ============================================
+// Dashboard Session Types
+// ============================================
+
+export type SuggestedActionType = 
+  | 'start_task' 
+  | 'log_update' 
+  | 'send_email' 
+  | 'mark_complete' 
+  | 'request_help' 
+  | 'schedule_meeting';
+
+export type SuggestedActionStatus = 'pending' | 'accepted' | 'declined' | 'executed';
+
+export interface ISuggestedAction {
+  id: string;
+  type: SuggestedActionType;
+  label: string;
+  description?: string;
+  ticketId?: string;
+  ticketNumber?: string;
+  payload?: Record<string, unknown>;
+  status: SuggestedActionStatus;
+}
+
+export interface IDashboardMessage {
+  id: string;
+  role: MessageRole;
+  content: string;
+  timestamp: string;
+  metadata?: {
+    ticketsDiscussed?: string[];
+    suggestedActions?: ISuggestedAction[];
+    toolsUsed?: string[];
+  };
+}
+
+export interface IDashboardContextSnapshot {
+  assignedTicketCount: number;
+  overdueTicketCount: number;
+  ticketsInProgress: number;
+  recentCompletions: number;
+  previousCheckInDate?: string;
+  managerFeedback?: string;
+}
+
+export interface IDashboardSession {
+  sessionId: string;
+  userId: string;
+  organizationId: string;
+  status: SessionStatus;
+  messages: IDashboardMessage[];
+  contextSnapshot: IDashboardContextSnapshot;
+  lastActivityAt: string;
+  createdAt: string;
+}
+
+// Response from /api/v1/aipm/dashboard/init
+export interface IDashboardInitResponse {
+  sessionId: string;
+  greeting: string;
+  suggestedActions: ISuggestedAction[];
+  focusQueue: IFocusQueueItem[];
+  stats: {
+    completed: number;
+    inProgress: number;
+    inReview: number;
+    hoursLogged: number;
+  };
+}
+
+export interface IDashboardMessageResponse {
+  response: string;
+  sessionStatus: SessionStatus;
+  suggestedActions?: ISuggestedAction[];
+}
+
+export interface IExecuteActionResponse {
+  success: boolean;
+  result?: Record<string, unknown>;
+  message?: string;
+}
+
+// ============================================
+// Gamification Types
+// ============================================
+
+export type BadgeRarity = 'common' | 'rare' | 'epic' | 'legendary';
+
+export interface IBadge {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  earnedAt: string;
+  rarity: BadgeRarity;
+}
+
+export interface IUserStreak {
+  currentStreak: number;
+  longestStreak: number;
+  lastCheckInDate: string;
+  totalPoints: number;
+  weeklyPoints: number;
+  rank?: number;
+  percentile?: number;
+  badges: IBadge[];
+}
+
+export interface ILeaderboardEntry {
+  userId: string;
+  userName: string;
+  avatar?: string;
+  currentStreak: number;
+  totalPoints: number;
+  weeklyPoints: number;
+  rank: number;
+}
+
+export interface ILeaderboard {
+  entries: ILeaderboardEntry[];
+  userRank?: number;
+  totalParticipants: number;
+}
+
+// ============================================
+// Focus Queue Types
+// ============================================
+
+export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';
+
+export interface IFocusQueueItem {
+  ticketId: string;
+  ticketNumber: string;
+  title: string;
+  priority: TicketPriority;
+  dueDate?: string;
+  isOverdue: boolean;
+  client: string;
+  project: string;
+  aiReason: string;
+}
+
+// ============================================
+// Today Stats Types
+// ============================================
+
+export interface ITodayStats {
+  completed: number;
+  inProgress: number;
+  blocked: number;
+  hoursLogged: number;
+  checkInsCompleted: number;
+}
+
+// ============================================
+// Dashboard State Types
+// ============================================
+
+export type ContextMode = 'general' | 'client_kb' | 'internal_docs';
+
+export interface IDashboardState {
+  session: IDashboardSession | null;
+  isSessionActive: boolean;
+  isAITyping: boolean;
+  contextMode: ContextMode;
+  selectedClientId: string | null;
+  streak: IUserStreak | null;
+  focusQueue: IFocusQueueItem[];
+  todayStats: ITodayStats | null;
+}
+
+// ============================================
+// Dashboard Socket Event Payloads
+// ============================================
+
+export interface IAIPMDashboardGreetingPayload {
+  sessionId: string;
+  message: string;
+  suggestedActions?: ISuggestedAction[];
+}
+
+export interface IAIPMDashboardMessagePayload {
+  sessionId: string;
+  message: string;
+  status: SessionStatus;
+  suggestedActions?: ISuggestedAction[];
+}
+
+export interface IAIPMActionExecutedPayload {
+  actionId: string;
+  success: boolean;
+  result?: Record<string, unknown>;
+}
+
+export interface IAIPMPointsEarnedPayload {
+  points: number;
+  reason: string;
+  newTotal: number;
+}
+
+export interface IAIPMFocusUpdatedPayload {
+  focusQueue: IFocusQueueItem[];
+}
+
+// Combined socket events type for type-safe event handling
+export interface IAIPMDashboardSocketEvents {
+  'aipm:dashboard:greeting': IAIPMDashboardGreetingPayload;
+  'aipm:dashboard:message': IAIPMDashboardMessagePayload;
+  'aipm:action:executed': IAIPMActionExecutedPayload;
+  'aipm:points:earned': IAIPMPointsEarnedPayload;
+  'aipm:focus:updated': IAIPMFocusUpdatedPayload;
+}
+

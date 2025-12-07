@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
+import { Toaster as SonnerToaster } from 'sonner';
 import { useUIStore } from '@/stores/uiStore';
 import { SocketProvider, AICheckinProvider } from '@/components/providers';
 
@@ -29,6 +30,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             {children}
           </AICheckinProvider>
         </SocketProvider>
+        {/* React Hot Toast for existing notifications */}
         <Toaster
           position="top-right"
           toastOptions={{
@@ -37,6 +39,23 @@ export function Providers({ children }: { children: React.ReactNode }) {
             style: {
               background: 'var(--toast-bg)',
               color: 'var(--toast-color)',
+            },
+          }}
+        />
+        {/* Sonner for gamification and action toasts */}
+        <SonnerToaster
+          position="top-right"
+          offset={60}
+          richColors
+          closeButton
+          toastOptions={{
+            classNames: {
+              toast: 'dark:bg-surface-800 dark:text-white dark:border-surface-700',
+              title: 'dark:text-white',
+              description: 'dark:text-surface-400',
+              actionButton: 'dark:bg-primary-600 dark:text-white',
+              cancelButton: 'dark:bg-surface-700 dark:text-surface-300',
+              closeButton: 'dark:bg-surface-700 dark:text-surface-300 dark:hover:bg-surface-600',
             },
           }}
         />

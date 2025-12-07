@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAIPMConfig, useAIPMDashboard, useFlaggedSessions } from '@/hooks/useAIPM';
+import { useAIPMConfig, useAIPMManagerDashboard, useFlaggedSessions } from '@/hooks/useAIPM';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -49,7 +49,7 @@ const tabs: Array<{ id: TabId; label: string; icon: typeof Bot; description: str
 export default function AIManagerPage() {
   const { user } = useAuthStore();
   const { config, isLoading: isLoadingConfig, error: configError, updateConfig, isUpdating, refetch } = useAIPMConfig();
-  const { nextCheckIn, flaggedCount, recentReports, recentSessions, isLoading: isDashboardLoading } = useAIPMDashboard();
+  const { nextCheckIn, flaggedCount, recentReports, recentSessions, isLoading: isDashboardLoading } = useAIPMManagerDashboard();
   const [activeTab, setActiveTab] = useState<TabId>('overview');
 
   const isOwner = user?.role === 'owner';

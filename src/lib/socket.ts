@@ -116,5 +116,11 @@ export const AIPM_SOCKET_EVENTS = {
   CHECKIN_COMPLETED: 'aipm:checkin:completed',
   SESSION_FLAGGED: 'aipm:session:flagged',
   REPORT_GENERATED: 'aipm:report:generated',
+  // Dashboard events
+  DASHBOARD_GREETING: 'aipm:dashboard:greeting',
+  DASHBOARD_MESSAGE: 'aipm:dashboard:message',
+  ACTION_EXECUTED: 'aipm:action:executed',
+  POINTS_EARNED: 'aipm:points:earned',
+  FOCUS_UPDATED: 'aipm:focus:updated',
 } as const;
 

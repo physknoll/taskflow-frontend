@@ -16,6 +16,7 @@ import {
   ISessionMessage,
 } from '@/types/aipm';
 import toast from 'react-hot-toast';
+import type { IUserStreak, IFocusQueueItem, ITodayStats, ILeaderboard } from '@/types/aipm';
 
 // ============================================
 // Configuration Hook
@@ -383,10 +384,10 @@ export function useAIPMReports(filters?: ReportFilters) {
 }
 
 // ============================================
-// Combined Dashboard Hook
+// Manager Dashboard Hook (for AI Manager admin page)
 // ============================================
 
-export function useAIPMDashboard() {
+export function useAIPMManagerDashboard() {
   const { config, isLoading: isLoadingConfig } = useAIPMConfig();
   const { nextCheckIn, isLoading: isLoadingNextCheckIn } = useNextCheckIn();
   const { flaggedSessions, isLoading: isLoadingFlagged, count: flaggedCount } = useFlaggedSessions();
@@ -401,6 +402,91 @@ export function useAIPMDashboard() {
     recentReports: reports,
     recentSessions: sessions,
     isLoading: isLoadingConfig || isLoadingNextCheckIn || isLoadingFlagged || isLoadingReports || isLoadingSessions,
+  };
+}
+
+// ============================================
+// Main Dashboard Hook (for AI-first dashboard)
+// ============================================
+
+export function useAIPMDashboard() {
+  const { isAuthenticated } = useAuthStore();
+
+  // User streak and gamification data
+  const { data: streak, isLoading: isStreakLoading } = useQuery({
+    queryKey: ['aipm', 'gamification', 'streak'],
+    queryFn: () => aipmService.getStreak(),
+    enabled: isAuthenticated,
+    staleTime: 60000, // 1 minute
+  });
+
+  // AI-prioritized focus queue
+  const { data: focusQueue = [], isLoading: isFocusLoading } = useQuery({
+    queryKey: ['aipm', 'dashboard', 'focus-queue'],
+    queryFn: () => aipmService.getFocusQueue(),
+    enabled: isAuthenticated,
+    staleTime: 30000, // 30 seconds
+  });
+
+  // Today's statistics
+  const { data: todayStats, isLoading: isStatsLoading } = useQuery({
+    queryKey: ['aipm', 'dashboard', 'today-stats'],
+    queryFn: () => aipmService.getTodayStats(),
+    enabled: isAuthenticated,
+    staleTime: 30000, // 30 seconds
+  });
+
+  // Next check-in time
+  const { data: nextCheckIn } = useQuery({
+    queryKey: ['aipm', 'config', 'next-checkin'],
+    queryFn: () => aipmService.getNextCheckIn(),
+    enabled: isAuthenticated,
+    staleTime: 60000, // 1 minute
+  });
+
+  return {
+    streak: streak ?? null,
+    focusQueue,
+    todayStats: todayStats ?? null,
+    nextCheckIn: nextCheckIn ?? null,
+    isLoading: isStreakLoading || isFocusLoading || isStatsLoading,
+  };
+}
+
+// ============================================
+// Gamification Hooks
+// ============================================
+
+export function useLeaderboard(limit?: number) {
+  const { isAuthenticated } = useAuthStore();
+
+  const { data: leaderboard, isLoading, refetch } = useQuery({
+    queryKey: ['aipm', 'gamification', 'leaderboard', limit],
+    queryFn: () => aipmService.getLeaderboard(limit),
+    enabled: isAuthenticated,
+    staleTime: 60000, // 1 minute
+  });
+
+  return {
+    leaderboard: leaderboard ?? null,
+    isLoading,
+    refetch,
+  };
+}
+
+export function useBadges() {
+  const { isAuthenticated } = useAuthStore();
+
+  const { data: badges = [], isLoading } = useQuery({
+    queryKey: ['aipm', 'gamification', 'badges'],
+    queryFn: () => aipmService.getBadges(),
+    enabled: isAuthenticated,
+    staleTime: 300000, // 5 minutes
+  });
+
+  return {
+    badges,
+    isLoading,
   };
 }
 

@@ -15,7 +15,26 @@ export {
   useAIPMSessions,
   useAIPMReports,
   useAIPMDashboard,
+  useAIPMManagerDashboard,
   useNextCheckIn,
   useFlaggedSessions,
+  useLeaderboard,
+  useBadges,
 } from './useAIPM';
+
+// Dashboard-specific hooks
+export { useAIPMSocket, AIPM_DASHBOARD_EVENTS } from './useAIPMSocket';
+export { useAIPMSession } from './useAIPMSession';
+export {
+  useMediaQuery,
+  useIsMobile,
+  useIsTablet,
+  useIsDesktop,
+  useIsLargeDesktop,
+  useIsTouchDevice,
+  usePrefersReducedMotion,
+  usePrefersDarkMode,
+  useBreakpoint,
+  breakpoints,
+} from './useMediaQuery';
 

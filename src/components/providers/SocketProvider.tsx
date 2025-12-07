@@ -15,7 +15,24 @@ import {
   NotificationData,
 } from '@/lib/socket';
 import { INotification } from '@/types';
+import type {
+  IAIPMDashboardGreetingPayload,
+  IAIPMDashboardMessagePayload,
+  IAIPMActionExecutedPayload,
+  IAIPMPointsEarnedPayload,
+  IAIPMFocusUpdatedPayload,
+} from '@/types/aipm';
 import toast from 'react-hot-toast';
+import { toast as sonnerToast } from 'sonner';
+
+// AIPM Dashboard Socket Event Names
+const AIPM_DASHBOARD_EVENTS = {
+  GREETING: 'aipm:dashboard:greeting',
+  MESSAGE: 'aipm:dashboard:message',
+  ACTION_EXECUTED: 'aipm:action:executed',
+  POINTS_EARNED: 'aipm:points:earned',
+  FOCUS_UPDATED: 'aipm:focus:updated',
+} as const;
 
 interface SocketContextValue {
   socket: Socket | null;
@@ -99,6 +116,62 @@ export function SocketProvider({ children }: SocketProviderProps) {
     queryClient.invalidateQueries({ queryKey: ['reviews'] });
   }, [queryClient]);
 
+  // ============================================
+  // AIPM Dashboard Event Handlers
+  // ============================================
+
+  // Handle dashboard greeting
+  const handleDashboardGreeting = useCallback((data: IAIPMDashboardGreetingPayload) => {
+    console.log('🤖 AIPM Dashboard greeting:', data);
+    queryClient.invalidateQueries({ queryKey: ['aipm', 'dashboard', 'session'] });
+  }, [queryClient]);
+
+  // Handle dashboard message
+  const handleDashboardMessage = useCallback((data: IAIPMDashboardMessagePayload) => {
+    console.log('💬 AIPM Dashboard message:', data);
+    // Messages are handled by useAIPMSocket hook - this is just for logging
+  }, []);
+
+  // Handle action executed
+  const handleActionExecuted = useCallback((data: IAIPMActionExecutedPayload) => {
+    console.log('✅ AIPM Action executed:', data);
+    
+    if (data.success) {
+      sonnerToast.success('Action completed!', {
+        description: 'The task has been updated.',
+      });
+    } else {
+      sonnerToast.error('Action failed', {
+        description: 'Please try again or do it manually.',
+      });
+    }
+
+    // Refresh related queries
+    queryClient.invalidateQueries({ queryKey: ['aipm', 'dashboard', 'focus-queue'] });
+    queryClient.invalidateQueries({ queryKey: ['aipm', 'dashboard', 'today-stats'] });
+    queryClient.invalidateQueries({ queryKey: ['tickets'] });
+  }, [queryClient]);
+
+  // Handle points earned
+  const handlePointsEarned = useCallback((data: IAIPMPointsEarnedPayload) => {
+    console.log('🎉 Points earned:', data);
+    
+    sonnerToast.success(`+${data.points} points!`, {
+      description: data.reason,
+      icon: '🎉',
+    });
+
+    // Refresh gamification data
+    queryClient.invalidateQueries({ queryKey: ['aipm', 'gamification', 'streak'] });
+    queryClient.invalidateQueries({ queryKey: ['aipm', 'gamification', 'leaderboard'] });
+  }, [queryClient]);
+
+  // Handle focus queue updated
+  const handleFocusUpdated = useCallback((data: IAIPMFocusUpdatedPayload) => {
+    console.log('🎯 Focus queue updated:', data);
+    queryClient.setQueryData(['aipm', 'dashboard', 'focus-queue'], data.focusQueue);
+  }, [queryClient]);
+
   // Initialize socket connection
   useEffect(() => {
     if (!isAuthenticated || !token) {
@@ -115,12 +188,26 @@ export function SocketProvider({ children }: SocketProviderProps) {
     socket.on('ticket:update', handleTicketUpdate);
     socket.on('review:update', handleReviewUpdate);
 
+    // AIPM Dashboard events
+    socket.on(AIPM_DASHBOARD_EVENTS.GREETING, handleDashboardGreeting);
+    socket.on(AIPM_DASHBOARD_EVENTS.MESSAGE, handleDashboardMessage);
+    socket.on(AIPM_DASHBOARD_EVENTS.ACTION_EXECUTED, handleActionExecuted);
+    socket.on(AIPM_DASHBOARD_EVENTS.POINTS_EARNED, handlePointsEarned);
+    socket.on(AIPM_DASHBOARD_EVENTS.FOCUS_UPDATED, handleFocusUpdated);
+
     return () => {
       socket.off('notification', handleNotification);
       socket.off('ai:interactive_checkin', handleInteractiveCheckin);
       socket.off('ai:checkin_processed', handleCheckinProcessed);
       socket.off('ticket:update', handleTicketUpdate);
       socket.off('review:update', handleReviewUpdate);
+
+      // AIPM Dashboard events
+      socket.off(AIPM_DASHBOARD_EVENTS.GREETING, handleDashboardGreeting);
+      socket.off(AIPM_DASHBOARD_EVENTS.MESSAGE, handleDashboardMessage);
+      socket.off(AIPM_DASHBOARD_EVENTS.ACTION_EXECUTED, handleActionExecuted);
+      socket.off(AIPM_DASHBOARD_EVENTS.POINTS_EARNED, handlePointsEarned);
+      socket.off(AIPM_DASHBOARD_EVENTS.FOCUS_UPDATED, handleFocusUpdated);
     };
   }, [
     isAuthenticated, 
@@ -130,6 +217,11 @@ export function SocketProvider({ children }: SocketProviderProps) {
     handleCheckinProcessed,
     handleTicketUpdate,
     handleReviewUpdate,
+    handleDashboardGreeting,
+    handleDashboardMessage,
+    handleActionExecuted,
+    handlePointsEarned,
+    handleFocusUpdated,
   ]);
 
   // Cleanup on unmount

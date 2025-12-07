@@ -9,6 +9,14 @@ import {
   SessionFilters,
   ReportFilters,
   IIntervention,
+  IDashboardInitResponse,
+  IDashboardMessageResponse,
+  IExecuteActionResponse,
+  IFocusQueueItem,
+  ITodayStats,
+  IUserStreak,
+  ILeaderboard,
+  IBadge,
 } from '@/types/aipm';
 import { ApiResponse } from '@/types';
 
@@ -156,6 +164,113 @@ export const aipmService = {
       `/aipm/reports/${reportId}/interventions/${interventionId}`,
       { resolution }
     );
+    return response.data.data;
+  },
+
+  // ============================================
+  // Dashboard Session
+  // ============================================
+
+  /**
+   * Initialize or resume a dashboard session
+   * Creates a new session or returns existing active session with proactive greeting
+   */
+  async initiateDashboardSession(): Promise<IDashboardInitResponse> {
+    const response = await api.post<ApiResponse<IDashboardInitResponse>>('/aipm/dashboard/init');
+    return response.data.data;
+  },
+
+  /**
+   * Send a message in the dashboard context
+   */
+  async sendDashboardMessage(sessionId: string, message: string): Promise<IDashboardMessageResponse> {
+    const response = await api.post<ApiResponse<IDashboardMessageResponse>>(
+      '/aipm/dashboard/messages',
+      { sessionId, message }
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Get AI-prioritized focus queue
+   */
+  async getFocusQueue(): Promise<IFocusQueueItem[]> {
+    const response = await api.get<ApiResponse<IFocusQueueItem[]>>('/aipm/dashboard/focus-queue');
+    return response.data.data;
+  },
+
+  /**
+   * Get today's statistics
+   */
+  async getTodayStats(): Promise<ITodayStats> {
+    const response = await api.get<ApiResponse<ITodayStats>>('/aipm/dashboard/today-stats');
+    return response.data.data;
+  },
+
+  /**
+   * Execute a suggested action
+   */
+  async executeAction(
+    actionId: string,
+    payload?: Record<string, unknown>
+  ): Promise<IExecuteActionResponse> {
+    const response = await api.post<ApiResponse<IExecuteActionResponse>>(
+      `/aipm/dashboard/actions/${actionId}/execute`,
+      payload
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Close the dashboard session
+   */
+  async closeDashboardSession(): Promise<void> {
+    await api.post('/aipm/dashboard/close');
+  },
+
+  /**
+   * Get urgent items count (for badge display)
+   */
+  async getUrgentCount(): Promise<{ count: number }> {
+    const response = await api.get<ApiResponse<{ count: number }>>('/aipm/dashboard/urgent-count');
+    return response.data.data;
+  },
+
+  // ============================================
+  // Gamification
+  // ============================================
+
+  /**
+   * Get user's streak and points data
+   */
+  async getStreak(): Promise<IUserStreak> {
+    const response = await api.get<ApiResponse<IUserStreak>>('/aipm/gamification/streak');
+    return response.data.data;
+  },
+
+  /**
+   * Get organization leaderboard
+   */
+  async getLeaderboard(limit?: number): Promise<ILeaderboard> {
+    const response = await api.get<ApiResponse<ILeaderboard>>('/aipm/gamification/leaderboard', {
+      params: { limit },
+    });
+    return response.data.data;
+  },
+
+  /**
+   * Get user's earned badges
+   */
+  async getBadges(): Promise<IBadge[]> {
+    const response = await api.get<ApiResponse<IBadge[]>>('/aipm/gamification/badges');
+    return response.data.data;
+  },
+
+  /**
+   * Manually update streak (used after completing check-in)
+   */
+  async updateStreak(): Promise<IUserStreak> {
+    const response = await api.post<ApiResponse<IUserStreak>>('/aipm/gamification/update-streak');
     return response.data.data;
   },
 };
