@@ -26,20 +26,20 @@ interface ResourceUploaderProps {
   onUploadFiles: (
     files: File[],
     metadata: { clientId: string; purpose?: ResourcePurpose }
-  ) => Promise<void>;
+  ) => Promise<unknown>;
   onAddLink: (data: {
     url: string;
     clientId: string;
     title?: string;
     purpose?: ResourcePurpose;
-  }) => Promise<void>;
+  }) => Promise<unknown>;
   onAddGit?: (data: {
     repoUrl: string;
     clientId: string;
     branch?: string;
     pullRequestUrl?: string;
     purpose?: ResourcePurpose;
-  }) => Promise<void>;
+  }) => Promise<unknown>;
   isUploading?: boolean;
   isAddingLink?: boolean;
   isAddingGit?: boolean;

@@ -11,7 +11,7 @@ import {
   Calendar,
   CheckSquare,
   MessageCircle,
-  Image,
+  Image as ImageIcon,
   Video,
   Link as LinkIcon,
   GitBranch,
@@ -225,7 +225,7 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
                 {/* Images */}
                 {resourceCounts.images > 0 && (
                   <div className="flex items-center gap-0.5 text-xs text-pink-500 dark:text-pink-400" title={`${resourceCounts.images} image${resourceCounts.images > 1 ? 's' : ''}`}>
-                    <Image className="h-3 w-3" />
+                    <ImageIcon className="h-3 w-3" />
                     <span className="text-[10px] font-medium">{resourceCounts.images}</span>
                   </div>
                 )}
