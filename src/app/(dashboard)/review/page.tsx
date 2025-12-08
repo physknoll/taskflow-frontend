@@ -225,7 +225,7 @@ export default function ReviewPage() {
                         {hasReviewRecord && review ? (
                           <>
                             <Badge variant="secondary" size="sm">
-                              {review.submittedAssets?.length || 0} assets
+                              {(review.submittedResources?.length || review.submittedAssets?.length || 0)} resources
                             </Badge>
                             <Button onClick={() => handleStartReview(item)}>
                               <Eye className="h-4 w-4 mr-2" />

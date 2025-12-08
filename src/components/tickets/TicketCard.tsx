@@ -1,14 +1,65 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDraggable } from '@dnd-kit/core';
-import { ITicket, ITicketProject } from '@/types';
+import { ITicket, ITicketProject, IResource } from '@/types';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar, AvatarGroup } from '@/components/ui/Avatar';
 import { Progress } from '@/components/ui/Progress';
-import { Calendar, CheckSquare, MessageCircle, Paperclip, FolderKanban } from 'lucide-react';
+import {
+  Calendar,
+  CheckSquare,
+  MessageCircle,
+  Image,
+  Video,
+  Link as LinkIcon,
+  GitBranch,
+  FileText,
+  File,
+} from 'lucide-react';
 import { formatRelativeTime, getTypeIcon, getPriorityColor, calculateProgress, isOverdue, isDueSoon } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+
+// Helper to count resources by type
+function getResourceCounts(resources: IResource[] | undefined) {
+  if (!resources || resources.length === 0) {
+    return null;
+  }
+
+  const counts = {
+    images: 0,
+    videos: 0,
+    links: 0,
+    git: 0,
+    files: 0,
+  };
+
+  resources.forEach((resource) => {
+    if (resource.resourceType === 'git') {
+      counts.git++;
+    } else if (resource.resourceType === 'link') {
+      // Check if it's a video link
+      if (resource.provider.category === 'video') {
+        counts.videos++;
+      } else {
+        counts.links++;
+      }
+    } else if (resource.resourceType === 'file' && resource.file) {
+      if (resource.file.mimeType.startsWith('image/')) {
+        counts.images++;
+      } else if (resource.file.mimeType.startsWith('video/')) {
+        counts.videos++;
+      } else {
+        counts.files++;
+      }
+    } else {
+      counts.files++;
+    }
+  });
+
+  return counts;
+}
 
 // Helper to check if project is populated (has project details vs just ID)
 function isPopulatedProject(project: ITicket['project']): project is ITicketProject {
@@ -43,6 +94,18 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
   const progress = calculateProgress(ticket.tasks);
   const overdue = isOverdue(ticket.dueDate);
   const dueSoon = isDueSoon(ticket.dueDate);
+  
+  // Calculate resource counts by type
+  const resourceCounts = useMemo(() => getResourceCounts(ticket.resources), [ticket.resources]);
+  const hasResources = resourceCounts && (
+    resourceCounts.images > 0 ||
+    resourceCounts.videos > 0 ||
+    resourceCounts.links > 0 ||
+    resourceCounts.git > 0 ||
+    resourceCounts.files > 0
+  );
+  // Fallback for legacy attachments
+  const legacyAttachmentCount = !hasResources ? ticket.attachments?.length || 0 : 0;
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Only navigate if not dragging
@@ -127,8 +190,8 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
 
         {/* Footer */}
         <div className="flex items-center justify-between pt-3 border-t border-surface-100 dark:border-surface-700">
-          {/* Due date */}
-          <div className="flex items-center gap-3">
+          {/* Left side: Due date and comments */}
+          <div className="flex items-center gap-2.5">
             {ticket.dueDate && (
               <div
                 className={cn(
@@ -147,33 +210,81 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
             
             {/* Comments count */}
             {ticket.comments.length > 0 && (
-              <div className="flex items-center gap-1 text-xs text-surface-400 dark:text-surface-500">
+              <div className="flex items-center gap-0.5 text-xs text-surface-400 dark:text-surface-500">
                 <MessageCircle className="h-3 w-3" />
-                {ticket.comments.length}
-              </div>
-            )}
-            
-            {/* Attachments count */}
-            {ticket.attachments.length > 0 && (
-              <div className="flex items-center gap-1 text-xs text-surface-400 dark:text-surface-500">
-                <Paperclip className="h-3 w-3" />
-                {ticket.attachments.length}
+                <span>{ticket.comments.length}</span>
               </div>
             )}
           </div>
 
-          {/* Assignees */}
-          {Array.isArray(ticket.assignedTo) && ticket.assignedTo.length > 0 && (
-            <AvatarGroup
-              avatars={ticket.assignedTo.map((user: any) => ({
-                src: user.avatar,
-                firstName: user.firstName,
-                lastName: user.lastName,
-              }))}
-              max={3}
-              size="xs"
-            />
-          )}
+          {/* Right side: Resources + Assignees */}
+          <div className="flex items-center gap-2">
+            {/* Resource indicators by type */}
+            {hasResources && resourceCounts && (
+              <div className="flex items-center gap-1.5">
+                {/* Images */}
+                {resourceCounts.images > 0 && (
+                  <div className="flex items-center gap-0.5 text-xs text-pink-500 dark:text-pink-400" title={`${resourceCounts.images} image${resourceCounts.images > 1 ? 's' : ''}`}>
+                    <Image className="h-3 w-3" />
+                    <span className="text-[10px] font-medium">{resourceCounts.images}</span>
+                  </div>
+                )}
+                
+                {/* Videos */}
+                {resourceCounts.videos > 0 && (
+                  <div className="flex items-center gap-0.5 text-xs text-red-500 dark:text-red-400" title={`${resourceCounts.videos} video${resourceCounts.videos > 1 ? 's' : ''}`}>
+                    <Video className="h-3 w-3" />
+                    <span className="text-[10px] font-medium">{resourceCounts.videos}</span>
+                  </div>
+                )}
+                
+                {/* Links */}
+                {resourceCounts.links > 0 && (
+                  <div className="flex items-center gap-0.5 text-xs text-blue-500 dark:text-blue-400" title={`${resourceCounts.links} link${resourceCounts.links > 1 ? 's' : ''}`}>
+                    <LinkIcon className="h-3 w-3" />
+                    <span className="text-[10px] font-medium">{resourceCounts.links}</span>
+                  </div>
+                )}
+                
+                {/* Git */}
+                {resourceCounts.git > 0 && (
+                  <div className="flex items-center gap-0.5 text-xs text-emerald-500 dark:text-emerald-400" title={`${resourceCounts.git} git resource${resourceCounts.git > 1 ? 's' : ''}`}>
+                    <GitBranch className="h-3 w-3" />
+                    <span className="text-[10px] font-medium">{resourceCounts.git}</span>
+                  </div>
+                )}
+                
+                {/* Other files */}
+                {resourceCounts.files > 0 && (
+                  <div className="flex items-center gap-0.5 text-xs text-amber-500 dark:text-amber-400" title={`${resourceCounts.files} file${resourceCounts.files > 1 ? 's' : ''}`}>
+                    <FileText className="h-3 w-3" />
+                    <span className="text-[10px] font-medium">{resourceCounts.files}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Legacy attachment indicator (fallback) */}
+            {legacyAttachmentCount > 0 && (
+              <div className="flex items-center gap-0.5 text-xs text-surface-400 dark:text-surface-500" title={`${legacyAttachmentCount} attachment${legacyAttachmentCount > 1 ? 's' : ''}`}>
+                <File className="h-3 w-3" />
+                <span className="text-[10px] font-medium">{legacyAttachmentCount}</span>
+              </div>
+            )}
+
+            {/* Assignees */}
+            {Array.isArray(ticket.assignedTo) && ticket.assignedTo.length > 0 && (
+              <AvatarGroup
+                avatars={ticket.assignedTo.map((user: any) => ({
+                  src: user.avatar,
+                  firstName: user.firstName,
+                  lastName: user.lastName,
+                }))}
+                max={3}
+                size="xs"
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>

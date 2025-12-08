@@ -1,6 +1,20 @@
+/**
+ * @deprecated This service is deprecated. Use resourcesService from './resources.service' instead.
+ * The assets API has been replaced by the unified resources API.
+ * 
+ * Migration guide:
+ * - assetsService.uploadAssets() -> resourcesService.uploadFiles()
+ * - assetsService.getAsset() -> resourcesService.getResource()
+ * - assetsService.getAssets() -> resourcesService.searchResources()
+ * - assetsService.deleteAsset() -> resourcesService.deleteResource()
+ * - assetsService.getAssetsByTicket() -> resourcesService.getResourcesForEntity('Ticket', ticketId)
+ * - assetsService.getAssetsByClient() -> resourcesService.getResourcesForEntity('Client', clientId)
+ */
+
 import api from './api';
 import { IAsset, ApiResponse, PaginatedResponse } from '@/types';
 
+/** @deprecated Use ResourceFilters from resources.service instead */
 export interface AssetFilters {
   client?: string;
   ticket?: string;
@@ -10,6 +24,7 @@ export interface AssetFilters {
   limit?: number;
 }
 
+/** @deprecated Use resourcesService from resources.service instead */
 export const assetsService = {
   async uploadAssets(files: File[], metadata?: {
     client?: string;

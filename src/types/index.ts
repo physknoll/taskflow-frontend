@@ -121,7 +121,11 @@ export interface ITicketTask {
   completedAt?: Date;
   completedBy?: string;
   notes?: string;
+  requiresResource?: boolean;
+  resourceId?: string;
+  /** @deprecated Use requiresResource instead */
   requiresAttachment?: boolean;
+  /** @deprecated Use resourceId instead */
   attachmentId?: string;
 }
 
@@ -160,7 +164,10 @@ export interface ITicket {
   parentTicket?: string;
   childTickets: string[];
   linkedTickets: string[];
+  resources?: IResource[];
+  /** @deprecated Use resources with resourceType: 'git' instead */
   gitBranch?: string;
+  /** @deprecated Use resources with resourceType: 'git' instead */
   pullRequestUrl?: string;
   reviewInfo?: {
     requestedAt: Date;
@@ -168,6 +175,7 @@ export interface ITicket {
     reviewers: string[];
     currentReviewId?: string;
   };
+  /** @deprecated Use resources instead */
   attachments: string[];
   comments: ITicketComment[];
   aiInteractions: Array<{
@@ -194,6 +202,8 @@ export interface IReviewRevision {
   version: number;
   submittedAt: Date;
   submittedBy: IUser | string;
+  resources?: IResource[];
+  /** @deprecated Use resources instead */
   assets: string[];
   notes?: string;
   reviewedAt?: Date;
@@ -213,6 +223,8 @@ export interface IReview {
   currentReviewer?: IUser | string;
   submittedAt: Date;
   submissionNotes?: string;
+  submittedResources?: IResource[];
+  /** @deprecated Use submittedResources instead */
   submittedAssets: string[];
   reviewedAt?: Date;
   reviewedBy?: IUser | string;
@@ -307,7 +319,103 @@ export interface INotification {
   aiProcessingResult?: IAICheckinProcessingResult;
 }
 
-// Asset Types
+// ============================================
+// Resource Types (Unified Attachment System)
+// ============================================
+
+export type ResourceType = 'file' | 'link' | 'integration' | 'git';
+export type ResourceCategory = 'video' | 'design' | 'code' | 'cloud_storage' | 'docs' | 'other';
+export type ResourcePurpose = 'deliverable' | 'reference' | 'source_file' | 'review_submission';
+export type GitPRState = 'open' | 'merged' | 'closed' | 'draft';
+export type EmbedType = 'iframe' | 'image' | 'none';
+
+export interface IResourceProvider {
+  name: string;
+  category: ResourceCategory;
+  faviconUrl: string;
+  brandColor?: string;
+}
+
+export interface IResourceFile {
+  filename: string;
+  originalFilename: string;
+  mimeType: string;
+  size: number;
+}
+
+export interface IResourceLink {
+  url: string;
+  title?: string;
+  description?: string;
+  thumbnailUrl?: string;
+  embedUrl?: string;
+  embedType?: EmbedType;
+}
+
+export interface IResourceGit {
+  repoUrl: string;
+  repoOwner?: string;
+  repoName?: string;
+  branch?: string;
+  pullRequestUrl?: string;
+  prNumber?: number;
+  prTitle?: string;
+  prState?: GitPRState;
+  commitHash?: string;
+}
+
+export interface IResourceAIContext {
+  contentType: string;
+  purpose?: ResourcePurpose;
+}
+
+export interface IResourceUploader {
+  _id?: string;
+  firstName: string;
+  lastName: string;
+  avatar?: string;
+}
+
+export interface IResource {
+  _id: string;
+  resourceType: ResourceType;
+  provider: IResourceProvider;
+  file?: IResourceFile;
+  link?: IResourceLink;
+  git?: IResourceGit;
+  aiContext?: IResourceAIContext;
+  displayName: string;
+  description?: string;
+  uploadedBy: IResourceUploader;
+  attachedToModel: 'Ticket' | 'Project' | 'Review' | 'Client';
+  attachedToId: string;
+  clientId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface IResourceStats {
+  total: number;
+  byCategory: Record<string, number>;
+  byPurpose: Record<string, number>;
+  hasDeliverables: boolean;
+  openPRs: number;
+  providers: string[];
+}
+
+export interface IProviderInfo {
+  name: string;
+  category: ResourceCategory;
+  displayName: string;
+  brandColor?: string;
+  supportsEmbed: boolean;
+}
+
+// ============================================
+// Asset Types (DEPRECATED - Use Resource instead)
+// ============================================
+
+/** @deprecated Use IResource instead */
 export interface IAsset {
   _id: string;
   filename: string;
@@ -626,6 +734,7 @@ export interface IProjectMilestone {
   linkedTickets: (ITicket | string)[];
 }
 
+/** @deprecated Use IResource with resourceType: 'link' instead */
 export interface IExternalLink {
   title: string;
   url: string;
@@ -664,7 +773,10 @@ export interface IProject {
   deliverables: string[];
   tasks: IProjectTask[];
   milestones: IProjectMilestone[];
+  resources?: IResource[];
+  /** @deprecated Use resources instead */
   attachments: IAsset[];
+  /** @deprecated Use resources with resourceType: 'link' instead */
   externalLinks: IExternalLink[];
   aiGeneratedBrief?: string;
   aiGeneratedAt?: string;

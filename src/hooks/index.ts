@@ -22,6 +22,17 @@ export {
   useBadges,
 } from './useAIPM';
 
+// Resources hooks
+export {
+  useResources,
+  useResource,
+  useResourceStats,
+  useResourceSearch,
+  useProviders,
+  useResourceAIContext,
+  resourceKeys,
+} from './useResources';
+
 // Dashboard-specific hooks
 export { useAIPMSocket, AIPM_DASHBOARD_EVENTS } from './useAIPMSocket';
 export { useAIPMSession } from './useAIPMSession';

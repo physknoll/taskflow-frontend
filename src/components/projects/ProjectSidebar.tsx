@@ -4,8 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { IProject, ProjectStats } from '@/types';
 import { useProject } from '@/hooks/useProjects';
+import { useResources } from '@/hooks/useResources';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { ResourceListInline, ResourceUploader } from '@/components/resources';
 import { cn, formatDate } from '@/lib/utils';
 import {
   X,
@@ -24,6 +27,7 @@ import {
   ExternalLink,
   Trash2,
   Archive,
+  Paperclip,
 } from 'lucide-react';
 
 interface ProjectSidebarProps {
@@ -39,8 +43,27 @@ export function ProjectSidebar({ project, stats, onClose }: ProjectSidebarProps)
     'details',
     'team',
     'progress',
+    'resources',
   ]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showAddResource, setShowAddResource] = useState(false);
+  
+  // Get clientId for resources
+  const clientId = typeof project.client === 'object' ? project.client._id : project.client;
+  
+  // Resources hook
+  const {
+    resources,
+    isLoading: isLoadingResources,
+    uploadFiles,
+    addLink,
+    addGitResource,
+    deleteResource,
+    isUploading,
+    isAddingLink,
+    isAddingGit,
+    isDeleting: isDeletingResource,
+  } = useResources('Project', project._id, { enabled: !!project._id && !!clientId });
 
   const toggleSection = (section: string) => {
     setExpandedSections((prev) =>
@@ -383,35 +406,100 @@ export function ProjectSidebar({ project, stats, onClose }: ProjectSidebarProps)
           </div>
         )}
 
-        {/* External Links */}
-        {project.externalLinks && project.externalLinks.length > 0 && (
-          <div className="border-t border-surface-200 dark:border-surface-800 pt-4">
-            <SectionHeader title="Links" section="links" icon={LinkIcon} />
-            {expandedSections.includes('links') && (
-              <div className="mt-2 space-y-2">
-                {project.externalLinks.map((link, i) => (
-                  <a
-                    key={i}
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-between p-2 rounded-lg border border-surface-200 dark:border-surface-700 hover:bg-surface-50 dark:hover:bg-surface-800"
+        {/* Resources Section */}
+        <div className="border-t border-surface-200 dark:border-surface-800 pt-4">
+          <SectionHeader title="Resources" section="resources" icon={Paperclip} />
+          {expandedSections.includes('resources') && (
+            <div className="mt-2 space-y-3">
+              {/* Add resource button */}
+              {!showAddResource ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAddResource(true)}
+                  className="w-full"
+                >
+                  <LinkIcon className="w-4 h-4 mr-2" />
+                  Add Resource
+                </Button>
+              ) : (
+                <div className="space-y-3">
+                  <ResourceUploader
+                    clientId={clientId}
+                    onUploadFiles={async (files, metadata) => {
+                      await uploadFiles(files, metadata);
+                      setShowAddResource(false);
+                    }}
+                    onAddLink={async (data) => {
+                      await addLink(data);
+                      setShowAddResource(false);
+                    }}
+                    onAddGit={async (data) => {
+                      await addGitResource(data);
+                      setShowAddResource(false);
+                    }}
+                    isUploading={isUploading}
+                    isAddingLink={isAddingLink}
+                    isAddingGit={isAddingGit}
+                    compact
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowAddResource(false)}
+                    className="w-full text-surface-500"
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-surface-900 dark:text-white">
-                        {link.title}
-                      </span>
-                      <span className="text-xs text-surface-500 dark:text-surface-400 capitalize">
-                        {link.type}
-                      </span>
-                    </div>
-                    <ExternalLink className="w-4 h-4 text-surface-400" />
-                  </a>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+                    Cancel
+                  </Button>
+                </div>
+              )}
+
+              {/* Resource list */}
+              {isLoadingResources ? (
+                <div className="space-y-2">
+                  <Skeleton variant="rounded" height={40} />
+                  <Skeleton variant="rounded" height={40} />
+                </div>
+              ) : resources.length > 0 ? (
+                <ResourceListInline
+                  resources={resources}
+                  onDelete={deleteResource}
+                  maxItems={5}
+                />
+              ) : (
+                // Show legacy external links if no resources
+                project.externalLinks && project.externalLinks.length > 0 ? (
+                  <div className="space-y-2">
+                    <p className="text-xs text-surface-400">Legacy links:</p>
+                    {project.externalLinks.map((link, i) => (
+                      <a
+                        key={i}
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between p-2 rounded-lg border border-surface-200 dark:border-surface-700 hover:bg-surface-50 dark:hover:bg-surface-800"
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-surface-900 dark:text-white">
+                            {link.title}
+                          </span>
+                          <span className="text-xs text-surface-500 dark:text-surface-400 capitalize">
+                            {link.type}
+                          </span>
+                        </div>
+                        <ExternalLink className="w-4 h-4 text-surface-400" />
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-surface-400 text-center py-2">
+                    No resources attached
+                  </p>
+                )
+              )}
+            </div>
+          )}
+        </div>
 
         {/* AI Brief */}
         <div className="border-t border-surface-200 dark:border-surface-800 pt-4">

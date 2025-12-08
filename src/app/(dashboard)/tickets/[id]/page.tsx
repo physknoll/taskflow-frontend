@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTicket, useTickets } from '@/hooks/useTickets';
 import { useClients } from '@/hooks/useClients';
+import { useResources } from '@/hooks/useResources';
 import { useAuthStore } from '@/stores/authStore';
 import { ITicketTask, ITicket } from '@/types';
 import { IUserMinimal } from '@/services/users.service';
@@ -15,6 +16,7 @@ import { Select } from '@/components/ui/Select';
 import { Input, Textarea } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { UserTagInput } from '@/components/ui/UserTagInput';
+import { ResourceList, ResourceUploader } from '@/components/resources';
 import { TICKET_STATUSES, TICKET_PRIORITIES, TICKET_TYPES } from '@/lib/constants';
 import {
   canEditTicket,
@@ -50,6 +52,7 @@ import {
   Lock,
   Plus,
   Loader2,
+  Paperclip,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -73,9 +76,27 @@ export default function TicketDetailPage() {
   const { updateTicketStatus, updateTask, addTask, deleteTask, updateTicket, deleteTicket, isUpdating, isAddingTask, isDeletingTask } = useTickets();
   const { clients } = useClients();
   
+  // Get clientId for resources
+  const clientId = ticket ? (typeof ticket.client === 'object' ? ticket.client._id : ticket.client) : '';
+  
+  // Resources hook
+  const {
+    resources,
+    isLoading: isLoadingResources,
+    uploadFiles,
+    addLink,
+    addGitResource,
+    deleteResource,
+    isUploading,
+    isAddingLink,
+    isAddingGit,
+    isDeleting: isDeletingResource,
+  } = useResources('Ticket', ticketId, { enabled: !!ticketId && !!clientId });
+  
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showComments, setShowComments] = useState(true);
+  const [showResources, setShowResources] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
@@ -595,8 +616,8 @@ export default function TicketDetailPage() {
                         {task.description}
                       </p>
                     )}
-                    {/* Show attachment badge if required */}
-                    {task.requiresAttachment && !task.attachmentId && (
+                    {/* Show resource badge if required (support both old and new field names) */}
+                    {(task.requiresResource || task.requiresAttachment) && !(task.resourceId || task.attachmentId) && (
                       <span className="inline-flex items-center gap-1 mt-2 text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400">
                         📎 Needs upload
                       </span>
@@ -695,6 +716,68 @@ export default function TicketDetailPage() {
                   </>
                 )}
               </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Resources Section - Collapsible */}
+        <div className="border-t border-surface-200 dark:border-surface-700">
+          <button
+            onClick={() => setShowResources(!showResources)}
+            className="w-full flex items-center justify-between p-4 hover:bg-surface-50 dark:hover:bg-surface-700/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Paperclip className="h-5 w-5 text-surface-500" />
+              <span className="font-medium text-surface-700 dark:text-surface-300">
+                Resources
+              </span>
+              {resources.length > 0 && (
+                <Badge variant="secondary" size="sm">
+                  {resources.length}
+                </Badge>
+              )}
+            </div>
+            {showResources ? (
+              <ChevronUp className="h-5 w-5 text-surface-400" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-surface-400" />
+            )}
+          </button>
+          
+          {showResources && (
+            <div className="px-6 pb-6 space-y-4">
+              {/* Resource uploader - only show if user can edit */}
+              {userCanEdit && clientId && (
+                <ResourceUploader
+                  clientId={clientId}
+                  onUploadFiles={uploadFiles}
+                  onAddLink={addLink}
+                  onAddGit={addGitResource}
+                  isUploading={isUploading}
+                  isAddingLink={isAddingLink}
+                  isAddingGit={isAddingGit}
+                  showGitOption={true}
+                />
+              )}
+              
+              {/* Resource list */}
+              {isLoadingResources ? (
+                <div className="space-y-2">
+                  {[1, 2].map((i) => (
+                    <Skeleton key={i} variant="rounded" height={60} />
+                  ))}
+                </div>
+              ) : (
+                <ResourceList
+                  resources={resources}
+                  onDelete={userCanEdit ? deleteResource : undefined}
+                  isDeleting={isDeletingResource}
+                  emptyMessage="No resources attached yet"
+                  groupBy="category"
+                  defaultView="list"
+                  compact
+                />
+              )}
             </div>
           )}
         </div>

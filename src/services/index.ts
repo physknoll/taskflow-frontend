@@ -8,6 +8,7 @@ export { notificationsService } from './notifications.service';
 export { usersService } from './users.service';
 export { analyticsService } from './analytics.service';
 export { assetsService } from './assets.service';
+export { resourcesService } from './resources.service';
 export { projectsService, workflowColumnsService } from './projects.service';
 export { projectAgentService } from './projectAgent.service';
 export { guidelinesService } from './guidelines.service';
@@ -23,4 +24,11 @@ export type { NotificationFilters } from './notifications.service';
 export type { UserFilters } from './users.service';
 export type { DateRange } from './analytics.service';
 export type { AssetFilters } from './assets.service';
+export type {
+  ResourceFilters,
+  UploadResourceMetadata,
+  AddLinkResourceDto,
+  AddGitResourceDto,
+  UpdateResourceDto,
+} from './resources.service';
 
