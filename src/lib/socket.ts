@@ -109,6 +109,21 @@ export interface AIPMReportGeneratedData {
   title: string;
 }
 
+// AI Tool Usage Event (shows "AI is searching..." indicator)
+export interface AIToolUsageData {
+  toolName: string;
+  status: 'start' | 'complete';
+}
+
+// Interactive Check-in Processed
+export interface AICheckinProcessedData {
+  notificationId: string;
+  ticketsUpdated: number;
+  tasksCompleted: number;
+  notesAdded: number;
+  summary: string;
+}
+
 // AIPM Socket Event Names
 export const AIPM_SOCKET_EVENTS = {
   CHECKIN_STARTED: 'aipm:checkin:started',
@@ -122,5 +137,12 @@ export const AIPM_SOCKET_EVENTS = {
   ACTION_EXECUTED: 'aipm:action:executed',
   POINTS_EARNED: 'aipm:points:earned',
   FOCUS_UPDATED: 'aipm:focus:updated',
+} as const;
+
+// AI Socket Event Names
+export const AI_SOCKET_EVENTS = {
+  INTERACTIVE_CHECKIN: 'ai:interactive_checkin',
+  CHECKIN_PROCESSED: 'ai:checkin_processed',
+  TOOL_USAGE: 'ai:tool_usage',
 } as const;
 

@@ -36,6 +36,20 @@ export {
 // Dashboard-specific hooks
 export { useAIPMSocket, AIPM_DASHBOARD_EVENTS } from './useAIPMSocket';
 export { useAIPMSession } from './useAIPMSession';
+
+// Conversations hooks
+export {
+  useConversations,
+  useConversation,
+  useConversationSearch,
+  useConversationsForTicket,
+  useConversationsForProject,
+  useConversationStats,
+  useConversationActions,
+  useConversationHistory,
+  conversationKeys,
+} from './useConversations';
+
 export {
   useMediaQuery,
   useIsMobile,

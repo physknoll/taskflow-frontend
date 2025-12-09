@@ -61,5 +61,3 @@ export const sopAgentService = {
     await api.delete(`/sop-agent/sessions/${sessionId}`);
   },
 };
-
-

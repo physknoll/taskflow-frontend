@@ -1,21 +1,35 @@
 import api from './api';
-import { IParsedUpdate, ApiResponse, INotification, IAICheckinResponse, IAICheckinProcessingResult } from '@/types';
+import {
+  IParsedUpdate,
+  ApiResponse,
+  INotification,
+  IAICheckinResponse,
+  IAICheckinProcessingResult,
+  GeneralChatRequest,
+  GeneralChatResponse,
+  KnowledgeChatRequest,
+  KnowledgeChatResponse,
+  KnowledgeChatCitation,
+} from '@/types';
 
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
 }
 
+// Legacy interface for backwards compat during transition
 export interface SendMessageDto {
   message: string;
   clientId?: string;
   ticketId?: string;
   mode?: 'general' | 'knowledge_base' | 'daily_update';
   conversationHistory?: ChatMessage[];
+  conversationId?: string;
 }
 
 export interface ChatResponse {
   response: string;
+  conversationId: string;
   citations?: Array<{
     source: string;
     content: string;
@@ -25,6 +39,11 @@ export interface ChatResponse {
     label: string;
     data: any;
   }>;
+  knowledgeBase?: {
+    answer: string;
+    citations: KnowledgeChatCitation[];
+    confidence: number;
+  };
 }
 
 export interface ParseUpdateResponse {
@@ -61,9 +80,58 @@ export interface ComposeEmailResponse {
 }
 
 export const aiService = {
-  async sendMessage(data: SendMessageDto): Promise<ChatResponse> {
-    const response = await api.post<ApiResponse<ChatResponse>>('/ai/knowledge-chat', data);
+  /**
+   * Send a general AI chat message (no knowledge base context)
+   * POST /api/v1/ai/chat
+   */
+  async sendGeneralChat(data: GeneralChatRequest): Promise<GeneralChatResponse> {
+    const response = await api.post<ApiResponse<GeneralChatResponse>>('/ai/chat', data);
     return response.data.data;
+  },
+
+  /**
+   * Send a knowledge base chat message (requires clientId)
+   * POST /api/v1/ai/knowledge-chat
+   */
+  async sendKnowledgeChat(data: KnowledgeChatRequest): Promise<KnowledgeChatResponse> {
+    const response = await api.post<ApiResponse<KnowledgeChatResponse>>('/ai/knowledge-chat', data);
+    return response.data.data;
+  },
+
+  /**
+   * Legacy unified method - routes to appropriate endpoint based on mode
+   * @deprecated Use sendGeneralChat or sendKnowledgeChat instead
+   */
+  async sendMessage(data: SendMessageDto): Promise<ChatResponse> {
+    // Route to appropriate endpoint based on mode
+    if (data.mode === 'knowledge_base' && data.clientId) {
+      const kbResponse = await this.sendKnowledgeChat({
+        message: data.message,
+        clientId: data.clientId,
+        conversationId: data.conversationId,
+      });
+      return {
+        response: kbResponse.response,
+        conversationId: kbResponse.conversationId,
+        knowledgeBase: kbResponse.knowledgeBase,
+        citations: kbResponse.knowledgeBase?.citations?.map(c => ({
+          source: c.title,
+          content: c.excerpt,
+        })),
+      };
+    }
+
+    // Default to general chat
+    const generalResponse = await this.sendGeneralChat({
+      message: data.message,
+      clientId: data.clientId,
+      conversationHistory: data.conversationHistory,
+      conversationId: data.conversationId,
+    });
+    return {
+      response: generalResponse.response,
+      conversationId: generalResponse.conversationId,
+    };
   },
 
   async parseUpdate(input: string): Promise<ParseUpdateResponse> {
@@ -138,4 +206,3 @@ export const aiService = {
     return response.data.data;
   },
 };
-

@@ -912,3 +912,189 @@ export * from './guidelines';
 // ============================================
 export * from './aipm';
 
+// ============================================
+// Conversations API Types
+// ============================================
+
+export type ConversationType =
+  | 'daily_checkin'
+  | 'scheduled_checkin'
+  | 'dashboard_chat'
+  | 'project_creation'
+  | 'knowledge_base'
+  | 'sop_creation'
+  | 'blocker_resolution'
+  | 'ticket_discussion'
+  | 'general';
+
+export type ConversationStatus = 'active' | 'completed' | 'abandoned' | 'escalated';
+export type ConversationChannel = 'web_app' | 'google_chat' | 'slack' | 'email' | 'sms' | 'api';
+export type ConversationMessageRole = 'user' | 'assistant' | 'system' | 'tool';
+export type MessageFeedbackRating = 'positive' | 'negative';
+
+export interface ConversationMessageMetadata {
+  ticketsMentioned?: string[];
+  projectsMentioned?: string[];
+  usersMentioned?: string[];
+  toolsUsed?: string[];
+  tokensUsed?: number;
+  model?: string;
+  latencyMs?: number;
+  toolName?: string;
+  toolInput?: Record<string, unknown>;
+  toolOutput?: Record<string, unknown>;
+}
+
+export interface ConversationMessageFeedback {
+  rating?: MessageFeedbackRating;
+  comment?: string;
+  ratedAt?: string;
+}
+
+export interface ConversationMessage {
+  _id: string;
+  role: ConversationMessageRole;
+  content: string;
+  timestamp: string;
+  metadata?: ConversationMessageMetadata;
+  feedback?: ConversationMessageFeedback;
+}
+
+export interface ConversationRelatedTicket {
+  ticketId: string;
+  ticketNumber: string;
+  relationship: 'discussed' | 'created' | 'updated' | 'blocked_by' | 'blocking';
+}
+
+export interface ConversationRelatedProject {
+  projectId: string;
+  relationship: 'discussed' | 'created' | 'updated';
+}
+
+export interface ConversationAnalysis {
+  sentiment?: 'positive' | 'neutral' | 'negative' | 'frustrated';
+  topics?: string[];
+  blockers?: string[];
+  commitments?: string[];
+  questionsAsked?: number;
+  questionsAnswered?: number;
+  progressSummary?: string;
+  concernsRaised?: string[];
+}
+
+export interface Conversation {
+  _id: string;
+  conversationId: string;
+  userId: string;
+  type: ConversationType;
+  status: ConversationStatus;
+  channel: ConversationChannel;
+  title?: string;
+  messages: ConversationMessage[];
+  relatedTickets: ConversationRelatedTicket[];
+  relatedProjects: ConversationRelatedProject[];
+  analysis?: ConversationAnalysis;
+  startedAt: string;
+  lastMessageAt: string;
+  completedAt?: string;
+  messageCount: number;
+  userMessageCount?: number;
+  assistantMessageCount?: number;
+  agentName?: string;
+  langGraphThreadId?: string;
+}
+
+export interface ConversationsQuery {
+  type?: ConversationType;
+  status?: ConversationStatus;
+  channel?: ConversationChannel;
+  limit?: number;
+  offset?: number;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface ConversationsResponse {
+  conversations: Conversation[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+  };
+}
+
+export interface ResumeConversationResponse {
+  conversation: Conversation;
+  routeTo: string;
+  canResume: boolean;
+  agentName?: string;
+  langGraphThreadId?: string;
+}
+
+export interface ConversationFeedbackDto {
+  rating?: 1 | 2 | 3 | 4 | 5;
+  helpful?: boolean;
+  comment?: string;
+}
+
+export interface MessageFeedbackDto {
+  rating: MessageFeedbackRating;
+  comment?: string;
+}
+
+export interface ConversationStatsQuery {
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface ConversationStats {
+  totalConversations: number;
+  byType: Record<ConversationType, number>;
+  byStatus: Record<ConversationStatus, number>;
+  averageMessageCount: number;
+  averageDuration: number;
+}
+
+// ============================================
+// AI Chat Types
+// ============================================
+
+export interface GeneralChatRequest {
+  message: string;
+  clientId?: string;
+  conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  conversationId?: string;
+}
+
+export interface GeneralChatResponse {
+  response: string;
+  conversationId: string;
+  tokenUsage?: {
+    input: number;
+    output: number;
+  };
+}
+
+export interface KnowledgeChatRequest {
+  message: string;
+  clientId: string;
+  conversationId?: string;
+}
+
+export interface KnowledgeChatCitation {
+  documentId: string;
+  title: string;
+  excerpt: string;
+  relevanceScore: number;
+}
+
+export interface KnowledgeChatResponse {
+  response: string;
+  conversationId: string;
+  knowledgeBase: {
+    answer: string;
+    citations: KnowledgeChatCitation[];
+    confidence: number;
+  };
+}
+

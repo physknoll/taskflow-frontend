@@ -84,6 +84,7 @@ export function ProactiveChatInterface({
     contextMode,
     isConnected,
     error,
+    initData,
     initializeSession,
     sendMessage,
     executeAction,
@@ -181,6 +182,7 @@ export function ProactiveChatInterface({
               message={message}
               onActionClick={handleActionClick}
               isExecuting={isExecuting}
+              conversationId={initData?.sessionId}
             />
           ))}
         </AnimatePresence>

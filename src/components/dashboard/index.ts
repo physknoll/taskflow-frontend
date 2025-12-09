@@ -14,6 +14,7 @@ export { StreakWidget } from './StreakWidget';
 export { FocusQueueWidget } from './FocusQueueWidget';
 export { TodayStatsWidget } from './TodayStatsWidget';
 export { PendingReviewsWidget } from './PendingReviewsWidget';
+export { ConversationHistory } from './ConversationHistory';
 
 // Mobile Components
 export { MobileDashboard } from './MobileDashboard';

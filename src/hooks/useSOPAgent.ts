@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 
 interface SOPAgentState {
   sessionId: string | null;
+  conversationId: string | null;
   phase: SOPAgentPhase;
   messages: SOPConversationMessage[];
   draft: SOPDraft;
@@ -27,6 +28,7 @@ const initialDraft: SOPDraft = {
 
 const initialState: SOPAgentState = {
   sessionId: null,
+  conversationId: null,
   phase: 'greeting',
   messages: [],
   draft: initialDraft,
@@ -46,6 +48,7 @@ export function useSOPAgent() {
     onSuccess: (data) => {
       setState({
         sessionId: data.sessionId,
+        conversationId: data.conversationId || null,
         phase: data.phase,
         messages: data.response
           ? [
@@ -77,6 +80,7 @@ export function useSOPAgent() {
     onSuccess: (data) => {
       setState((prev) => ({
         ...prev,
+        conversationId: data.conversationId || prev.conversationId,
         phase: data.phase,
         messages: [
           ...prev.messages,
@@ -112,7 +116,7 @@ export function useSOPAgent() {
     onSuccess: (data) => {
       setState((prev) => ({
         ...prev,
-        phase: 'complete',
+        phase: 'completed',
         createdGuideline: data.guideline,
       }));
       queryClient.invalidateQueries({ queryKey: ['guidelines'] });
@@ -200,6 +204,7 @@ export function useSOPAgent() {
   return {
     // State
     sessionId: state.sessionId,
+    conversationId: state.conversationId,
     phase: state.phase,
     messages: state.messages,
     draft: state.draft,
@@ -222,5 +227,3 @@ export function useSOPAgent() {
     resetSession,
   };
 }
-
-

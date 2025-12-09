@@ -3,17 +3,15 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAI } from '@/hooks/useAI';
 import { useClients } from '@/hooks/useClients';
+import { useConversationHistory } from '@/hooks/useConversations';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
-import { Badge } from '@/components/ui/Badge';
-import { Avatar } from '@/components/ui/Avatar';
 import { useAuthStore } from '@/stores/authStore';
 import ReactMarkdown from 'react-markdown';
 import {
   Send,
-  Sparkles,
   Loader2,
   Bot,
   User,
@@ -22,17 +20,19 @@ import {
   Check,
   MessageSquare,
   FileText,
-  Mail,
   Ticket,
+  ThumbsUp,
+  ThumbsDown,
+  Clock,
 } from 'lucide-react';
 import { cn, formatRelativeTime } from '@/lib/utils';
+import type { Conversation, KnowledgeChatCitation } from '@/types';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  citations?: any[];
-  suggestedActions?: any[];
+  citations?: KnowledgeChatCitation[];
   timestamp: Date;
 }
 
@@ -41,7 +41,21 @@ type ChatMode = 'general' | 'knowledge_base' | 'daily_update';
 export default function AIAssistantPage() {
   const { user } = useAuthStore();
   const { clients } = useClients();
-  const { sendMessage, parseUpdate, isLoading, isParsing } = useAI();
+  const {
+    sendGeneralChat,
+    sendKnowledgeChat,
+    parseUpdate,
+    isLoading,
+    isParsing,
+    conversationId,
+    resetConversation,
+    setConversationId,
+  } = useAI();
+
+  const { conversations, handleResume, isResuming } = useConversationHistory({
+    type: 'general',
+    limit: 10,
+  });
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -74,7 +88,9 @@ export default function AIAssistantPage() {
       content: greetings[mode],
       timestamp: new Date(),
     }]);
-  }, [mode, user?.firstName]);
+    // Reset conversation when mode changes
+    resetConversation();
+  }, [mode, user?.firstName, resetConversation]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
@@ -126,26 +142,16 @@ export default function AIAssistantPage() {
           timestamp: new Date(),
         };
         setMessages(prev => [...prev, assistantMessage]);
-      } else {
-        // For knowledge_base mode, use the knowledge-chat endpoint
-        const response = await sendMessage({
-          message: currentInput,
-          clientId: selectedClient || undefined,
-          mode,
-          conversationHistory: messages.slice(-10).map(m => ({
-            role: m.role,
-            content: m.content,
-          })),
-        });
-
-        // Build response content
+      } else if (mode === 'knowledge_base') {
+        // Use knowledge base endpoint (requires clientId)
+        const response = await sendKnowledgeChat(currentInput, selectedClient);
+        
         let responseContent = response.response;
         
-        // Add knowledge base info if available
-        const kb = (response as any).knowledgeBase;
-        if (kb?.citations && kb.citations.length > 0) {
+        // Add citations if available
+        if (response.knowledgeBase?.citations && response.knowledgeBase.citations.length > 0) {
           responseContent += '\n\n---\n**Sources:**';
-          kb.citations.forEach((citation: any) => {
+          response.knowledgeBase.citations.forEach((citation) => {
             responseContent += `\n- *${citation.title}*`;
             if (citation.excerpt) {
               responseContent += `: "${citation.excerpt.substring(0, 100)}..."`;
@@ -157,8 +163,24 @@ export default function AIAssistantPage() {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
           content: responseContent,
-          citations: response.citations || (response as any).knowledgeBase?.citations,
-          suggestedActions: response.suggestedActions,
+          citations: response.knowledgeBase?.citations,
+          timestamp: new Date(),
+        };
+
+        setMessages(prev => [...prev, assistantMessage]);
+      } else {
+        // Use general chat endpoint
+        const conversationHistory = messages.slice(-10).map(m => ({
+          role: m.role,
+          content: m.content,
+        }));
+
+        const response = await sendGeneralChat(currentInput, conversationHistory);
+
+        const assistantMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          content: response.response,
           timestamp: new Date(),
         };
 
@@ -192,6 +214,27 @@ export default function AIAssistantPage() {
   const clearChat = () => {
     setMessages([]);
     setInput('');
+    resetConversation();
+  };
+
+  const handleResumeConversation = async (conversation: Conversation) => {
+    const result = await handleResume(conversation);
+    if (result) {
+      // Set the conversation ID for continuation
+      setConversationId(conversation.conversationId);
+      // Load the conversation messages
+      if (conversation.messages) {
+        const loadedMessages: Message[] = conversation.messages
+          .filter(m => m.role === 'user' || m.role === 'assistant')
+          .map(m => ({
+            id: m._id,
+            role: m.role as 'user' | 'assistant',
+            content: m.content,
+            timestamp: new Date(m.timestamp),
+          }));
+        setMessages(loadedMessages);
+      }
+    }
   };
 
   return (
@@ -259,6 +302,35 @@ export default function AIAssistantPage() {
             </Card>
           )}
 
+          {/* Recent Conversations */}
+          {conversations.length > 0 && (
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-medium text-surface-900 dark:text-white mb-3">Recent Chats</h3>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {conversations.slice(0, 5).map((conv) => (
+                    <button
+                      key={conv.conversationId}
+                      onClick={() => handleResumeConversation(conv)}
+                      disabled={isResuming}
+                      className="w-full flex items-start gap-2 p-2 rounded-lg text-left hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+                    >
+                      <Clock className="w-3.5 h-3.5 mt-0.5 text-surface-400 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-surface-700 dark:text-surface-300 truncate">
+                          {conv.title || 'Untitled conversation'}
+                        </p>
+                        <p className="text-xs text-surface-400">
+                          {formatRelativeTime(new Date(conv.lastMessageAt))}
+                        </p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Quick Actions */}
           <Card>
             <CardContent className="p-4">
@@ -314,16 +386,28 @@ export default function AIAssistantPage() {
                   <div className="flex items-center gap-2 mt-1 text-xs text-surface-400 dark:text-surface-500">
                     <span>{formatRelativeTime(message.timestamp)}</span>
                     {message.role === 'assistant' && (
-                      <button
-                        onClick={() => copyToClipboard(message.content, message.id)}
-                        className="hover:text-surface-600 dark:hover:text-surface-300"
-                      >
-                        {copiedId === message.id ? (
-                          <Check className="h-3 w-3" />
-                        ) : (
-                          <Copy className="h-3 w-3" />
+                      <>
+                        <button
+                          onClick={() => copyToClipboard(message.content, message.id)}
+                          className="hover:text-surface-600 dark:hover:text-surface-300"
+                        >
+                          {copiedId === message.id ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                        </button>
+                        {conversationId && (
+                          <>
+                            <button className="hover:text-green-500 p-0.5">
+                              <ThumbsUp className="h-3 w-3" />
+                            </button>
+                            <button className="hover:text-red-500 p-0.5">
+                              <ThumbsDown className="h-3 w-3" />
+                            </button>
+                          </>
                         )}
-                      </button>
+                      </>
                     )}
                   </div>
                 </div>
@@ -381,4 +465,3 @@ export default function AIAssistantPage() {
     </div>
   );
 }
-

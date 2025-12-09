@@ -4,19 +4,27 @@ import { useState, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectAgentService } from '@/services/projectAgent.service';
 import {
-  ConversationMessage,
   ProjectDraft,
   ProjectAgentPhase,
   ValidationError,
   CreatedProject,
   CreatedTicket,
+  UpdateProjectDraftDto,
 } from '@/types';
+
+// Local message type for project agent conversation
+interface ProjectAgentMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
 import toast from 'react-hot-toast';
 
 interface ProjectAgentState {
   sessionId: string | null;
+  conversationId: string | null;
   phase: ProjectAgentPhase;
-  messages: ConversationMessage[];
+  messages: ProjectAgentMessage[];
   draft: ProjectDraft;
   validationErrors: ValidationError[];
   showConfirmation: boolean;
@@ -26,6 +34,7 @@ interface ProjectAgentState {
 
 const initialState: ProjectAgentState = {
   sessionId: null,
+  conversationId: null,
   phase: 'greeting',
   messages: [],
   draft: {},
@@ -44,10 +53,9 @@ export function useProjectAgent() {
   const startMutation = useMutation({
     mutationFn: (options?: { guidelineId?: string }) => projectAgentService.startSession(options),
     onSuccess: (data) => {
-      // API returns { sessionId, response, phase }
-      // response is the AI greeting message
       setState({
         sessionId: data.sessionId,
+        conversationId: data.conversationId || null,
         phase: data.phase,
         messages: data.response ? [{
           role: 'assistant',
@@ -74,9 +82,9 @@ export function useProjectAgent() {
     mutationFn: ({ sessionId, message }: { sessionId: string; message: string }) =>
       projectAgentService.sendMessage(sessionId, message),
     onSuccess: (data) => {
-      // API returns { response, phase, showConfirmation, draft, validationErrors, createdProject?, createdTickets? }
       setState((prev) => ({
         ...prev,
+        conversationId: data.conversationId || prev.conversationId,
         phase: data.phase,
         messages: [
           ...(prev.messages || []),
@@ -94,7 +102,7 @@ export function useProjectAgent() {
       }));
       setError(null);
 
-      // If project was created (user said "confirm" in chat), invalidate queries
+      // If project was created, invalidate queries
       if (data.createdProject) {
         queryClient.invalidateQueries({ queryKey: ['projects'] });
         queryClient.invalidateQueries({ queryKey: ['projects-board'] });
@@ -108,17 +116,34 @@ export function useProjectAgent() {
     },
   });
 
-  // Confirm and create mutation (explicit confirmation endpoint)
+  // Update draft mutation (direct UI edits)
+  const updateDraftMutation = useMutation({
+    mutationFn: ({ sessionId, updates }: { sessionId: string; updates: UpdateProjectDraftDto }) =>
+      projectAgentService.updateDraft(sessionId, updates),
+    onSuccess: (data) => {
+      setState((prev) => ({
+        ...prev,
+        draft: data.draft,
+        validationErrors: data.validationErrors,
+        showConfirmation: data.readyForConfirmation,
+      }));
+    },
+    onError: (err: any) => {
+      const message = err.response?.data?.message || 'Failed to update draft';
+      toast.error(message);
+    },
+  });
+
+  // Confirm and create mutation
   const confirmMutation = useMutation({
     mutationFn: (sessionId: string) => projectAgentService.confirmAndCreate(sessionId),
     onSuccess: (data) => {
       setState((prev) => ({
         ...prev,
-        phase: 'complete',
+        phase: 'completed',
         createdProject: data.project,
         createdTickets: data.tickets,
       }));
-      // Invalidate projects queries to refresh the list
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['projects-board'] });
       toast.success('Project and tickets created successfully!');
@@ -174,7 +199,19 @@ export function useProjectAgent() {
     [state.sessionId, sendMutation]
   );
 
-  // Confirm and create the project (using dedicated endpoint)
+  // Update draft directly from UI
+  const updateDraft = useCallback(
+    async (updates: UpdateProjectDraftDto) => {
+      if (!state.sessionId) return;
+      await updateDraftMutation.mutateAsync({
+        sessionId: state.sessionId,
+        updates,
+      });
+    },
+    [state.sessionId, updateDraftMutation]
+  );
+
+  // Confirm and create the project
   const confirmAndCreate = useCallback(async () => {
     if (!state.sessionId) throw new Error('No active session');
     return confirmMutation.mutateAsync(state.sessionId);
@@ -208,6 +245,7 @@ export function useProjectAgent() {
   return {
     // State
     sessionId: state.sessionId,
+    conversationId: state.conversationId,
     phase: state.phase,
     messages: state.messages || [],
     draft: state.draft || {},
@@ -222,10 +260,12 @@ export function useProjectAgent() {
     isLoading: startMutation.isPending,
     isSending: sendMutation.isPending,
     isConfirming: confirmMutation.isPending,
+    isUpdatingDraft: updateDraftMutation.isPending,
 
     // Actions
     startSession,
     sendMessage,
+    updateDraft,
     confirmAndCreate,
     cancelSession,
     resetSession,

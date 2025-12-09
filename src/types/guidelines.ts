@@ -51,22 +51,26 @@ export type SOPAgentPhase =
   | 'clarifying' 
   | 'generating' 
   | 'reviewing' 
-  | 'complete';
+  | 'completed'
+  | 'cancelled';
 
 export interface SOPDraft {
   name?: string;
   projectType?: ProjectType;
+  summary?: string;
   typicalTasks: string[];
   tools: string[];
   typicalDuration?: string;
   defaultAssignments?: { taskType: string; role: string; department?: string }[];
   checklistTemplates?: { taskType: string; items: string[] }[];
+  notes?: string[];
 }
 
 export interface SOPAgentStartResponse {
   sessionId: string;
   response: string;
   phase: SOPAgentPhase;
+  conversationId?: string;
 }
 
 export interface SOPAgentMessageResponse {
@@ -80,6 +84,7 @@ export interface SOPAgentMessageResponse {
     name: string;
     slug: string;
   };
+  conversationId?: string;
 }
 
 export interface SOPAgentSessionState {

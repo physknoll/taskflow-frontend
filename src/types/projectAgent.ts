@@ -69,7 +69,8 @@ export type ProjectAgentPhase =
   | 'clarifying' 
   | 'confirming' 
   | 'creating' 
-  | 'complete';
+  | 'completed'
+  | 'cancelled';
 
 export interface ValidationError {
   field: string;
@@ -83,6 +84,12 @@ export interface ProjectAgentStartResponse {
   sessionId: string;
   response: string;  // AI greeting message (markdown)
   phase: ProjectAgentPhase;
+  guideline?: {
+    name: string;
+    projectType: string;
+    typicalTasks: string[];
+  };
+  conversationId?: string;
 }
 
 export interface CreatedProject {
@@ -106,6 +113,34 @@ export interface ProjectAgentMessageResponse {
   validationErrors: ValidationError[];
   createdProject?: CreatedProject;
   createdTickets?: CreatedTicket[];
+  conversationId?: string;
+}
+
+// SSE Stream event types
+export type ProjectStreamEvent = 
+  | { type: 'content'; data: string }
+  | { type: 'phase'; data: ProjectAgentPhase }
+  | { type: 'draft'; data: ProjectDraft }
+  | { type: 'done'; data: { sessionId: string; phase: string } }
+  | { type: 'error'; data: string };
+
+// History response
+export interface ProjectAgentHistoryResponse {
+  messages: Array<{
+    role: 'human' | 'ai';
+    content: string;
+  }>;
+}
+
+// Draft update DTO
+export interface UpdateProjectDraftDto {
+  name?: string;
+  description?: string;
+  client?: string;
+  projectLead?: string;
+  priority?: 'low' | 'medium' | 'high' | 'critical';
+  type?: 'campaign' | 'product_launch' | 'content_series' | 'website' | 'rebrand' | 'video' | 'event' | 'retainer' | 'other';
+  targetEndDate?: string;
 }
 
 export interface ProjectAgentSessionState {
