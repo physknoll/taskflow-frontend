@@ -4,9 +4,11 @@ export { StreakCard } from './StreakCard';
 
 // AI Dashboard Components
 export { ProactiveChatInterface } from './ProactiveChatInterface';
+export type { ProactiveChatInterfaceHandle } from './ProactiveChatInterface';
 export { MessageBubble } from './MessageBubble';
 export { ActionCard } from './ActionCard';
 export { TypingIndicator } from './TypingIndicator';
+export { ToolIndicator } from './ToolIndicator';
 
 // Context Rail Components
 export { ContextRail } from './ContextRail';

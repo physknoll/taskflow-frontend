@@ -3,17 +3,26 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { aipmService } from '@/services/aipm.service';
-import { useAIPMSocket } from './useAIPMSocket';
+import { useAIPMSocket, AIPM_DASHBOARD_EVENTS } from './useAIPMSocket';
 import type {
   IDashboardMessage,
   ChatMode,
   IAIPMDashboardMessagePayload,
   IDashboardInitResponse,
 } from '@/types/aipm';
+import type { ResumeConversationResponse } from '@/types';
 import { aiService } from '@/services/ai.service';
+import type { AIToolUsageData } from '@/lib/socket';
 
 interface UseAIPMSessionOptions {
   autoInitialize?: boolean;
+}
+
+// Tool indicator state
+interface ToolIndicatorState {
+  isThinking: boolean;
+  currentTool: string | null;
+  recentTools: string[];
 }
 
 export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize: true }) {
@@ -28,6 +37,17 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
   const [initData, setInitData] = useState<IDashboardInitResponse | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const hasInitializedRef = useRef(false);
+  
+  // Tool usage indicator state
+  const [toolIndicator, setToolIndicator] = useState<ToolIndicatorState>({
+    isThinking: false,
+    currentTool: null,
+    recentTools: [],
+  });
+  const recentToolsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Track all tools used during current AI turn for persisting with message
+  const currentTurnToolsRef = useRef<string[]>([]);
 
   // Initialize/resume dashboard session
   const initMutation = useMutation({
@@ -191,6 +211,18 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
         const messageData = data as IAIPMDashboardMessagePayload;
         if (messageData.sessionId === sessionIdRef.current) {
           setIsAITyping(false);
+          
+          // Capture tools used during this turn before clearing
+          const toolsUsedThisTurn = [...currentTurnToolsRef.current];
+          currentTurnToolsRef.current = []; // Reset for next turn
+          
+          // Clear tool indicator when message received
+          setToolIndicator({
+            isThinking: false,
+            currentTool: null,
+            recentTools: [],
+          });
+          
           // Only add if not already present (avoids duplicate from HTTP response)
           setMessages((prev) => {
             const alreadyExists = prev.some(
@@ -203,7 +235,10 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
               role: 'aipm',
               content: messageData.message,
               timestamp: new Date().toISOString(),
-              metadata: { suggestedActions: messageData.suggestedActions },
+              metadata: { 
+                suggestedActions: messageData.suggestedActions,
+                toolsUsed: toolsUsedThisTurn.length > 0 ? toolsUsedThisTurn : undefined,
+              },
             };
             return [...prev, aiMessage];
           });
@@ -211,8 +246,54 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
       }
     );
 
+    // Subscribe to tool usage events
+    const unsubToolUsage = subscribe(
+      'ai:tool_usage',
+      (data: AIToolUsageData) => {
+        if (data.toolName === 'agent_thinking') {
+          // Handle thinking state
+          setToolIndicator((prev) => ({
+            ...prev,
+            isThinking: data.status === 'start',
+            currentTool: data.status === 'start' ? null : prev.currentTool,
+          }));
+        } else if (data.status === 'start') {
+          // Tool started
+          setToolIndicator((prev) => ({
+            ...prev,
+            currentTool: data.toolName,
+          }));
+        } else if (data.status === 'complete') {
+          // Track this tool for persisting with the AI message
+          currentTurnToolsRef.current.push(data.toolName);
+          
+          // Tool completed - add to recent tools and clear current
+          setToolIndicator((prev) => ({
+            ...prev,
+            currentTool: null,
+            recentTools: [...prev.recentTools, data.toolName].slice(-3), // Keep last 3
+          }));
+          
+          // Clear recent tools after 3 seconds (UI indicator only, tools are persisted separately)
+          if (recentToolsTimeoutRef.current) {
+            clearTimeout(recentToolsTimeoutRef.current);
+          }
+          recentToolsTimeoutRef.current = setTimeout(() => {
+            setToolIndicator((prev) => ({
+              ...prev,
+              recentTools: [],
+            }));
+          }, 3000);
+        }
+      }
+    );
+
     return () => {
       unsubMessage();
+      unsubToolUsage();
+      if (recentToolsTimeoutRef.current) {
+        clearTimeout(recentToolsTimeoutRef.current);
+      }
     };
   }, [subscribe]);
 
@@ -337,6 +418,48 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
     setMessages([]);
   }, []);
 
+  // Load a conversation from an already-fetched resume result
+  // This is used when ConversationHistory has already called the resume API
+  const loadConversation = useCallback((result: ResumeConversationResponse) => {
+    const { conversation: fullConversation, langGraphThreadId } = result;
+    
+    // Determine the mode based on conversation type
+    const conversationType = fullConversation.type;
+    
+    if (conversationType === 'knowledge_base') {
+      // Switch to knowledge base mode
+      setContextMode('client_kb');
+      // TODO: Could extract clientId from conversation metadata if needed
+      setSelectedClientId(null);
+      setKbConversationId(fullConversation.conversationId);
+    } else {
+      // Default to AIPM mode for dashboard_chat and other types
+      setContextMode('aipm');
+      setSelectedClientId(null);
+      setKbConversationId(null);
+    }
+    
+    // CRITICAL: Store the langGraphThreadId as the sessionId for continuing the conversation
+    if (langGraphThreadId) {
+      sessionIdRef.current = langGraphThreadId;
+    }
+    
+    // Load all messages into the chat UI
+    if (fullConversation.messages && fullConversation.messages.length > 0) {
+      const loadedMessages: IDashboardMessage[] = fullConversation.messages
+        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .map((m, index) => ({
+          id: m._id || `msg-${index}-${Date.now()}`,
+          role: m.role === 'user' ? 'user' : 'aipm',
+          content: m.content,
+          timestamp: m.timestamp || new Date().toISOString(),
+          // Note: Citations from knowledge base conversations are not transferred here
+          // They would need to be stored in conversation metadata if needed
+        }));
+      setMessages(loadedMessages);
+    }
+  }, []);
+
   return {
     // State
     sessionId: sessionIdRef.current,
@@ -350,6 +473,9 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
     isConnected,
     initData, // Expose init data (greeting, focusQueue, stats, suggestedActions)
     error: initMutation.error || sendKBMutation.error,
+    
+    // Tool usage indicator state
+    toolIndicator,
 
     // Actions
     initializeSession,
@@ -358,6 +484,7 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
     changeContextMode,
     selectClient,
     clearMessages,
+    loadConversation,
   };
 }
 

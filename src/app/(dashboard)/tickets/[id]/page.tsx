@@ -77,7 +77,7 @@ export default function TicketDetailPage() {
   const { clients } = useClients();
   
   // Get clientId for resources
-  const clientId = ticket ? (typeof ticket.client === 'object' ? ticket.client._id : ticket.client) : '';
+  const clientId = ticket ? (typeof ticket.client === 'object' && ticket.client !== null ? ticket.client._id : ticket.client) : '';
   
   // Resources hook
   const {
@@ -133,7 +133,7 @@ export default function TicketDetailPage() {
         type: ticket.type || 'other',
         priority: ticket.priority || 'medium',
         dueDate: ticket.dueDate ? new Date(ticket.dueDate).toISOString().split('T')[0] : '',
-        client: typeof ticket.client === 'object' ? ticket.client._id : ticket.client || '',
+        client: typeof ticket.client === 'object' && ticket.client !== null ? ticket.client._id : ticket.client || '',
         tags: ticket.tags || [],
       });
       
@@ -499,7 +499,7 @@ export default function TicketDetailPage() {
 
               {/* Meta Info Row */}
               <div className="flex flex-wrap items-center gap-4 mt-4 text-sm text-surface-500">
-                {typeof ticket.client === 'object' && (
+                {typeof ticket.client === 'object' && ticket.client !== null && (
                   <div className="flex items-center gap-1.5">
                     <Building className="h-4 w-4" />
                     <span>{ticket.client.name}</span>

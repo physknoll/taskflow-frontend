@@ -2,13 +2,57 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Sparkles, ThumbsUp, ThumbsDown, Loader2 } from 'lucide-react';
+import { 
+  Sparkles, 
+  ThumbsUp, 
+  ThumbsDown, 
+  Loader2,
+  CheckCircle2,
+  Search,
+  PlusCircle,
+  MessageSquare,
+  Edit3,
+  FileSearch,
+  ListChecks,
+  Trash2,
+  Send,
+  Clock,
+  Zap,
+  Brain,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ActionCard } from './ActionCard';
 import { messageEnter } from '@/lib/animations';
 import { useConversationActions } from '@/hooks/useConversations';
 import type { IDashboardMessage, ISuggestedAction } from '@/types/aipm';
 import type { MessageFeedbackRating } from '@/types';
+
+// Tool name to display info mapping (same as ToolIndicator)
+const TOOL_INFO: Record<string, { label: string; icon: typeof Search }> = {
+  agent_thinking: { label: 'Analyzed', icon: Brain },
+  create_ticket: { label: 'Created ticket', icon: PlusCircle },
+  lookup_user_tickets: { label: 'Searched tickets', icon: Search },
+  update_ticket_status: { label: 'Updated status', icon: Edit3 },
+  add_ticket_comment: { label: 'Added comment', icon: MessageSquare },
+  complete_task: { label: 'Completed task', icon: CheckCircle2 },
+  get_ticket_details: { label: 'Retrieved details', icon: FileSearch },
+  update_task_status: { label: 'Updated task', icon: ListChecks },
+  add_task: { label: 'Added task', icon: PlusCircle },
+  delete_task: { label: 'Removed task', icon: Trash2 },
+  send_external_message: { label: 'Sent message', icon: Send },
+  log_time: { label: 'Logged time', icon: Clock },
+  default: { label: 'Processed', icon: Zap },
+};
+
+function getToolInfo(toolName: string) {
+  return TOOL_INFO[toolName] || TOOL_INFO.default;
+}
+
+function formatToolLabel(toolName: string): string {
+  const info = TOOL_INFO[toolName];
+  if (info) return info.label;
+  return toolName.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
 
 interface MessageBubbleProps {
   message: IDashboardMessage;
@@ -79,6 +123,25 @@ export function MessageBubble({
 
       {/* Message Content */}
       <div className={cn('max-w-[80%] space-y-2', !isAI && 'items-end')}>
+        {/* Tools Used Indicator - shown above AI messages that used tools */}
+        {isAI && message.metadata?.toolsUsed && message.metadata.toolsUsed.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {message.metadata.toolsUsed.map((tool, index) => {
+              const toolInfo = getToolInfo(tool);
+              const ToolIcon = toolInfo.icon;
+              return (
+                <div
+                  key={`${tool}-${index}`}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                >
+                  <CheckCircle2 className="w-3 h-3" />
+                  <span>{formatToolLabel(tool)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Bubble */}
         <div
           className={cn(

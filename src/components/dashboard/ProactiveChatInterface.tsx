@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send,
@@ -17,13 +17,20 @@ import { useAIPMSession } from '@/hooks/useAIPMSession';
 import { useClients } from '@/hooks/useClients';
 import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
+import { ToolIndicator } from './ToolIndicator';
 import { cn } from '@/lib/utils';
 import type { ISuggestedAction, ChatMode } from '@/types/aipm';
+import type { ResumeConversationResponse } from '@/types';
 import { scaleIn } from '@/lib/animations';
 
 interface ProactiveChatInterfaceProps {
   showDailyUpdatePrompt?: boolean;
   className?: string;
+}
+
+// Exposed methods for parent components via ref
+export interface ProactiveChatInterfaceHandle {
+  loadConversation: (result: ResumeConversationResponse) => void;
 }
 
 const chatModeOptions: Array<{
@@ -59,10 +66,11 @@ function getPlaceholder(chatMode: ChatMode, hasClientSelected: boolean): string 
   return 'Ask about your tasks, priorities, or get help with anything...';
 }
 
-export function ProactiveChatInterface({
-  showDailyUpdatePrompt = true,
-  className,
-}: ProactiveChatInterfaceProps) {
+export const ProactiveChatInterface = forwardRef<ProactiveChatInterfaceHandle, ProactiveChatInterfaceProps>(
+  function ProactiveChatInterface({
+    showDailyUpdatePrompt = true,
+    className,
+  }, ref) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const [inputValue, setInputValue] = useState('');
@@ -81,12 +89,19 @@ export function ProactiveChatInterface({
     isConnected,
     error,
     initData,
+    toolIndicator,
     initializeSession,
     sendMessage,
     executeAction,
     changeContextMode,
     selectClient,
+    loadConversation,
   } = useAIPMSession();
+
+  // Expose methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    loadConversation,
+  }), [loadConversation]);
 
   // Fetch clients for the dropdown
   const { clients, isLoading: isLoadingClients } = useClients({ isActive: true });
@@ -251,7 +266,7 @@ export function ProactiveChatInterface({
           ))}
         </AnimatePresence>
 
-        {/* AI Typing Indicator */}
+        {/* AI Typing/Tool Usage Indicator */}
         {isAITyping && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -261,8 +276,24 @@ export function ProactiveChatInterface({
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
-            <div className="bg-surface-100 dark:bg-surface-700 rounded-2xl rounded-tl-sm px-4 py-3">
-              <TypingIndicator />
+            <div className="flex flex-col gap-2">
+              {/* Show tool indicator if AI is using tools */}
+              <AnimatePresence mode="wait">
+                {(toolIndicator.isThinking || toolIndicator.currentTool || toolIndicator.recentTools.length > 0) && (
+                  <ToolIndicator
+                    isThinking={toolIndicator.isThinking}
+                    currentTool={toolIndicator.currentTool}
+                    recentTools={toolIndicator.recentTools}
+                  />
+                )}
+              </AnimatePresence>
+              
+              {/* Standard typing indicator - only show when not using tools */}
+              {!toolIndicator.isThinking && !toolIndicator.currentTool && (
+                <div className="bg-surface-100 dark:bg-surface-700 rounded-2xl rounded-tl-sm px-4 py-3">
+                  <TypingIndicator />
+                </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -484,6 +515,6 @@ export function ProactiveChatInterface({
       </div>
     </div>
   );
-}
+});
 
 export default ProactiveChatInterface;

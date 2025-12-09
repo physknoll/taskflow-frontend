@@ -16,10 +16,10 @@ import {
 } from 'lucide-react';
 import { useConversationHistory } from '@/hooks/useConversations';
 import { cn, formatRelativeTime } from '@/lib/utils';
-import type { Conversation, ConversationType } from '@/types';
+import type { Conversation, ConversationType, ResumeConversationResponse } from '@/types';
 
 interface ConversationHistoryProps {
-  onSelectConversation?: (conversation: Conversation, routeTo: string) => void;
+  onSelectConversation?: (result: ResumeConversationResponse) => void;
   className?: string;
   defaultExpanded?: boolean;
 }
@@ -89,7 +89,8 @@ export function ConversationHistory({
     try {
       const result = await handleResume(conversation);
       if (result && onSelectConversation) {
-        onSelectConversation(conversation, result.routeTo);
+        // Pass the full result including messages and langGraphThreadId
+        onSelectConversation(result);
       }
     } finally {
       setLoadingId(null);

@@ -1,23 +1,32 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PanelRightClose, PanelRight } from 'lucide-react';
-import { ProactiveChatInterface } from '@/components/dashboard/ProactiveChatInterface';
+import { ProactiveChatInterface, ProactiveChatInterfaceHandle } from '@/components/dashboard/ProactiveChatInterface';
 import { ContextRail } from '@/components/dashboard/ContextRail';
 import { MobileDashboard } from '@/components/dashboard/MobileDashboard';
 import { useIsMobile } from '@/hooks/useMediaQuery';
 import { cn } from '@/lib/utils';
+import type { ResumeConversationResponse } from '@/types';
 
 export default function DashboardPage() {
   const router = useRouter();
   const isMobile = useIsMobile();
   const [isRailOpen, setIsRailOpen] = useState(true);
+  const chatRef = useRef<ProactiveChatInterfaceHandle>(null);
 
   const handleTicketClick = useCallback((ticketId: string) => {
     router.push(`/tickets/${ticketId}`);
   }, [router]);
+
+  // Handle resuming a conversation from history - populates the chat without navigating
+  const handleResumeConversation = useCallback((result: ResumeConversationResponse) => {
+    if (chatRef.current) {
+      chatRef.current.loadConversation(result);
+    }
+  }, []);
 
   // Mobile layout
   if (isMobile) {
@@ -33,7 +42,7 @@ export default function DashboardPage() {
         'flex-1 flex flex-col m-4 bg-white dark:bg-surface-800 rounded-2xl shadow-sm border border-surface-200 dark:border-surface-700 overflow-hidden transition-all duration-300 min-h-0',
         isRailOpen ? 'mr-2' : 'mr-4'
       )}>
-        <ProactiveChatInterface showDailyUpdatePrompt={true} />
+        <ProactiveChatInterface ref={chatRef} showDailyUpdatePrompt={true} />
       </section>
 
       {/* Context Rail - Collapsible, independently scrollable */}
@@ -59,7 +68,10 @@ export default function DashboardPage() {
             
             {/* Scrollable content area */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar min-h-0">
-              <ContextRail onTicketClick={handleTicketClick} />
+              <ContextRail 
+                onTicketClick={handleTicketClick} 
+                onResumeConversation={handleResumeConversation}
+              />
             </div>
           </motion.aside>
         )}

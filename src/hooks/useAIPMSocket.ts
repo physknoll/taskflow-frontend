@@ -3,7 +3,7 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/authStore';
-import { getSocket } from '@/lib/socket';
+import { getSocket, AI_SOCKET_EVENTS, AIToolUsageData } from '@/lib/socket';
 import { toast } from 'sonner';
 import type {
   IAIPMDashboardGreetingPayload,
@@ -21,10 +21,16 @@ export const AIPM_DASHBOARD_EVENTS = {
   ACTION_EXECUTED: 'aipm:action:executed',
   POINTS_EARNED: 'aipm:points:earned',
   FOCUS_UPDATED: 'aipm:focus:updated',
+  TOOL_USAGE: 'ai:tool_usage',
 } as const;
 
+// Extended socket events type including tool usage
+export interface IAIPMExtendedSocketEvents extends IAIPMDashboardSocketEvents {
+  'ai:tool_usage': AIToolUsageData;
+}
+
 type EventHandler<T> = (data: T) => void;
-type EventName = keyof IAIPMDashboardSocketEvents;
+type EventName = keyof IAIPMExtendedSocketEvents;
 
 export function useAIPMSocket() {
   const { isAuthenticated } = useAuthStore();
@@ -88,12 +94,18 @@ export function useAIPMSocket() {
       emitToHandlers(AIPM_DASHBOARD_EVENTS.FOCUS_UPDATED, data);
     };
 
+    // Tool usage handler - shows what the AI is doing
+    const handleToolUsage = (data: AIToolUsageData) => {
+      emitToHandlers(AIPM_DASHBOARD_EVENTS.TOOL_USAGE, data);
+    };
+
     // Register all event listeners
     socket.on(AIPM_DASHBOARD_EVENTS.GREETING, handleGreeting);
     socket.on(AIPM_DASHBOARD_EVENTS.MESSAGE, handleMessage);
     socket.on(AIPM_DASHBOARD_EVENTS.ACTION_EXECUTED, handleActionExecuted);
     socket.on(AIPM_DASHBOARD_EVENTS.POINTS_EARNED, handlePointsEarned);
     socket.on(AIPM_DASHBOARD_EVENTS.FOCUS_UPDATED, handleFocusUpdated);
+    socket.on(AI_SOCKET_EVENTS.TOOL_USAGE, handleToolUsage);
 
     return () => {
       socket.off(AIPM_DASHBOARD_EVENTS.GREETING, handleGreeting);
@@ -101,13 +113,14 @@ export function useAIPMSocket() {
       socket.off(AIPM_DASHBOARD_EVENTS.ACTION_EXECUTED, handleActionExecuted);
       socket.off(AIPM_DASHBOARD_EVENTS.POINTS_EARNED, handlePointsEarned);
       socket.off(AIPM_DASHBOARD_EVENTS.FOCUS_UPDATED, handleFocusUpdated);
+      socket.off(AI_SOCKET_EVENTS.TOOL_USAGE, handleToolUsage);
     };
   }, [isAuthenticated, socket, queryClient, emitToHandlers]);
 
   // Subscribe to specific events
   const subscribe = useCallback(<K extends EventName>(
     event: K,
-    handler: EventHandler<IAIPMDashboardSocketEvents[K]>
+    handler: EventHandler<IAIPMExtendedSocketEvents[K]>
   ) => {
     if (!handlersRef.current.has(event)) {
       handlersRef.current.set(event, new Set());

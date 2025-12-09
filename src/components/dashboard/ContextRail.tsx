@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
 import { StreakWidget } from './StreakWidget';
 import { FocusQueueWidget } from './FocusQueueWidget';
 import { TodayStatsWidget } from './TodayStatsWidget';
@@ -9,19 +8,24 @@ import { PendingReviewsWidget } from './PendingReviewsWidget';
 import { ConversationHistory } from './ConversationHistory';
 import { useAIPMDashboard } from '@/hooks/useAIPM';
 import { cn } from '@/lib/utils';
-import type { Conversation } from '@/types';
+import type { ResumeConversationResponse } from '@/types';
 
 interface ContextRailProps {
   onTicketClick?: (ticketId: string) => void;
+  onResumeConversation?: (result: ResumeConversationResponse) => void;
   className?: string;
 }
 
-export function ContextRail({ onTicketClick, className }: ContextRailProps) {
-  const router = useRouter();
+export function ContextRail({ onTicketClick, onResumeConversation, className }: ContextRailProps) {
   const { streak, focusQueue, todayStats, isLoading } = useAIPMDashboard();
 
-  const handleConversationSelect = (conversation: Conversation, routeTo: string) => {
-    router.push(routeTo);
+  // Handle conversation selection - call parent's resume handler instead of navigating
+  const handleConversationSelect = (result: ResumeConversationResponse) => {
+    if (onResumeConversation) {
+      // Don't navigate - just call the resume handler to populate the chat
+      onResumeConversation(result);
+    }
+    // If no handler provided, do nothing (don't navigate away from dashboard)
   };
 
   return (
