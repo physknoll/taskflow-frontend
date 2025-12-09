@@ -17,7 +17,7 @@ import { useAIPMSession } from '@/hooks/useAIPMSession';
 import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
 import { cn } from '@/lib/utils';
-import type { ISuggestedAction, ContextMode } from '@/types/aipm';
+import type { ISuggestedAction, ChatMode } from '@/types/aipm';
 import { scaleIn } from '@/lib/animations';
 
 interface ProactiveChatInterfaceProps {
@@ -25,43 +25,39 @@ interface ProactiveChatInterfaceProps {
   className?: string;
 }
 
-const contextOptions: Array<{
-  value: ContextMode;
+const chatModeOptions: Array<{
+  value: ChatMode;
   label: string;
   icon: typeof Sparkles;
   description: string;
+  requiresClientId: boolean;
 }> = [
   {
-    value: 'general',
-    label: 'General Assistant',
+    value: 'aipm',
+    label: 'AI Project Manager',
     icon: Sparkles,
-    description: 'General help and task management',
+    description: 'Your smart assistant that knows your tasks and priorities',
+    requiresClientId: false,
   },
   {
     value: 'client_kb',
     label: 'Client Knowledge Base',
     icon: Database,
-    description: 'Search client documents and history',
-  },
-  {
-    value: 'internal_docs',
-    label: 'Internal Docs',
-    icon: FileText,
-    description: 'Search internal documentation',
+    description: 'Search client documents and brand guidelines',
+    requiresClientId: true,
   },
 ];
 
-function getPlaceholder(contextMode: ContextMode, showDailyUpdatePrompt: boolean): string {
-  if (showDailyUpdatePrompt) {
+function getPlaceholder(chatMode: ChatMode, showDailyUpdatePrompt: boolean): string {
+  if (showDailyUpdatePrompt && chatMode === 'aipm') {
     return "Type 'Log 2hrs on Acme project', ask a question, or just say hi...";
   }
-  switch (contextMode) {
+  switch (chatMode) {
     case 'client_kb':
       return 'Ask about client documents, brand guidelines, or project history...';
-    case 'internal_docs':
-      return 'Search internal documentation, processes, or team knowledge...';
+    case 'aipm':
     default:
-      return 'Type a message or ask your AI assistant anything...';
+      return 'Ask about your tasks, priorities, or get help with anything...';
   }
 }
 
@@ -130,12 +126,12 @@ export function ProactiveChatInterface({
   };
 
   // Context mode change handler
-  const handleContextChange = (mode: ContextMode) => {
+  const handleContextChange = (mode: ChatMode) => {
     changeContextMode(mode);
     setShowContextMenu(false);
   };
 
-  const currentContext = contextOptions.find((o) => o.value === contextMode);
+  const currentChatMode = chatModeOptions.find((o) => o.value === contextMode);
 
   return (
     <div className={cn('flex flex-col h-full', className)}>
@@ -215,11 +211,11 @@ export function ProactiveChatInterface({
               onClick={() => setShowContextMenu(!showContextMenu)}
               className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-100 dark:bg-surface-700 text-sm font-medium hover:bg-surface-200 dark:hover:bg-surface-600 transition-colors"
             >
-              {currentContext && (
+              {currentChatMode && (
                 <>
-                  <currentContext.icon className="w-3.5 h-3.5 text-primary-500" />
+                  <currentChatMode.icon className="w-3.5 h-3.5 text-primary-500" />
                   <span className="text-surface-700 dark:text-surface-200">
-                    {currentContext.label}
+                    {currentChatMode.label}
                   </span>
                 </>
               )}
@@ -241,7 +237,7 @@ export function ProactiveChatInterface({
                   exit="exit"
                   className="absolute bottom-full left-0 mb-2 bg-white dark:bg-surface-800 rounded-lg shadow-lg border border-surface-200 dark:border-surface-700 overflow-hidden z-10 min-w-[220px]"
                 >
-                  {contextOptions.map((option) => (
+                  {chatModeOptions.map((option) => (
                     <button
                       key={option.value}
                       onClick={() => handleContextChange(option.value)}

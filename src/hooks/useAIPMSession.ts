@@ -6,10 +6,11 @@ import { aipmService } from '@/services/aipm.service';
 import { useAIPMSocket } from './useAIPMSocket';
 import type {
   IDashboardMessage,
-  ContextMode,
+  ChatMode,
   IAIPMDashboardMessagePayload,
   IDashboardInitResponse,
 } from '@/types/aipm';
+import { aiService } from '@/services/ai.service';
 
 interface UseAIPMSessionOptions {
   autoInitialize?: boolean;
@@ -21,7 +22,9 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
   
   const [messages, setMessages] = useState<IDashboardMessage[]>([]);
   const [isAITyping, setIsAITyping] = useState(false);
-  const [contextMode, setContextMode] = useState<ContextMode>('general');
+  const [contextMode, setContextMode] = useState<ChatMode>('aipm');
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [kbConversationId, setKbConversationId] = useState<string | null>(null);
   const [initData, setInitData] = useState<IDashboardInitResponse | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const hasInitializedRef = useRef(false);
@@ -66,7 +69,7 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
     },
   });
 
-  // Send message mutation
+  // Send message mutation (AIPM Dashboard mode)
   const sendMutation = useMutation({
     mutationFn: ({ sessionId, message }: { sessionId: string; message: string }) => 
       aipmService.sendDashboardMessage(sessionId, message),
@@ -91,6 +94,56 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
         content: data.response,
         timestamp: new Date().toISOString(),
         metadata: { suggestedActions: data.suggestedActions },
+      };
+      setMessages((prev) => [...prev, aiMessage]);
+    },
+    onError: () => {
+      setIsAITyping(false);
+      // Remove the optimistic user message on error
+      setMessages((prev) => prev.filter((m) => !m.id.startsWith('temp-')));
+    },
+  });
+
+  // Send message mutation (Client Knowledge Base mode)
+  const sendKBMutation = useMutation({
+    mutationFn: ({ clientId, message, conversationId }: { clientId: string; message: string; conversationId?: string }) => 
+      aiService.sendKnowledgeChat({
+        message,
+        clientId,
+        conversationId,
+      }),
+    onMutate: async ({ message }) => {
+      // Optimistic update - add user message immediately
+      const userMessage: IDashboardMessage = {
+        id: `temp-${Date.now()}`,
+        role: 'user',
+        content: message,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, userMessage]);
+      setIsAITyping(true);
+    },
+    onSuccess: (data) => {
+      setIsAITyping(false);
+      // Store conversation ID for continuity
+      if (data.conversationId) {
+        setKbConversationId(data.conversationId);
+      }
+      
+      // Add AI response with citations if available
+      const aiMessage: IDashboardMessage = {
+        id: `ai-${Date.now()}`,
+        role: 'aipm',
+        content: data.response,
+        timestamp: new Date().toISOString(),
+        metadata: data.knowledgeBase?.citations ? {
+          citations: data.knowledgeBase.citations.map(c => ({
+            documentId: c.documentId,
+            title: c.title,
+            excerpt: c.excerpt,
+            relevanceScore: c.relevanceScore,
+          })),
+        } : undefined,
       };
       setMessages((prev) => [...prev, aiMessage]);
     },
@@ -179,23 +232,37 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
     return null;
   }, [initMutation]);
 
-  // Send a message
+  // Send a message - routes to correct endpoint based on mode
   const sendMessage = useCallback(async (message: string) => {
-    let sessionId = sessionIdRef.current;
-    
-    // Initialize session if not already
-    if (!sessionId && !initMutation.isPending) {
-      const initData = await initMutation.mutateAsync();
-      sessionId = initData.sessionId;
+    if (contextMode === 'client_kb') {
+      // Client Knowledge Base mode
+      if (!selectedClientId) {
+        console.error('No client selected for knowledge base chat');
+        return;
+      }
+      await sendKBMutation.mutateAsync({ 
+        clientId: selectedClientId, 
+        message,
+        conversationId: kbConversationId || undefined,
+      });
+    } else {
+      // AIPM Dashboard mode (default)
+      let sessionId = sessionIdRef.current;
+      
+      // Initialize session if not already
+      if (!sessionId && !initMutation.isPending) {
+        const initData = await initMutation.mutateAsync();
+        sessionId = initData.sessionId;
+      }
+      
+      if (!sessionId) {
+        console.error('No session ID available');
+        return;
+      }
+      
+      await sendMutation.mutateAsync({ sessionId, message });
     }
-    
-    if (!sessionId) {
-      console.error('No session ID available');
-      return;
-    }
-    
-    await sendMutation.mutateAsync({ sessionId, message });
-  }, [initMutation, sendMutation]);
+  }, [contextMode, selectedClientId, kbConversationId, initMutation, sendMutation, sendKBMutation]);
 
   // Execute a suggested action
   const executeAction = useCallback(async (actionId: string, accepted: boolean) => {
@@ -222,10 +289,48 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
     await executeMutation.mutateAsync({ actionId });
   }, [executeMutation]);
 
-  // Change context mode
-  const changeContextMode = useCallback((mode: ContextMode) => {
+  // Change chat mode - resets conversation when switching
+  const changeContextMode = useCallback((mode: ChatMode, clientId?: string) => {
+    if (mode === contextMode && (mode !== 'client_kb' || clientId === selectedClientId)) {
+      return; // No change
+    }
+    
     setContextMode(mode);
-  }, []);
+    setMessages([]); // Clear messages when switching modes
+    
+    if (mode === 'client_kb') {
+      setSelectedClientId(clientId || null);
+      setKbConversationId(null); // Reset conversation
+    } else {
+      setSelectedClientId(null);
+      setKbConversationId(null);
+      // Re-initialize AIPM session if needed
+      if (!sessionIdRef.current) {
+        initMutation.mutate();
+      } else if (initData?.greeting) {
+        // Restore the greeting message
+        const greetingMessage: IDashboardMessage = {
+          id: `greeting-${Date.now()}`,
+          role: 'aipm',
+          content: initData.greeting,
+          timestamp: new Date().toISOString(),
+          metadata: {
+            suggestedActions: initData.suggestedActions || [],
+          },
+        };
+        setMessages([greetingMessage]);
+      }
+    }
+  }, [contextMode, selectedClientId, initMutation, initData]);
+
+  // Set client for knowledge base mode
+  const selectClient = useCallback((clientId: string) => {
+    setSelectedClientId(clientId);
+    if (contextMode === 'client_kb') {
+      setMessages([]); // Clear messages when changing client
+      setKbConversationId(null);
+    }
+  }, [contextMode]);
 
   // Clear messages (for reset)
   const clearMessages = useCallback(() => {
@@ -238,18 +343,20 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
     messages,
     isLoading: initMutation.isPending,
     isAITyping,
-    isSending: sendMutation.isPending,
+    isSending: sendMutation.isPending || sendKBMutation.isPending,
     isExecuting: executeMutation.isPending,
     contextMode,
+    selectedClientId,
     isConnected,
     initData, // Expose init data (greeting, focusQueue, stats, suggestedActions)
-    error: initMutation.error,
+    error: initMutation.error || sendKBMutation.error,
 
     // Actions
     initializeSession,
     sendMessage,
     executeAction,
     changeContextMode,
+    selectClient,
     clearMessages,
   };
 }

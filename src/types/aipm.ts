@@ -397,6 +397,14 @@ export interface ISuggestedAction {
   status: SuggestedActionStatus;
 }
 
+// Citation from knowledge base responses
+export interface IKnowledgeCitation {
+  documentId: string;
+  title: string;
+  excerpt: string;
+  relevanceScore: number;
+}
+
 export interface IDashboardMessage {
   id: string;
   role: MessageRole;
@@ -406,6 +414,7 @@ export interface IDashboardMessage {
     ticketsDiscussed?: string[];
     suggestedActions?: ISuggestedAction[];
     toolsUsed?: string[];
+    citations?: IKnowledgeCitation[]; // For knowledge base responses
   };
 }
 
@@ -531,7 +540,13 @@ export interface ITodayStats {
 // Dashboard State Types
 // ============================================
 
-export type ContextMode = 'general' | 'client_kb' | 'internal_docs';
+// Chat modes for dashboard - aligned with backend API
+// 'aipm' uses /api/v1/aipm/dashboard/messages (AI Project Manager)
+// 'client_kb' uses /api/v1/ai/knowledge-chat (Client Knowledge Base - requires clientId)
+export type ChatMode = 'aipm' | 'client_kb';
+
+// @deprecated - use ChatMode instead
+export type ContextMode = ChatMode;
 
 export interface IDashboardState {
   session: IDashboardSession | null;
