@@ -44,6 +44,23 @@
   .dark ::-webkit-scrollbar-thumb:hover {
     @apply bg-surface-500;
   }
+
+  /* Custom thin scrollbar for sidebars */
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-1;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-surface-200 dark:bg-surface-700 rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-surface-300 dark:bg-surface-600;
+  }
 }
 
 @layer components {

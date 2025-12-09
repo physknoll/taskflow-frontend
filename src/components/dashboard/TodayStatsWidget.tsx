@@ -10,6 +10,7 @@ import type { ITodayStats } from '@/types/aipm';
 interface TodayStatsWidgetProps {
   stats: ITodayStats | null;
   className?: string;
+  compact?: boolean;
 }
 
 interface StatItem {
@@ -17,27 +18,36 @@ interface StatItem {
   value: number;
   icon: typeof CheckCircle2;
   color: string;
+  bgColor: string;
 }
 
-export function TodayStatsWidget({ stats, className }: TodayStatsWidgetProps) {
+export function TodayStatsWidget({ stats, className, compact = false }: TodayStatsWidgetProps) {
   // Loading state
   if (!stats) {
     return (
       <div
         className={cn(
-          'bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-4 animate-pulse',
+          'bg-white dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700 animate-pulse',
+          compact ? 'p-2' : 'p-4',
           className
         )}
       >
-        <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-24 mb-3" />
-        <div className="grid grid-cols-2 gap-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div
-              key={i}
-              className="h-16 bg-surface-100 dark:bg-surface-700 rounded-lg"
-            />
-          ))}
-        </div>
+        {compact ? (
+          <div className="flex gap-2">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-8 flex-1 bg-surface-100 dark:bg-surface-700 rounded" />
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-24 mb-3" />
+            <div className="grid grid-cols-2 gap-3">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-16 bg-surface-100 dark:bg-surface-700 rounded-lg" />
+              ))}
+            </div>
+          </>
+        )}
       </div>
     );
   }
@@ -48,27 +58,59 @@ export function TodayStatsWidget({ stats, className }: TodayStatsWidgetProps) {
       value: stats.completed,
       icon: CheckCircle2,
       color: 'text-emerald-500',
+      bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
     },
     {
       label: 'In Progress',
       value: stats.inProgress,
       icon: Clock,
       color: 'text-blue-500',
+      bgColor: 'bg-blue-50 dark:bg-blue-900/20',
     },
     {
       label: 'Blocked',
       value: stats.blocked,
       icon: AlertCircle,
       color: 'text-red-500',
+      bgColor: 'bg-red-50 dark:bg-red-900/20',
     },
     {
       label: 'Hours',
       value: stats.hoursLogged,
       icon: TrendingUp,
       color: 'text-purple-500',
+      bgColor: 'bg-purple-50 dark:bg-purple-900/20',
     },
   ];
 
+  // Compact inline view
+  if (compact) {
+    return (
+      <div
+        className={cn(
+          'bg-white dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700 p-2',
+          className
+        )}
+      >
+        <div className="flex items-center justify-between gap-1">
+          {statItems.map((stat) => (
+            <div
+              key={stat.label}
+              className={cn('flex items-center gap-1.5 px-2 py-1 rounded-md flex-1 justify-center', stat.bgColor)}
+              title={stat.label}
+            >
+              <stat.icon className={cn('w-3.5 h-3.5', stat.color)} />
+              <span className="text-sm font-semibold text-surface-900 dark:text-white">
+                {stat.value}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Full view
   return (
     <div
       className={cn(
@@ -109,4 +151,3 @@ export function TodayStatsWidget({ stats, className }: TodayStatsWidgetProps) {
 }
 
 export default TodayStatsWidget;
-

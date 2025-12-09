@@ -13,7 +13,6 @@ import {
   Clock,
   Loader2,
   AlertCircle,
-  Search,
 } from 'lucide-react';
 import { useConversationHistory } from '@/hooks/useConversations';
 import { cn, formatRelativeTime } from '@/lib/utils';
@@ -54,25 +53,20 @@ function ConversationItem({
       onClick={onSelect}
       disabled={isLoading}
       className={cn(
-        'w-full flex items-start gap-3 px-3 py-2.5 rounded-lg text-left transition-colors',
+        'w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-left transition-colors',
         'hover:bg-surface-100 dark:hover:bg-surface-700',
         'disabled:opacity-50 disabled:cursor-not-allowed'
       )}
     >
-      <Icon className={cn('w-4 h-4 mt-0.5 flex-shrink-0', config.color)} />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-surface-900 dark:text-white truncate">
-          {conversation.title || `${config.label} conversation`}
-        </p>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className={cn('text-xs', config.color)}>{config.label}</span>
-          <span className="text-xs text-surface-400 dark:text-surface-500">
-            {formatRelativeTime(new Date(conversation.lastMessageAt))}
-          </span>
-        </div>
-      </div>
+      <Icon className={cn('w-3.5 h-3.5 flex-shrink-0', config.color)} />
+      <span className="text-xs font-medium text-surface-700 dark:text-surface-300 truncate flex-1">
+        {conversation.title || `${config.label} conversation`}
+      </span>
+      <span className="text-[10px] text-surface-400 dark:text-surface-500 flex-shrink-0">
+        {formatRelativeTime(new Date(conversation.lastMessageAt))}
+      </span>
       {isLoading && (
-        <Loader2 className="w-4 h-4 text-surface-400 animate-spin" />
+        <Loader2 className="w-3 h-3 text-surface-400 animate-spin flex-shrink-0" />
       )}
     </button>
   );
@@ -81,14 +75,13 @@ function ConversationItem({
 export function ConversationHistory({
   onSelectConversation,
   className,
-  defaultExpanded = true,
+  defaultExpanded = false, // Start collapsed by default
 }: ConversationHistoryProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
-  const [searchQuery, setSearchQuery] = useState('');
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const { conversations, isLoading, error, handleResume, isResuming } = useConversationHistory({
-    limit: 20,
+    limit: 10,
   });
 
   const handleSelect = async (conversation: Conversation) => {
@@ -103,94 +96,68 @@ export function ConversationHistory({
     }
   };
 
-  const filteredConversations = conversations.filter((conv) => {
-    if (!searchQuery) return true;
-    const search = searchQuery.toLowerCase();
-    return (
-      (conv.title?.toLowerCase().includes(search)) ||
-      typeConfig[conv.type]?.label.toLowerCase().includes(search)
-    );
-  });
-
   return (
-    <div className={cn('bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700', className)}>
-      {/* Header */}
+    <div className={cn('bg-white dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700', className)}>
+      {/* Header - Compact */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left"
+        className="w-full flex items-center justify-between px-3 py-2 text-left"
       >
         <div className="flex items-center gap-2">
-          <MessageSquare className="w-4 h-4 text-primary-500" />
-          <span className="text-sm font-medium text-surface-900 dark:text-white">
+          <MessageSquare className="w-3.5 h-3.5 text-primary-500" />
+          <span className="text-xs font-medium text-surface-900 dark:text-white">
             Recent Conversations
           </span>
           {conversations.length > 0 && (
-            <span className="text-xs bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-400 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] bg-surface-100 dark:bg-surface-700 text-surface-500 px-1.5 py-0.5 rounded">
               {conversations.length}
             </span>
           )}
         </div>
         {isExpanded ? (
-          <ChevronDown className="w-4 h-4 text-surface-400" />
+          <ChevronDown className="w-3.5 h-3.5 text-surface-400" />
         ) : (
-          <ChevronRight className="w-4 h-4 text-surface-400" />
+          <ChevronRight className="w-3.5 h-3.5 text-surface-400" />
         )}
       </button>
 
-      {/* Content */}
+      {/* Content - Compact */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.15 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 space-y-3">
-              {/* Search */}
-              {conversations.length > 5 && (
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
-                  <input
-                    type="text"
-                    placeholder="Search conversations..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-sm bg-surface-50 dark:bg-surface-900 border border-surface-200 dark:border-surface-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                </div>
-              )}
-
+            <div className="px-2 pb-2">
               {/* Loading state */}
               {isLoading && (
-                <div className="flex items-center justify-center py-6">
-                  <Loader2 className="w-5 h-5 text-surface-400 animate-spin" />
+                <div className="flex items-center justify-center py-3">
+                  <Loader2 className="w-4 h-4 text-surface-400 animate-spin" />
                 </div>
               )}
 
               {/* Error state */}
               {error && !isLoading && (
-                <div className="flex items-center gap-2 py-4 text-sm text-red-500">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>Failed to load conversations</span>
+                <div className="flex items-center gap-1 py-2 text-xs text-red-500">
+                  <AlertCircle className="w-3 h-3" />
+                  <span>Failed to load</span>
                 </div>
               )}
 
               {/* Empty state */}
               {!isLoading && !error && conversations.length === 0 && (
-                <div className="text-center py-6">
-                  <MessageSquare className="w-8 h-8 text-surface-300 dark:text-surface-600 mx-auto mb-2" />
-                  <p className="text-sm text-surface-500 dark:text-surface-400">
-                    No conversations yet
-                  </p>
-                </div>
+                <p className="text-xs text-surface-500 dark:text-surface-400 py-2 text-center">
+                  No conversations yet
+                </p>
               )}
 
-              {/* Conversations list */}
-              {!isLoading && !error && filteredConversations.length > 0 && (
-                <div className="space-y-1 max-h-64 overflow-y-auto">
-                  {filteredConversations.map((conversation) => (
+              {/* Conversations list - Compact */}
+              {!isLoading && !error && conversations.length > 0 && (
+                <div className="space-y-0.5 max-h-40 overflow-y-auto">
+                  {conversations.map((conversation) => (
                     <ConversationItem
                       key={conversation.conversationId}
                       conversation={conversation}
@@ -199,13 +166,6 @@ export function ConversationHistory({
                     />
                   ))}
                 </div>
-              )}
-
-              {/* No results */}
-              {!isLoading && !error && searchQuery && filteredConversations.length === 0 && conversations.length > 0 && (
-                <p className="text-center text-sm text-surface-500 dark:text-surface-400 py-4">
-                  No conversations match &quot;{searchQuery}&quot;
-                </p>
               )}
             </div>
           </motion.div>
@@ -216,4 +176,3 @@ export function ConversationHistory({
 }
 
 export default ConversationHistory;
-

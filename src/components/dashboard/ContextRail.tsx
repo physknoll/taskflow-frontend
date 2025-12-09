@@ -21,22 +21,24 @@ export function ContextRail({ onTicketClick, className }: ContextRailProps) {
   const { streak, focusQueue, todayStats, isLoading } = useAIPMDashboard();
 
   const handleConversationSelect = (conversation: Conversation, routeTo: string) => {
-    // Navigate to the appropriate route based on conversation type
     router.push(routeTo);
   };
 
   return (
-    <div className={cn('flex flex-col gap-4 h-full', className)}>
-      {/* Streak Widget - Fixed at top */}
-      <StreakWidget streak={streak} />
+    <div className={cn('flex flex-col gap-3', className)}>
+      {/* Streak Widget - Compact */}
+      <StreakWidget streak={streak} compact />
 
-      {/* Conversation History - New collapsible section */}
+      {/* Today's Stats - Compact inline */}
+      <TodayStatsWidget stats={todayStats} compact />
+
+      {/* Conversation History - Collapsible, starts collapsed */}
       <ConversationHistory
         onSelectConversation={handleConversationSelect}
-        defaultExpanded={true}
+        defaultExpanded={false}
       />
 
-      {/* Focus Queue Widget - Grows to fill space */}
+      {/* Focus Queue - Main content */}
       <FocusQueueWidget
         items={focusQueue}
         onTicketClick={onTicketClick}
@@ -44,10 +46,7 @@ export function ContextRail({ onTicketClick, className }: ContextRailProps) {
         className="flex-1 min-h-0"
       />
 
-      {/* Today's Stats Widget */}
-      <TodayStatsWidget stats={todayStats} />
-
-      {/* Pending Reviews Widget */}
+      {/* Pending Reviews - Collapsible */}
       <PendingReviewsWidget />
     </div>
   );
