@@ -65,8 +65,12 @@ export const useAuthStore = create<AuthState>()(
           // Sync tokens with API service after rehydration
           if (state.token && state.refreshToken) {
             setTokens(state.token, state.refreshToken);
+            // Keep isLoading: true if we have tokens - useAuth will fetch user and set loading false
+            // This prevents the race condition where dashboard redirects before user is fetched
+          } else {
+            // No tokens = definitely not authenticated, safe to set loading false
+            state.setLoading(false);
           }
-          state.setLoading(false);
         }
       },
     }
