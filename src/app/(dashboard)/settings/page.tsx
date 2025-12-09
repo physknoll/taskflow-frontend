@@ -18,6 +18,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { useGoogleChatIntegration } from '@/hooks/useGoogleChatIntegration';
+import type { GoogleChatPreferences } from '@/services/integrations.service';
 import {
   User,
   Bell,
@@ -482,7 +483,7 @@ function IntegrationsSettings() {
   } = useGoogleChatIntegration();
 
   // Handle preference toggle
-  const handlePreferenceToggle = (key: keyof NonNullable<typeof status>['preferences']) => {
+  const handlePreferenceToggle = (key: keyof GoogleChatPreferences) => {
     if (!status?.preferences) return;
     updatePreferences({
       [key]: !status.preferences[key],
