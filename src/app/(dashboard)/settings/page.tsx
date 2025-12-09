@@ -17,6 +17,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
+import { useGoogleChatIntegration } from '@/hooks/useGoogleChatIntegration';
 import {
   User,
   Bell,
@@ -32,6 +33,12 @@ import {
   Eye,
   Trash2,
   AlertTriangle,
+  Link2,
+  MessageSquare,
+  Check,
+  X,
+  ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -75,6 +82,7 @@ export default function SettingsPage() {
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'appearance', label: 'Appearance', icon: Sun },
     { id: 'security', label: 'Security', icon: Shield },
+    { id: 'integrations', label: 'Integrations', icon: Link2 },
   ];
 
   return (
@@ -116,6 +124,7 @@ export default function SettingsPage() {
           {activeTab === 'notifications' && <NotificationSettings />}
           {activeTab === 'appearance' && <AppearanceSettings />}
           {activeTab === 'security' && <SecuritySettings />}
+          {activeTab === 'integrations' && <IntegrationsSettings />}
         </div>
       </div>
     </div>
@@ -372,11 +381,13 @@ function NotificationToggle({
   description,
   checked,
   onChange,
+  disabled = false,
 }: {
   label: string;
   description: string;
   checked: boolean;
   onChange: () => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between">
@@ -387,9 +398,11 @@ function NotificationToggle({
       <button
         type="button"
         onClick={onChange}
+        disabled={disabled}
         className={cn(
           'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
-          checked ? 'bg-primary-600' : 'bg-surface-300 dark:bg-surface-600'
+          checked ? 'bg-primary-600' : 'bg-surface-300 dark:bg-surface-600',
+          disabled && 'opacity-50 cursor-not-allowed'
         )}
       >
         <span
@@ -450,6 +463,260 @@ function AppearanceSettings() {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function IntegrationsSettings() {
+  const {
+    status,
+    isLoading,
+    error,
+    hasPendingConnection,
+    pendingEmail,
+    connect,
+    disconnect,
+    updatePreferences,
+    isConnecting,
+    isDisconnecting,
+    isUpdatingPreferences,
+  } = useGoogleChatIntegration();
+
+  // Handle preference toggle
+  const handlePreferenceToggle = (key: keyof NonNullable<typeof status>['preferences']) => {
+    if (!status?.preferences) return;
+    updatePreferences({
+      [key]: !status.preferences[key],
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Link2 className="h-5 w-5" />
+            Integrations
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-surface-500 dark:text-surface-400 mb-6">
+            Connect TaskFlow AI with external services to receive notifications and updates.
+          </p>
+
+          {/* Google Chat Integration Card */}
+          <div className="border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-700">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                  <MessageSquare className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-surface-900 dark:text-white">
+                    Google Chat
+                  </h3>
+                  <p className="text-sm text-surface-500 dark:text-surface-400">
+                    Receive AI PM messages, blockers, and check-ins
+                  </p>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              {isLoading ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-100 dark:bg-surface-800 rounded-full">
+                  <Loader2 className="h-4 w-4 animate-spin text-surface-500" />
+                  <span className="text-sm text-surface-500">Loading...</span>
+                </div>
+              ) : status?.connected ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                    Connected
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-100 dark:bg-surface-800 rounded-full">
+                  <div className="w-2 h-2 rounded-full bg-surface-400" />
+                  <span className="text-sm text-surface-600 dark:text-surface-400">
+                    Not Connected
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Content */}
+            <div className="p-5">
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                </div>
+              )}
+
+              {!status?.available && !isLoading && (
+                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                  <p className="text-sm text-amber-700 dark:text-amber-400">
+                    Google Chat integration is not configured on this server. Contact your administrator.
+                  </p>
+                </div>
+              )}
+
+              {status?.available && !status.connected && (
+                <>
+                  {/* Pending connection from URL */}
+                  {hasPendingConnection && pendingEmail && (
+                    <div className="mb-6 p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-800 flex items-center justify-center flex-shrink-0">
+                          <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-medium text-primary-900 dark:text-primary-100">
+                            Ready to Connect
+                          </h4>
+                          <p className="text-sm text-primary-700 dark:text-primary-300 mt-1">
+                            Connect your TaskFlow account with <strong>{pendingEmail}</strong>
+                          </p>
+                          <Button
+                            className="mt-3"
+                            onClick={connect}
+                            isLoading={isConnecting}
+                          >
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            Connect Google Chat
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Instructions when not pending */}
+                  {!hasPendingConnection && (
+                    <div className="space-y-4">
+                      <h4 className="font-medium text-surface-900 dark:text-white">
+                        How to Connect
+                      </h4>
+                      <ol className="space-y-3">
+                        {[
+                          'Open Google Chat on your device',
+                          'Search for "TaskFlow AI" and start a conversation',
+                          'Send any message to the bot',
+                          'Click the "Connect Account" link the bot sends you',
+                        ].map((step, index) => (
+                          <li key={index} className="flex items-start gap-3">
+                            <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 text-sm font-medium flex items-center justify-center">
+                              {index + 1}
+                            </span>
+                            <span className="text-sm text-surface-600 dark:text-surface-400 pt-0.5">
+                              {step}
+                            </span>
+                          </li>
+                        ))}
+                      </ol>
+                      <a
+                        href="https://chat.google.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:underline mt-2"
+                      >
+                        Open Google Chat
+                        <ExternalLink className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {status?.connected && (
+                <>
+                  {/* Connection Info */}
+                  <div className="flex items-center justify-between p-4 bg-surface-50 dark:bg-surface-800/50 rounded-lg mb-6">
+                    <div>
+                      <p className="text-sm text-surface-500 dark:text-surface-400">
+                        Connected Account
+                      </p>
+                      <p className="font-medium text-surface-900 dark:text-white">
+                        {status.googleEmail}
+                      </p>
+                      {status.connectedAt && (
+                        <p className="text-xs text-surface-400 dark:text-surface-500 mt-1">
+                          Connected {new Date(status.connectedAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={disconnect}
+                      isLoading={isDisconnecting}
+                      className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Disconnect
+                    </Button>
+                  </div>
+
+                  {/* Notification Preferences */}
+                  {status.preferences && (
+                    <div>
+                      <h4 className="font-medium text-surface-900 dark:text-white mb-4">
+                        Notification Preferences
+                      </h4>
+                      <div className="space-y-4">
+                        <NotificationToggle
+                          label="Morning Check-in Reminders"
+                          description="Receive daily morning prompts to plan your day"
+                          checked={status.preferences.morningCheckIn}
+                          onChange={() => handlePreferenceToggle('morningCheckIn')}
+                          disabled={isUpdatingPreferences}
+                        />
+                        <NotificationToggle
+                          label="Evening Progress Summaries"
+                          description="End-of-day summaries of your accomplishments"
+                          checked={status.preferences.eveningCheckIn}
+                          onChange={() => handlePreferenceToggle('eveningCheckIn')}
+                          disabled={isUpdatingPreferences}
+                        />
+                        <NotificationToggle
+                          label="Ticket Notifications"
+                          description="Alerts when assigned or mentioned on tickets"
+                          checked={status.preferences.ticketNotifications}
+                          onChange={() => handlePreferenceToggle('ticketNotifications')}
+                          disabled={isUpdatingPreferences}
+                        />
+                        <NotificationToggle
+                          label="Blocker Alerts"
+                          description="Notifications about blockers affecting your work"
+                          checked={status.preferences.blockerAlerts}
+                          onChange={() => handlePreferenceToggle('blockerAlerts')}
+                          disabled={isUpdatingPreferences}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Placeholder for future integrations */}
+          <div className="mt-6 p-6 border-2 border-dashed border-surface-200 dark:border-surface-700 rounded-xl text-center">
+            <div className="w-12 h-12 rounded-xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center mx-auto mb-3">
+              <Link2 className="h-6 w-6 text-surface-400" />
+            </div>
+            <p className="text-sm text-surface-500 dark:text-surface-400">
+              More integrations coming soon
+            </p>
+            <p className="text-xs text-surface-400 dark:text-surface-500 mt-1">
+              Slack, Microsoft Teams, and more
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

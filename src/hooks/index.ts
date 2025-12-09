@@ -63,3 +63,6 @@ export {
   breakpoints,
 } from './useMediaQuery';
 
+// Integrations hooks
+export { useGoogleChatIntegration, googleChatKeys } from './useGoogleChatIntegration';
+

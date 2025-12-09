@@ -15,6 +15,7 @@ export { guidelinesService } from './guidelines.service';
 export { sopAgentService } from './sopAgent.service';
 export { aipmService } from './aipm.service';
 export { conversationsService } from './conversations.service';
+export { integrationsService } from './integrations.service';
 
 export type { TicketFilters, AIGeneratedContent } from './tickets.service';
 export type { GuidelinesFilters } from './guidelines.service';
@@ -33,4 +34,10 @@ export type {
   UpdateResourceDto,
 } from './resources.service';
 export type { SearchConversationsQuery } from './conversations.service';
+export type {
+  GoogleChatStatus,
+  GoogleChatPreferences,
+  GoogleChatConnectDto,
+  GoogleChatConnectResponse,
+} from './integrations.service';
 
