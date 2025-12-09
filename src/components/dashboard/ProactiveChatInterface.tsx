@@ -6,14 +6,15 @@ import {
   Send,
   Mic,
   MicOff,
-  Paperclip,
   Sparkles,
   ChevronDown,
   AlertCircle,
   Database,
-  FileText,
+  Building2,
+  Search,
 } from 'lucide-react';
 import { useAIPMSession } from '@/hooks/useAIPMSession';
+import { useClients } from '@/hooks/useClients';
 import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
 import { cn } from '@/lib/utils';
@@ -48,17 +49,14 @@ const chatModeOptions: Array<{
   },
 ];
 
-function getPlaceholder(chatMode: ChatMode, showDailyUpdatePrompt: boolean): string {
-  if (showDailyUpdatePrompt && chatMode === 'aipm') {
-    return "Type 'Log 2hrs on Acme project', ask a question, or just say hi...";
+function getPlaceholder(chatMode: ChatMode, hasClientSelected: boolean): string {
+  if (chatMode === 'client_kb') {
+    if (!hasClientSelected) {
+      return 'Select a client above to search their knowledge base...';
+    }
+    return 'Ask about client documents, brand guidelines, or project history...';
   }
-  switch (chatMode) {
-    case 'client_kb':
-      return 'Ask about client documents, brand guidelines, or project history...';
-    case 'aipm':
-    default:
-      return 'Ask about your tasks, priorities, or get help with anything...';
-  }
+  return 'Ask about your tasks, priorities, or get help with anything...';
 }
 
 export function ProactiveChatInterface({
@@ -70,6 +68,7 @@ export function ProactiveChatInterface({
   const [inputValue, setInputValue] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [showContextMenu, setShowContextMenu] = useState(false);
+  const [showClientMenu, setShowClientMenu] = useState(false);
 
   const {
     messages,
@@ -78,6 +77,7 @@ export function ProactiveChatInterface({
     isSending,
     isExecuting,
     contextMode,
+    selectedClientId,
     isConnected,
     error,
     initData,
@@ -85,7 +85,14 @@ export function ProactiveChatInterface({
     sendMessage,
     executeAction,
     changeContextMode,
+    selectClient,
   } = useAIPMSession();
+
+  // Fetch clients for the dropdown
+  const { clients, isLoading: isLoadingClients } = useClients({ isActive: true });
+
+  // Get selected client name
+  const selectedClient = clients.find(c => c._id === selectedClientId);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -102,6 +109,11 @@ export function ProactiveChatInterface({
   // Send message handler
   const handleSend = useCallback(async () => {
     if (!inputValue.trim() || isSending) return;
+    
+    // For client_kb mode, require a client to be selected
+    if (contextMode === 'client_kb' && !selectedClientId) {
+      return;
+    }
 
     const message = inputValue.trim();
     setInputValue('');
@@ -110,7 +122,7 @@ export function ProactiveChatInterface({
     }
 
     await sendMessage(message);
-  }, [inputValue, isSending, sendMessage]);
+  }, [inputValue, isSending, sendMessage, contextMode, selectedClientId]);
 
   // Keyboard handler
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -125,20 +137,34 @@ export function ProactiveChatInterface({
     await executeAction(action.id, accepted);
   };
 
-  // Context mode change handler
+  // Mode change handler
   const handleContextChange = (mode: ChatMode) => {
     changeContextMode(mode);
     setShowContextMenu(false);
   };
 
+  // Client selection handler
+  const handleClientSelect = (clientId: string) => {
+    selectClient(clientId);
+    setShowClientMenu(false);
+  };
+
   const currentChatMode = chatModeOptions.find((o) => o.value === contextMode);
+  
+  // Determine if chat input should be disabled
+  const isInputDisabled = 
+    (contextMode === 'aipm' && isLoading && messages.length === 0) ||
+    (contextMode === 'client_kb' && !selectedClientId);
+
+  // Determine if we should show the loading spinner (only for AIPM mode)
+  const showLoadingSpinner = contextMode === 'aipm' && isLoading && messages.length === 0 && !error;
 
   return (
     <div className={cn('flex flex-col h-full', className)}>
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {/* Loading state */}
-        {isLoading && messages.length === 0 && !error && (
+        {/* Loading state - ONLY for AIPM mode */}
+        {showLoadingSpinner && (
           <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <div className="w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mx-auto mb-4" />
@@ -149,8 +175,50 @@ export function ProactiveChatInterface({
           </div>
         )}
 
-        {/* Error state */}
-        {error && messages.length === 0 && (
+        {/* Client KB welcome state - when no client selected */}
+        {contextMode === 'client_kb' && !selectedClientId && messages.length === 0 && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center max-w-md">
+              <div className="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mx-auto mb-4">
+                <Database className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
+                Client Knowledge Base
+              </h3>
+              <p className="text-surface-500 dark:text-surface-400 text-sm mb-4">
+                Search through client documents, brand guidelines, and project history. 
+                Select a client above to get started.
+              </p>
+              <button
+                onClick={() => setShowClientMenu(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                <Building2 className="w-4 h-4" />
+                Select a Client
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Client KB ready state - client selected but no messages */}
+        {contextMode === 'client_kb' && selectedClientId && messages.length === 0 && (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center max-w-md">
+              <div className="w-16 h-16 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mx-auto mb-4">
+                <Search className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
+                Search {selectedClient?.name || 'Client'} Knowledge Base
+              </h3>
+              <p className="text-surface-500 dark:text-surface-400 text-sm">
+                Ask questions about their brand guidelines, project history, processes, or any documents in their knowledge base.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Error state - ONLY for AIPM mode */}
+        {error && messages.length === 0 && contextMode === 'aipm' && (
           <div className="flex items-center justify-center h-full">
             <div className="text-center max-w-md">
               <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
@@ -204,8 +272,9 @@ export function ProactiveChatInterface({
 
       {/* Input Area */}
       <div className="border-t border-surface-200 dark:border-surface-700 p-4 bg-white dark:bg-surface-800 relative z-10">
-        {/* Context Switcher */}
-        <div className="flex items-center gap-2 mb-3">
+        {/* Mode & Client Switcher */}
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          {/* Chat Mode Selector */}
           <div className="relative">
             <button
               onClick={() => setShowContextMenu(!showContextMenu)}
@@ -227,7 +296,7 @@ export function ProactiveChatInterface({
               />
             </button>
 
-            {/* Context Menu Dropdown */}
+            {/* Mode Menu Dropdown */}
             <AnimatePresence>
               {showContextMenu && (
                 <motion.div
@@ -235,7 +304,7 @@ export function ProactiveChatInterface({
                   initial="initial"
                   animate="animate"
                   exit="exit"
-                  className="absolute bottom-full left-0 mb-2 bg-white dark:bg-surface-800 rounded-lg shadow-lg border border-surface-200 dark:border-surface-700 overflow-hidden z-10 min-w-[220px]"
+                  className="absolute bottom-full left-0 mb-2 bg-white dark:bg-surface-800 rounded-lg shadow-lg border border-surface-200 dark:border-surface-700 overflow-hidden z-20 min-w-[220px]"
                 >
                   {chatModeOptions.map((option) => (
                     <button
@@ -277,8 +346,85 @@ export function ProactiveChatInterface({
             </AnimatePresence>
           </div>
 
+          {/* Client Selector - Only show for client_kb mode */}
+          {contextMode === 'client_kb' && (
+            <div className="relative">
+              <button
+                onClick={() => setShowClientMenu(!showClientMenu)}
+                className={cn(
+                  'flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors',
+                  selectedClientId
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-900/50'
+                    : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/50'
+                )}
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>
+                  {selectedClient?.name || 'Select Client'}
+                </span>
+                <ChevronDown
+                  className={cn(
+                    'w-3.5 h-3.5 transition-transform',
+                    showClientMenu && 'rotate-180'
+                  )}
+                />
+              </button>
+
+              {/* Client Menu Dropdown */}
+              <AnimatePresence>
+                {showClientMenu && (
+                  <motion.div
+                    variants={scaleIn}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    className="absolute bottom-full left-0 mb-2 bg-white dark:bg-surface-800 rounded-lg shadow-lg border border-surface-200 dark:border-surface-700 overflow-hidden z-20 min-w-[200px] max-h-[300px] overflow-y-auto"
+                  >
+                    {isLoadingClients ? (
+                      <div className="px-4 py-3 text-sm text-surface-500">
+                        Loading clients...
+                      </div>
+                    ) : clients.length === 0 ? (
+                      <div className="px-4 py-3 text-sm text-surface-500">
+                        No clients found
+                      </div>
+                    ) : (
+                      clients.map((client) => (
+                        <button
+                          key={client._id}
+                          onClick={() => handleClientSelect(client._id)}
+                          className={cn(
+                            'flex items-center gap-3 px-4 py-2.5 text-sm w-full hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors text-left',
+                            selectedClientId === client._id &&
+                              'bg-primary-50 dark:bg-primary-900/30'
+                          )}
+                        >
+                          <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0 bg-primary-500"
+                          >
+                            {client.name.charAt(0).toUpperCase()}
+                          </div>
+                          <span
+                            className={cn(
+                              'font-medium truncate',
+                              selectedClientId === client._id
+                                ? 'text-primary-700 dark:text-primary-300'
+                                : 'text-surface-900 dark:text-white'
+                            )}
+                          >
+                            {client.name}
+                          </span>
+                        </button>
+                      ))
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
           {/* Connection Status */}
-          {!isConnected && (
+          {!isConnected && contextMode === 'aipm' && (
             <span className="text-xs text-amber-600 flex items-center gap-1">
               <AlertCircle className="w-3 h-3" />
               Reconnecting...
@@ -294,10 +440,10 @@ export function ProactiveChatInterface({
               value={inputValue}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
-              placeholder={getPlaceholder(contextMode, showDailyUpdatePrompt)}
+              placeholder={getPlaceholder(contextMode, !!selectedClientId)}
               rows={1}
               className="w-full resize-none rounded-xl border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-800 px-4 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent placeholder:text-surface-400 dark:placeholder:text-surface-500 disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isLoading && messages.length === 0}
+              disabled={isInputDisabled}
             />
             <button
               onClick={() => setIsRecording(!isRecording)}
@@ -320,10 +466,10 @@ export function ProactiveChatInterface({
           {/* Send Button */}
           <button
             onClick={handleSend}
-            disabled={!inputValue.trim() || isSending}
+            disabled={!inputValue.trim() || isSending || isInputDisabled}
             className={cn(
               'p-3 rounded-xl transition-all',
-              inputValue.trim() && !isSending
+              inputValue.trim() && !isSending && !isInputDisabled
                 ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg hover:shadow-xl'
                 : 'bg-surface-100 dark:bg-surface-700 text-surface-400 cursor-not-allowed'
             )}
@@ -341,4 +487,3 @@ export function ProactiveChatInterface({
 }
 
 export default ProactiveChatInterface;
-
