@@ -18,7 +18,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.push('/login');
+      // Preserve the current URL so we can redirect back after login
+      const currentPath = window.location.pathname + window.location.search;
+      const redirectUrl = encodeURIComponent(currentPath);
+      router.push(`/login?redirect=${redirectUrl}`);
     }
   }, [isAuthenticated, isLoading, router]);
 

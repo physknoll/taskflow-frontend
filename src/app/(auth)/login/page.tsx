@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -42,9 +43,13 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  const searchParams = useSearchParams();
   const { login, initiateGoogleAuth } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Get redirect URL from query params (set when user was redirected to login)
+  const redirectTo = searchParams.get('redirect');
 
   const {
     register,
@@ -57,7 +62,7 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     try {
-      await login(data.email, data.password);
+      await login(data.email, data.password, redirectTo || undefined);
     } catch (error) {
       // Error is handled in the hook
     } finally {

@@ -34,13 +34,13 @@ export function useAuth() {
   }, []);
 
   const login = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, redirectTo?: string) => {
       try {
         const response = await authService.login({ email, password });
         setTokens(response.token, response.refreshToken);
         setUser(response.user);
         toast.success(`Welcome back, ${response.user.firstName}!`);
-        router.push('/');
+        router.push(redirectTo || '/');
         return response;
       } catch (error: any) {
         const message = error.response?.data?.message || 'Login failed';
