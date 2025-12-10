@@ -63,7 +63,7 @@ export default function AnalyticsPage() {
   const ticketsByClient = clients.slice(0, 5).map(client => ({
     name: client.name,
     tickets: tickets.filter(t => 
-      (typeof t.client === 'object' && t.client._id === client._id) || t.client === client._id
+      (t.client != null && typeof t.client === 'object' && t.client._id === client._id) || t.client === client._id
     ).length,
   }));
 

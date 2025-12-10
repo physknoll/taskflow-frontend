@@ -49,7 +49,7 @@ export function ProjectSidebar({ project, stats, onClose }: ProjectSidebarProps)
   const [showAddResource, setShowAddResource] = useState(false);
   
   // Get clientId for resources
-  const clientId = typeof project.client === 'object' ? project.client._id : project.client;
+  const clientId = project.client != null && typeof project.client === 'object' ? project.client._id : project.client;
   
   // Resources hook
   const {
