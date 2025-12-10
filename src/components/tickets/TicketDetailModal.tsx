@@ -301,9 +301,9 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
               <label className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 flex items-center gap-2">
                 <User className="h-4 w-4" /> Assigned To
               </label>
-              {Array.isArray(ticket.assignedTo) && ticket.assignedTo.length > 0 ? (
+              {Array.isArray(ticket.assignedTo) && ticket.assignedTo.filter(u => u != null).length > 0 ? (
                 <div className="flex flex-wrap gap-2">
-                  {ticket.assignedTo.map((user: any) => (
+                  {ticket.assignedTo.filter(u => u != null).map((user: any) => (
                     <div
                       key={user._id}
                       className="flex items-center gap-2 bg-surface-100 dark:bg-surface-800 rounded-full px-3 py-1"

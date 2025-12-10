@@ -514,29 +514,32 @@ export default function TicketDetailPage() {
                     <span>{formatDate(ticket.dueDate)}</span>
                   </div>
                 )}
-                {Array.isArray(ticket.assignedTo) && ticket.assignedTo.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4" />
-                    <div className="flex -space-x-2">
-                      {ticket.assignedTo.slice(0, 3).map((user: any) => (
-                        <Avatar
-                          key={user._id}
-                          src={user.avatar}
-                          firstName={user.firstName}
-                          lastName={user.lastName}
-                          size="xs"
-                          className="ring-2 ring-white dark:ring-surface-800"
-                        />
-                      ))}
-                    </div>
-                    {ticket.assignedTo.length > 0 && (
+                {Array.isArray(ticket.assignedTo) && (() => {
+                  const validAssignees = ticket.assignedTo.filter(u => u != null);
+                  if (validAssignees.length === 0) return null;
+                  const firstAssignee = validAssignees[0];
+                  return (
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      <div className="flex -space-x-2">
+                        {validAssignees.slice(0, 3).map((user: any) => (
+                          <Avatar
+                            key={user._id}
+                            src={user.avatar}
+                            firstName={user.firstName}
+                            lastName={user.lastName}
+                            size="xs"
+                            className="ring-2 ring-white dark:ring-surface-800"
+                          />
+                        ))}
+                      </div>
                       <span className="text-surface-600 dark:text-surface-400">
-                        {typeof ticket.assignedTo[0] === 'string' ? ticket.assignedTo[0] : ticket.assignedTo[0].firstName}
-                        {ticket.assignedTo.length > 1 && ` +${ticket.assignedTo.length - 1}`}
+                        {typeof firstAssignee === 'string' ? firstAssignee : (firstAssignee as any).firstName}
+                        {validAssignees.length > 1 && ` +${validAssignees.length - 1}`}
                       </span>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  );
+                })()}
               </div>
             </>
           )}

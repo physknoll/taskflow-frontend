@@ -302,7 +302,7 @@ function ProjectListView({
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex -space-x-2">
-                    {project.teamMembers?.slice(0, 3).map((member, index) => {
+                    {project.teamMembers?.filter(m => m != null).slice(0, 3).map((member, index) => {
                       const memberId = typeof member === 'string' ? member : member._id;
                       const memberName = typeof member === 'string' ? '' : `${member.firstName} ${member.lastName}`;
                       const memberInitial = typeof member === 'string' ? '?' : member.firstName?.[0];

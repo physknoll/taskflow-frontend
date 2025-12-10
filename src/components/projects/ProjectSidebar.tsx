@@ -331,7 +331,7 @@ export function ProjectSidebar({ project, stats, onClose }: ProjectSidebarProps)
                     Team Members ({project.teamMembers.length})
                   </span>
                   <div className="space-y-2 mt-1">
-                    {project.teamMembers.map((member, index) => {
+                    {project.teamMembers.filter(m => m != null).map((member, index) => {
                       const memberId = typeof member === 'string' ? member : member._id;
                       const firstName = typeof member === 'string' ? '' : member.firstName;
                       const lastName = typeof member === 'string' ? '' : member.lastName;

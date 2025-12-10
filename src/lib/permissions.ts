@@ -160,7 +160,7 @@ export function canSubmitForReview(ctx: TicketPermissionContext): boolean {
  * Get assignedTo user IDs from a ticket
  */
 export function getAssignedUserIds(assignedTo: any[]): string[] {
-  return assignedTo.map((user) => {
+  return assignedTo.filter(user => user != null).map((user) => {
     if (typeof user === 'string') return user;
     if (typeof user === 'object' && user._id) return user._id;
     return '';

@@ -447,7 +447,7 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
     // Load all messages into the chat UI
     if (fullConversation.messages && fullConversation.messages.length > 0) {
       const loadedMessages: IDashboardMessage[] = fullConversation.messages
-        .filter(m => m.role === 'user' || m.role === 'assistant')
+        .filter(m => m != null && (m.role === 'user' || m.role === 'assistant'))
         .map((m, index) => ({
           id: m._id || `msg-${index}-${Date.now()}`,
           role: m.role === 'user' ? 'user' : 'aipm',

@@ -273,9 +273,9 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
             )}
 
             {/* Assignees */}
-            {Array.isArray(ticket.assignedTo) && ticket.assignedTo.length > 0 && (
+            {Array.isArray(ticket.assignedTo) && ticket.assignedTo.filter(u => u != null).length > 0 && (
               <AvatarGroup
-                avatars={ticket.assignedTo.map((user: any) => ({
+                avatars={ticket.assignedTo.filter(u => u != null).map((user: any) => ({
                   src: user.avatar,
                   firstName: user.firstName,
                   lastName: user.lastName,

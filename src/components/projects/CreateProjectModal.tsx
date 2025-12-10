@@ -153,7 +153,7 @@ export function CreateProjectModal({
       setTags(editingProject.tags || []);
       setSelectedColor(editingProject.color || PROJECT_COLORS[0]);
       setSelectedTeamMembers(
-        editingProject.teamMembers?.map((m) => 
+        editingProject.teamMembers?.filter(m => m != null).map((m) => 
           typeof m === 'string' ? m : m._id
         ) || []
       );

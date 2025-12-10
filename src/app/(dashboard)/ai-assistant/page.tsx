@@ -225,7 +225,7 @@ export default function AIAssistantPage() {
       // Load the conversation messages
       if (conversation.messages) {
         const loadedMessages: Message[] = conversation.messages
-          .filter(m => m.role === 'user' || m.role === 'assistant')
+          .filter(m => m != null && (m.role === 'user' || m.role === 'assistant'))
           .map(m => ({
             id: m._id,
             role: m.role as 'user' | 'assistant',
