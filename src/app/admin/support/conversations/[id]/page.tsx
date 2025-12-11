@@ -162,9 +162,16 @@ export default function ConversationDetailPage() {
                 />
                 <div>
                   <p className="font-medium text-surface-900 dark:text-white">
-                    {conversation.user?.firstName} {conversation.user?.lastName}
+                    {conversation.user?.firstName && conversation.user?.lastName 
+                      ? `${conversation.user.firstName} ${conversation.user.lastName}`
+                      : conversation.user?.email || 'Unknown User'}
                   </p>
-                  <p className="text-sm text-surface-500">{conversation.user?.email}</p>
+                  {conversation.user?.email && conversation.user?.firstName && (
+                    <p className="text-sm text-surface-500">{conversation.user.email}</p>
+                  )}
+                  {!conversation.user && (
+                    <p className="text-sm text-surface-400 italic">User data not available</p>
+                  )}
                 </div>
               </div>
               {conversation.organization && (

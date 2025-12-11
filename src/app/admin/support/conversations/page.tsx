@@ -165,7 +165,9 @@ export default function ConversationsPage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-medium text-surface-900 dark:text-white">
-                          {conversation.user?.firstName} {conversation.user?.lastName}
+                          {conversation.user?.firstName && conversation.user?.lastName 
+                            ? `${conversation.user.firstName} ${conversation.user.lastName}`
+                            : conversation.user?.email || 'Unknown User'}
                         </span>
                         {conversation.organization && (
                           <span className="text-sm text-surface-500">
