@@ -20,9 +20,12 @@ export function useAuth() {
         try {
           const userData = await authService.getCurrentUser();
           setUser(userData);
-        } catch (error) {
-          // Token invalid, logout
+        } catch (error: any) {
+          // Token invalid or network error - logout and clear all tokens
+          console.error('Auth initialization failed:', error?.message || error);
           storeLogout();
+          // Ensure loading is set to false even if logout doesn't trigger it
+          setLoading(false);
         }
       } else {
         setLoading(false);

@@ -158,7 +158,8 @@ export default function ProjectsPage() {
         {viewMode === 'board' ? (
           <ProjectBoard
             board={board}
-            isLoading={isLoading}
+            projects={projects}
+            isLoading={isLoading || isListLoading}
             onStatusChange={handleStatusChange}
             onProjectClick={handleProjectClick}
           />

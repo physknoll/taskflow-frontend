@@ -20,6 +20,7 @@ import { PROJECT_STATUSES } from '@/lib/constants';
 
 interface ProjectBoardProps {
   board?: ProjectBoardData;
+  projects?: IProject[];  // Add direct projects support as fallback
   isLoading: boolean;
   onStatusChange: (projectId: string, newStatus: string) => void;
   onProjectClick: (project: IProject) => void;
@@ -27,6 +28,7 @@ interface ProjectBoardProps {
 
 export function ProjectBoard({
   board,
+  projects: projectsProp,
   isLoading,
   onStatusChange,
   onProjectClick,
@@ -50,9 +52,9 @@ export function ProjectBoard({
 
   const handleDragStart = (event: DragStartEvent) => {
     const projectId = event.active.id as string;
-    const project = board?.board
-      .flatMap((col) => col.projects)
-      .find((p) => p._id === projectId);
+    // Find the project from allProjects (will be set after loading)
+    const allProjectsForDrag = board?.board?.flatMap((col) => col.projects) || projectsProp || [];
+    const project = allProjectsForDrag.find((p) => p._id === projectId);
     
     if (project) {
       setActiveProject(project);
@@ -68,17 +70,15 @@ export function ProjectBoard({
     const projectId = active.id as string;
     const overId = over.id as string;
 
-    // Check if we're dropping over a column
-    const columns = board?.columns || [];
-    const targetColumn = columns.find((c) => c.key === overId);
+    // Check if we're dropping over a column (using PROJECT_STATUSES keys)
+    const targetStatus = PROJECT_STATUSES.find((s) => s.id === overId);
 
-    if (targetColumn) {
-      const project = board?.board
-        .flatMap((col) => col.projects)
-        .find((p) => p._id === projectId);
+    if (targetStatus) {
+      const allProjectsForDrag = board?.board?.flatMap((col) => col.projects) || projectsProp || [];
+      const project = allProjectsForDrag.find((p) => p._id === projectId);
 
-      if (project && project.status !== targetColumn.key) {
-        onStatusChange(projectId, targetColumn.key);
+      if (project && project.status !== targetStatus.id) {
+        onStatusChange(projectId, targetStatus.id);
       }
     }
   };
@@ -91,8 +91,20 @@ export function ProjectBoard({
     return <BoardSkeleton />;
   }
 
+  // Get all projects - prefer board data if available, otherwise use direct projects prop
+  const allProjects: IProject[] = (() => {
+    // First try to get projects from board data
+    if (board?.board && board.board.length > 0) {
+      return board.board.flatMap((b) => b.projects);
+    }
+    // Fallback to direct projects prop
+    if (projectsProp && projectsProp.length > 0) {
+      return projectsProp;
+    }
+    return [];
+  })();
+
   // Always use PROJECT_STATUSES for project boards
-  // The backend should eventually return project-specific columns  
   const columns = PROJECT_STATUSES.map((s) => ({
     _id: s.id,
     key: s.id,
@@ -118,10 +130,8 @@ export function ProjectBoard({
     >
       <div className="flex gap-6 h-full min-h-[500px] overflow-x-auto pb-4">
         {columns.map((column) => {
-          // Get projects that match this status
-          const projects = board?.board
-            .flatMap((b) => b.projects)
-            .filter((p) => p.status === column.key) || [];
+          // Get projects that match this column's status
+          const projects = allProjects.filter((p) => p.status === column.key);
 
           return (
             <KanbanColumn

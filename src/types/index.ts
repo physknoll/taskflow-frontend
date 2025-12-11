@@ -1,4 +1,13 @@
 // User Types
+
+// Per-user permission settings
+export interface IUserPermissions {
+  // For client_viewer users - can they create tickets?
+  canCreateTickets?: boolean;
+  // For employee users - ticket visibility scope
+  ticketVisibility?: 'assigned_only' | 'all';
+}
+
 export interface IUser {
   _id: string;
   email: string;
@@ -23,6 +32,12 @@ export interface IUser {
     aiReminders: boolean;
   };
   assignedClients: string[];
+  // For client_viewer users - links them to a specific client
+  clientId?: string;
+  // Populated client data (when available)
+  client?: IClient;
+  // Per-user permission settings
+  permissions?: IUserPermissions;
   stats: {
     totalTicketsCompleted: number;
     averageCompletionTime: number;
@@ -626,7 +641,11 @@ export interface RegisterDto {
   password: string;
   firstName: string;
   lastName: string;
-  role: 'manager' | 'employee';
+  role: 'manager' | 'employee' | 'client_viewer';
+  // Required for client_viewer role
+  clientId?: string;
+  // Per-user permission settings
+  permissions?: IUserPermissions;
 }
 
 // ============================================

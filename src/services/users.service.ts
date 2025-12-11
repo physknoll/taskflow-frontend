@@ -1,5 +1,5 @@
 import api from './api';
-import { IUser, RegisterDto, ApiResponse, PaginatedResponse } from '@/types';
+import { IUser, RegisterDto, ApiResponse, PaginatedResponse, IUserPermissions } from '@/types';
 
 export interface UserFilters {
   role?: string;
@@ -22,6 +22,26 @@ export interface IUserMinimal {
   jobTitle?: string;
 }
 
+// DTO for creating a new user (extends RegisterDto with all fields)
+export interface CreateUserDto {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role: 'manager' | 'employee' | 'client_viewer';
+  // Required for client_viewer role
+  clientId?: string;
+  // Per-user permission settings
+  permissions?: IUserPermissions;
+}
+
+// DTO for updating user permissions and settings
+export interface UpdateUserPermissionsDto {
+  role?: 'manager' | 'employee' | 'client_viewer';
+  clientId?: string;
+  permissions?: IUserPermissions;
+}
+
 export const usersService = {
   async getUsers(filters: UserFilters = {}): Promise<PaginatedResponse<IUser>> {
     const params = new URLSearchParams();
@@ -40,12 +60,18 @@ export const usersService = {
     return response.data.data;
   },
 
-  async createUser(data: RegisterDto): Promise<IUser> {
+  async createUser(data: CreateUserDto): Promise<IUser> {
     const response = await api.post<ApiResponse<{ user: IUser }>>('/auth/register', data);
     return response.data.data.user;
   },
 
   async updateUser(id: string, data: Partial<IUser>): Promise<IUser> {
+    const response = await api.put<ApiResponse<IUser>>(`/users/${id}`, data);
+    return response.data.data;
+  },
+
+  // Update user permissions and role settings (owner only)
+  async updateUserPermissions(id: string, data: UpdateUserPermissionsDto): Promise<IUser> {
     const response = await api.put<ApiResponse<IUser>>(`/users/${id}`, data);
     return response.data.data;
   },

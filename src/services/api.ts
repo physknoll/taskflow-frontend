@@ -45,6 +45,8 @@ export function clearTokens() {
   if (typeof window !== 'undefined') {
     localStorage.removeItem('taskflow_token');
     localStorage.removeItem('taskflow_refresh_token');
+    // Also clear the zustand auth store to prevent rehydration of stale tokens
+    localStorage.removeItem('taskflow-auth');
   }
 }
 

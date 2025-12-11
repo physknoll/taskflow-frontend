@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { authService } from '@/services/auth.service';
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-export default function SetupAccountPage() {
+function SetupAccountContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -249,6 +249,23 @@ export default function SetupAccountPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function SetupAccountPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary-600" />
+            <p className="mt-4 text-surface-600">Loading...</p>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <SetupAccountContent />
+    </Suspense>
   );
 }
 
