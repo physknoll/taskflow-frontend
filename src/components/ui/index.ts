@@ -24,3 +24,7 @@ export { Progress, CircularProgress } from './Progress';
 
 export { UserTagInput } from './UserTagInput';
 
+export { StatCard } from './StatCard';
+
+export { DateRangePicker } from './DateRangePicker';
+
