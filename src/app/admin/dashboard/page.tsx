@@ -1,36 +1,42 @@
 'use client';
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useAdminAuthStore } from '@/stores/adminAuthStore';
+import { useAdminOverview } from '@/hooks/admin/useAdminAnalytics';
 import { 
   Building2, 
   Users, 
   MessageSquare, 
   Ticket, 
-  TrendingUp, 
   DollarSign,
-  ArrowUpRight,
-  ArrowDownRight,
 } from 'lucide-react';
 
-// Placeholder component until analytics service is ready
 function StatCard({ 
   title, 
   value, 
   subtitle, 
   icon: Icon, 
-  trend,
-  trendValue,
+  loading,
 }: {
   title: string;
   value: string | number;
   subtitle?: string;
   icon: React.ElementType;
-  trend?: 'up' | 'down';
-  trendValue?: string;
+  loading?: boolean;
 }) {
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <Skeleton className="h-4 w-24 mb-2" />
+          <Skeleton className="h-8 w-16 mb-1" />
+          <Skeleton className="h-3 w-32" />
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="relative overflow-hidden">
       <CardContent className="p-6">
@@ -47,18 +53,6 @@ function StatCard({
                 {subtitle}
               </p>
             )}
-            {trend && trendValue && (
-              <div className="flex items-center gap-1 mt-2">
-                {trend === 'up' ? (
-                  <ArrowUpRight className="w-4 h-4 text-emerald-500" />
-                ) : (
-                  <ArrowDownRight className="w-4 h-4 text-red-500" />
-                )}
-                <span className={trend === 'up' ? 'text-emerald-500' : 'text-red-500'}>
-                  {trendValue}
-                </span>
-              </div>
-            )}
           </div>
           <div className="p-3 rounded-xl bg-surface-100 dark:bg-surface-800">
             <Icon className="w-6 h-6 text-surface-600 dark:text-surface-400" />
@@ -71,6 +65,7 @@ function StatCard({
 
 export default function AdminDashboardPage() {
   const { user } = useAdminAuthStore();
+  const { data: overview, isLoading: overviewLoading } = useAdminOverview();
 
   return (
     <div className="space-y-6">
@@ -88,33 +83,31 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Total Organizations"
-          value="--"
-          subtitle="-- active, -- trialing"
+          value={overview?.organizations.total ?? '--'}
+          subtitle={`${overview?.organizations.active ?? '--'} active, ${overview?.organizations.trialing ?? '--'} trialing`}
           icon={Building2}
-          trend="up"
-          trendValue="+12% this month"
+          loading={overviewLoading}
         />
         <StatCard
           title="Total Users"
-          value="--"
-          subtitle="-- new this month"
+          value={overview?.users.total ?? '--'}
+          subtitle={`${overview?.users.newThisMonth ?? '--'} new this month`}
           icon={Users}
-          trend="up"
-          trendValue="+8% this month"
+          loading={overviewLoading}
         />
         <StatCard
           title="AI Conversations"
-          value="--"
+          value={overview?.ai.conversationsThisMonth ?? '--'}
           subtitle="This month"
           icon={MessageSquare}
-          trend="up"
-          trendValue="+24% vs last month"
+          loading={overviewLoading}
         />
         <StatCard
           title="Tickets"
-          value="--"
-          subtitle="-- completed this month"
+          value={overview?.tickets.total ?? '--'}
+          subtitle={`${overview?.tickets.completedThisMonth ?? '--'} completed this month`}
           icon={Ticket}
+          loading={overviewLoading}
         />
       </div>
 
