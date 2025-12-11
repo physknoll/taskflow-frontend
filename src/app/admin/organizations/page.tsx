@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/Select';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { useAdminOrganizations, useFlagOrganization } from '@/hooks/admin/useAdminOrganizations';
 import { SUBSCRIPTION_STATUS_COLORS, SUBSCRIPTION_PLANS } from '@/lib/admin-constants';
+import { formatStatus } from '@/lib/utils';
 import { AdminOrganizationParams, SubscriptionPlan, SubscriptionStatus } from '@/types/admin';
 import { 
   Search, 
@@ -263,8 +264,8 @@ export default function OrganizationsPage() {
                       </Badge>
                     </td>
                     <td className="px-6 py-4">
-                      <Badge className={getStatusColor(org.subscriptionStatus)}>
-                        {org.subscriptionStatus.replace('_', ' ')}
+                      <Badge className={getStatusColor(org.subscriptionStatus || 'active')}>
+                        {formatStatus(org.subscriptionStatus, 'active')}
                       </Badge>
                     </td>
                     <td className="px-6 py-4">

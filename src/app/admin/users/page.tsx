@@ -281,14 +281,24 @@ export default function UsersPage() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <Badge className={ORG_ROLE_COLORS[user.role]}>
-                        {user.role.replace('_', ' ')}
-                      </Badge>
+                      {user.role ? (
+                        <Badge className={ORG_ROLE_COLORS[user.role] || ''}>
+                          {user.role.replace('_', ' ')}
+                        </Badge>
+                      ) : (
+                        <span className="text-surface-400">-</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
-                      <Badge className={ACCOUNT_STATUS_COLORS[user.accountStatus]}>
-                        {user.accountStatus.replace('_', ' ')}
-                      </Badge>
+                      {user.accountStatus ? (
+                        <Badge className={ACCOUNT_STATUS_COLORS[user.accountStatus] || ''}>
+                          {user.accountStatus.replace('_', ' ')}
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-surface-100 text-surface-600">
+                          active
+                        </Badge>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-surface-600 dark:text-surface-400">
                       {user.lastLogin ? format(new Date(user.lastLogin), 'MMM d, yyyy') : 'Never'}
@@ -306,7 +316,7 @@ export default function UsersPage() {
                             >
                               <UserCheck className="w-4 h-4 text-emerald-500" />
                             </Button>
-                          ) : (
+                          ) : user.accountStatus !== 'pending_deletion' && (
                             <Button
                               variant="ghost"
                               size="icon-sm"

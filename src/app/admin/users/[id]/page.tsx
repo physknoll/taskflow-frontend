@@ -14,6 +14,7 @@ import { useAdminUser, useSuspendUser, useUnsuspendUser, useImpersonateUser, use
 import { ACCOUNT_STATUS_COLORS, ORG_ROLE_COLORS, PLATFORM_ROLES } from '@/lib/admin-constants';
 import { hasAdminPermission, isSuperAdmin } from '@/lib/admin-permissions';
 import { useAdminAuthStore } from '@/stores/adminAuthStore';
+import { formatStatus } from '@/lib/utils';
 import { 
   ArrowLeft,
   Building2,
@@ -149,11 +150,13 @@ export default function UserDetailPage() {
             </div>
             <p className="text-surface-500 mt-1">{user.email}</p>
             <div className="flex items-center gap-3 mt-2">
-              <Badge className={ORG_ROLE_COLORS[user.role]}>
-                {user.role.replace('_', ' ')}
-              </Badge>
-              <Badge className={ACCOUNT_STATUS_COLORS[user.accountStatus]}>
-                {user.accountStatus.replace('_', ' ')}
+              {user.role && (
+                <Badge className={ORG_ROLE_COLORS[user.role] || ''}>
+                  {formatStatus(user.role)}
+                </Badge>
+              )}
+              <Badge className={ACCOUNT_STATUS_COLORS[user.accountStatus || 'active'] || ''}>
+                {formatStatus(user.accountStatus, 'active')}
               </Badge>
             </div>
           </div>
@@ -377,14 +380,14 @@ export default function UserDetailPage() {
                 </div>
                 <div>
                   <p className="text-sm text-surface-500">Account Status</p>
-                  <Badge className={ACCOUNT_STATUS_COLORS[user.accountStatus]}>
-                    {user.accountStatus.replace('_', ' ')}
+                  <Badge className={ACCOUNT_STATUS_COLORS[user.accountStatus || 'active'] || ''}>
+                    {formatStatus(user.accountStatus, 'active')}
                   </Badge>
                 </div>
                 <div>
                   <p className="text-sm text-surface-500">Organization Role</p>
-                  <Badge className={ORG_ROLE_COLORS[user.role]}>
-                    {user.role.replace('_', ' ')}
+                  <Badge className={ORG_ROLE_COLORS[user.role] || ''}>
+                    {formatStatus(user.role, '-')}
                   </Badge>
                 </div>
                 {user.platformRole && (

@@ -14,6 +14,7 @@ import { useAdminOrganization, useFlagOrganization, useDeleteOrganization } from
 import { SUBSCRIPTION_STATUS_COLORS, SUBSCRIPTION_PLANS, ORG_ROLE_COLORS, ACCOUNT_STATUS_COLORS } from '@/lib/admin-constants';
 import { hasAdminPermission, isSuperAdmin } from '@/lib/admin-permissions';
 import { useAdminAuthStore } from '@/stores/adminAuthStore';
+import { formatStatus } from '@/lib/utils';
 import { SubscriptionPlan, SubscriptionStatus } from '@/types/admin';
 import { 
   ArrowLeft,
@@ -147,8 +148,8 @@ export default function OrganizationDetailPage() {
               <Badge className={getPlanColor(org.currentPlan)}>
                 {SUBSCRIPTION_PLANS.find((p) => p.id === org.currentPlan)?.label}
               </Badge>
-              <Badge className={getStatusColor(org.subscriptionStatus)}>
-                {org.subscriptionStatus.replace('_', ' ')}
+              <Badge className={getStatusColor(org.subscriptionStatus || 'active')}>
+                {formatStatus(org.subscriptionStatus, 'active')}
               </Badge>
             </div>
           </div>
@@ -324,11 +325,11 @@ export default function OrganizationDetailPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Badge className={ORG_ROLE_COLORS[user.role]}>
-                      {user.role.replace('_', ' ')}
+                    <Badge className={ORG_ROLE_COLORS[user.role] || ''}>
+                      {formatStatus(user.role)}
                     </Badge>
-                    <Badge className={ACCOUNT_STATUS_COLORS[user.accountStatus]}>
-                      {user.accountStatus.replace('_', ' ')}
+                    <Badge className={ACCOUNT_STATUS_COLORS[user.accountStatus || 'active'] || ''}>
+                      {formatStatus(user.accountStatus, 'active')}
                     </Badge>
                     <Button
                       variant="ghost"
@@ -373,8 +374,8 @@ export default function OrganizationDetailPage() {
               </div>
               <div>
                 <p className="text-sm text-surface-500">Subscription Status</p>
-                <Badge className={getStatusColor(org.subscriptionStatus)}>
-                  {org.subscriptionStatus.replace('_', ' ')}
+                <Badge className={getStatusColor(org.subscriptionStatus || 'active')}>
+                  {formatStatus(org.subscriptionStatus, 'active')}
                 </Badge>
               </div>
               <div>

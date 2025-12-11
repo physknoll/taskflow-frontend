@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
 import { useAdminSubscriptions, useExtendTrial, useApplyCredit } from '@/hooks/admin/useBilling';
 import { SUBSCRIPTION_STATUS_COLORS, SUBSCRIPTION_PLANS } from '@/lib/admin-constants';
+import { formatStatus } from '@/lib/utils';
 import { SubscriptionPlan, SubscriptionStatus, AdminListParams } from '@/types/admin';
 import { 
   Search, 
@@ -266,8 +267,8 @@ export default function BillingPage() {
                       </Badge>
                     </td>
                     <td className="px-6 py-4">
-                      <Badge className={getStatusColor(sub.status)}>
-                        {sub.status.replace('_', ' ')}
+                      <Badge className={getStatusColor(sub.status || 'active')}>
+                        {formatStatus(sub.status, 'active')}
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-surface-600 dark:text-surface-400">

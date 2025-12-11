@@ -164,4 +164,13 @@ export function isDueSoon(dueDate?: Date | string, daysThreshold = 2): boolean {
   return due > now && due <= threshold;
 }
 
+/**
+ * Format a status string by replacing underscores with spaces
+ * Safely handles null/undefined values
+ */
+export function formatStatus(status?: string | null, fallback = '-'): string {
+  if (!status) return fallback;
+  return status.replace(/_/g, ' ');
+}
+
 

@@ -11,6 +11,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { useAdminSubscription, useExtendTrial, useApplyCredit, useAdjustSeats, useCancelSubscription, useProcessRefund } from '@/hooks/admin/useBilling';
 import { SUBSCRIPTION_STATUS_COLORS, SUBSCRIPTION_PLANS } from '@/lib/admin-constants';
+import { formatStatus } from '@/lib/utils';
 import { 
   ArrowLeft,
   Building2,
@@ -160,8 +161,8 @@ export default function SubscriptionDetailPage() {
               <Badge className={getPlanColor(subscription.plan)}>
                 {SUBSCRIPTION_PLANS.find((p) => p.id === subscription.plan)?.label}
               </Badge>
-              <Badge className={getStatusColor(subscription.status)}>
-                {subscription.status.replace('_', ' ')}
+              <Badge className={getStatusColor(subscription.status || 'active')}>
+                {formatStatus(subscription.status, 'active')}
               </Badge>
             </div>
           </div>
