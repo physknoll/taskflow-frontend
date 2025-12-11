@@ -262,19 +262,15 @@ export default function PlatformAdminsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-              Platform Role
-            </label>
             <Select
+              label="Platform Role"
               value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value as PlatformRole)}
-            >
-              {PLATFORM_ROLES.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.label} - {role.description}
-                </option>
-              ))}
-            </Select>
+              onChange={(value) => setInviteRole(value as PlatformRole)}
+              options={PLATFORM_ROLES.map((role) => ({
+                value: role.id,
+                label: `${role.label} - ${role.description}`,
+              }))}
+            />
           </div>
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setShowInviteModal(false)}>
@@ -300,19 +296,15 @@ export default function PlatformAdminsPage() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-              New Platform Role
-            </label>
             <Select
+              label="New Platform Role"
               value={newRole}
-              onChange={(e) => setNewRole(e.target.value as PlatformRole)}
-            >
-              {PLATFORM_ROLES.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.label} - {role.description}
-                </option>
-              ))}
-            </Select>
+              onChange={(value) => setNewRole(value as PlatformRole)}
+              options={PLATFORM_ROLES.map((role) => ({
+                value: role.id,
+                label: `${role.label} - ${role.description}`,
+              }))}
+            />
           </div>
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setShowChangeRoleModal(false)}>
@@ -337,7 +329,7 @@ export default function PlatformAdminsPage() {
       >
         <div className="space-y-4">
           <p className="text-surface-600 dark:text-surface-400">
-            Are you sure you want to revoke this user's admin access? They will no longer be able to access the admin panel.
+            Are you sure you want to revoke this user&apos;s admin access? They will no longer be able to access the admin panel.
           </p>
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setShowRevokeModal(false)}>

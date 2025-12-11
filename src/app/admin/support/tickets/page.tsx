@@ -119,28 +119,26 @@ export default function TicketsBrowserPage() {
           {showFilters && (
             <div className="flex flex-wrap gap-4 pt-4 border-t border-surface-200 dark:border-surface-700">
               <div className="w-40">
-                <label className="block text-xs font-medium text-surface-500 mb-1">Status</label>
                 <Select
+                  label="Status"
                   value={params.status || 'all'}
-                  onChange={(e) => handleStatusFilter(e.target.value)}
-                >
-                  <option value="all">All Statuses</option>
-                  {TICKET_STATUSES.map((status) => (
-                    <option key={status.id} value={status.id}>{status.label}</option>
-                  ))}
-                </Select>
+                  onChange={(value) => handleStatusFilter(value)}
+                  options={[
+                    { value: 'all', label: 'All Statuses' },
+                    ...TICKET_STATUSES.map((status) => ({ value: status.id, label: status.label }))
+                  ]}
+                />
               </div>
               <div className="w-40">
-                <label className="block text-xs font-medium text-surface-500 mb-1">Priority</label>
                 <Select
+                  label="Priority"
                   value={params.priority || 'all'}
-                  onChange={(e) => handlePriorityFilter(e.target.value)}
-                >
-                  <option value="all">All Priorities</option>
-                  {TICKET_PRIORITIES.map((priority) => (
-                    <option key={priority.id} value={priority.id}>{priority.label}</option>
-                  ))}
-                </Select>
+                  onChange={(value) => handlePriorityFilter(value)}
+                  options={[
+                    { value: 'all', label: 'All Priorities' },
+                    ...TICKET_PRIORITIES.map((priority) => ({ value: priority.id, label: priority.label }))
+                  ]}
+                />
               </div>
             </div>
           )}

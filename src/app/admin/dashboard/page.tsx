@@ -80,7 +80,7 @@ export default function AdminDashboardPage() {
           Dashboard
         </h1>
         <p className="text-surface-500 dark:text-surface-400 mt-1">
-          Welcome back, {user?.firstName}! Here's what's happening on the platform.
+          Welcome back, {user?.firstName}! Here&apos;s what&apos;s happening on the platform.
         </p>
       </div>
 

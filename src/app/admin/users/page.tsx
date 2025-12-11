@@ -139,40 +139,43 @@ export default function UsersPage() {
           {showFilters && (
             <div className="flex flex-wrap gap-4 pt-4 border-t border-surface-200 dark:border-surface-700">
               <div className="w-40">
-                <label className="block text-xs font-medium text-surface-500 mb-1">Role</label>
                 <Select
+                  label="Role"
                   value={params.role || 'all'}
-                  onChange={(e) => handleRoleFilter(e.target.value)}
-                >
-                  <option value="all">All Roles</option>
-                  <option value="owner">Owner</option>
-                  <option value="manager">Manager</option>
-                  <option value="employee">Employee</option>
-                  <option value="client_viewer">Client Viewer</option>
-                </Select>
+                  onChange={(value) => handleRoleFilter(value)}
+                  options={[
+                    { value: 'all', label: 'All Roles' },
+                    { value: 'owner', label: 'Owner' },
+                    { value: 'manager', label: 'Manager' },
+                    { value: 'employee', label: 'Employee' },
+                    { value: 'client_viewer', label: 'Client Viewer' },
+                  ]}
+                />
               </div>
               <div className="w-40">
-                <label className="block text-xs font-medium text-surface-500 mb-1">Status</label>
                 <Select
+                  label="Status"
                   value={params.status || 'all'}
-                  onChange={(e) => handleStatusFilter(e.target.value)}
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="active">Active</option>
-                  <option value="suspended">Suspended</option>
-                  <option value="pending_deletion">Pending Deletion</option>
-                </Select>
+                  onChange={(value) => handleStatusFilter(value)}
+                  options={[
+                    { value: 'all', label: 'All Statuses' },
+                    { value: 'active', label: 'Active' },
+                    { value: 'suspended', label: 'Suspended' },
+                    { value: 'pending_deletion', label: 'Pending Deletion' },
+                  ]}
+                />
               </div>
               <div className="w-40">
-                <label className="block text-xs font-medium text-surface-500 mb-1">Platform Admin</label>
                 <Select
+                  label="Platform Admin"
                   value={params.hasPlatformRole === undefined ? 'all' : params.hasPlatformRole.toString()}
-                  onChange={(e) => handlePlatformAdminFilter(e.target.value)}
-                >
-                  <option value="all">All Users</option>
-                  <option value="true">Admins Only</option>
-                  <option value="false">Non-Admins Only</option>
-                </Select>
+                  onChange={(value) => handlePlatformAdminFilter(value)}
+                  options={[
+                    { value: 'all', label: 'All Users' },
+                    { value: 'true', label: 'Admins Only' },
+                    { value: 'false', label: 'Non-Admins Only' },
+                  ]}
+                />
               </div>
             </div>
           )}
@@ -260,7 +263,9 @@ export default function UsersPage() {
                               {user.firstName} {user.lastName}
                             </Link>
                             {user.platformRole && (
-                              <Shield className="w-4 h-4 text-purple-500" title={`Platform ${user.platformRole}`} />
+                              <span title={`Platform ${user.platformRole}`}>
+                                <Shield className="w-4 h-4 text-purple-500" />
+                              </span>
                             )}
                           </div>
                           <p className="text-sm text-surface-500">{user.email}</p>

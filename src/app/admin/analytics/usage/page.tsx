@@ -64,13 +64,14 @@ export default function UsageAnalyticsPage() {
           </p>
         </div>
         <div className="w-48">
-          <Select value={dateRange} onChange={(e) => setDateRange(e.target.value)}>
-            {DATE_RANGE_PRESETS.filter((p) => p.days > 0).map((preset) => (
-              <option key={preset.value} value={preset.value}>
-                {preset.label}
-              </option>
-            ))}
-          </Select>
+          <Select 
+            value={dateRange} 
+            onChange={(value) => setDateRange(value)}
+            options={DATE_RANGE_PRESETS.filter((p) => p.days > 0).map((preset) => ({
+              value: preset.value,
+              label: preset.label,
+            }))}
+          />
         </div>
       </div>
 

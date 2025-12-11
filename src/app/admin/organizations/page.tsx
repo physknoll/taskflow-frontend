@@ -127,41 +127,42 @@ export default function OrganizationsPage() {
           {showFilters && (
             <div className="flex flex-wrap gap-4 pt-4 border-t border-surface-200 dark:border-surface-700">
               <div className="w-40">
-                <label className="block text-xs font-medium text-surface-500 mb-1">Plan</label>
                 <Select
+                  label="Plan"
                   value={params.plan || 'all'}
-                  onChange={(e) => handlePlanFilter(e.target.value)}
-                >
-                  <option value="all">All Plans</option>
-                  {SUBSCRIPTION_PLANS.map((plan) => (
-                    <option key={plan.id} value={plan.id}>{plan.label}</option>
-                  ))}
-                </Select>
+                  onChange={(value) => handlePlanFilter(value)}
+                  options={[
+                    { value: 'all', label: 'All Plans' },
+                    ...SUBSCRIPTION_PLANS.map((plan) => ({ value: plan.id, label: plan.label }))
+                  ]}
+                />
               </div>
               <div className="w-40">
-                <label className="block text-xs font-medium text-surface-500 mb-1">Status</label>
                 <Select
+                  label="Status"
                   value={params.status || 'all'}
-                  onChange={(e) => handleStatusFilter(e.target.value)}
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="active">Active</option>
-                  <option value="trialing">Trialing</option>
-                  <option value="past_due">Past Due</option>
-                  <option value="canceled">Canceled</option>
-                  <option value="unpaid">Unpaid</option>
-                </Select>
+                  onChange={(value) => handleStatusFilter(value)}
+                  options={[
+                    { value: 'all', label: 'All Statuses' },
+                    { value: 'active', label: 'Active' },
+                    { value: 'trialing', label: 'Trialing' },
+                    { value: 'past_due', label: 'Past Due' },
+                    { value: 'canceled', label: 'Canceled' },
+                    { value: 'unpaid', label: 'Unpaid' },
+                  ]}
+                />
               </div>
               <div className="w-40">
-                <label className="block text-xs font-medium text-surface-500 mb-1">Flagged</label>
                 <Select
+                  label="Flagged"
                   value={params.flagged === undefined ? 'all' : params.flagged.toString()}
-                  onChange={(e) => handleFlaggedFilter(e.target.value)}
-                >
-                  <option value="all">All</option>
-                  <option value="true">Flagged Only</option>
-                  <option value="false">Not Flagged</option>
-                </Select>
+                  onChange={(value) => handleFlaggedFilter(value)}
+                  options={[
+                    { value: 'all', label: 'All' },
+                    { value: 'true', label: 'Flagged Only' },
+                    { value: 'false', label: 'Not Flagged' },
+                  ]}
+                />
               </div>
             </div>
           )}

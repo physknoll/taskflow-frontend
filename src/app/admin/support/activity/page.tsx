@@ -85,18 +85,19 @@ export default function ActivityLogsPage() {
           {showFilters && (
             <div className="flex flex-wrap gap-4 pt-4 border-t border-surface-200 dark:border-surface-700">
               <div className="w-48">
-                <label className="block text-xs font-medium text-surface-500 mb-1">Entity Type</label>
                 <Select
+                  label="Entity Type"
                   value={params.entityType || 'all'}
-                  onChange={(e) => handleEntityTypeFilter(e.target.value)}
-                >
-                  <option value="all">All Types</option>
-                  <option value="ticket">Tickets</option>
-                  <option value="project">Projects</option>
-                  <option value="user">Users</option>
-                  <option value="organization">Organizations</option>
-                  <option value="conversation">Conversations</option>
-                </Select>
+                  onChange={(value) => handleEntityTypeFilter(value)}
+                  options={[
+                    { value: 'all', label: 'All Types' },
+                    { value: 'ticket', label: 'Tickets' },
+                    { value: 'project', label: 'Projects' },
+                    { value: 'user', label: 'Users' },
+                    { value: 'organization', label: 'Organizations' },
+                    { value: 'conversation', label: 'Conversations' },
+                  ]}
+                />
               </div>
             </div>
           )}

@@ -94,29 +94,29 @@ export default function ConversationsPage() {
           {showFilters && (
             <div className="flex flex-wrap gap-4 pt-4 border-t border-surface-200 dark:border-surface-700">
               <div className="w-48">
-                <label className="block text-xs font-medium text-surface-500 mb-1">Type</label>
                 <Select
+                  label="Type"
                   value={params.type || 'all'}
-                  onChange={(e) => handleTypeFilter(e.target.value)}
-                >
-                  <option value="all">All Types</option>
-                  {CONVERSATION_TYPES.map((type) => (
-                    <option key={type.id} value={type.id}>{type.label}</option>
-                  ))}
-                </Select>
+                  onChange={(value) => handleTypeFilter(value)}
+                  options={[
+                    { value: 'all', label: 'All Types' },
+                    ...CONVERSATION_TYPES.map((type) => ({ value: type.id, label: type.label }))
+                  ]}
+                />
               </div>
               <div className="w-40">
-                <label className="block text-xs font-medium text-surface-500 mb-1">Status</label>
                 <Select
+                  label="Status"
                   value={params.status || 'all'}
-                  onChange={(e) => handleStatusFilter(e.target.value)}
-                >
-                  <option value="all">All Statuses</option>
-                  <option value="active">Active</option>
-                  <option value="completed">Completed</option>
-                  <option value="abandoned">Abandoned</option>
-                  <option value="escalated">Escalated</option>
-                </Select>
+                  onChange={(value) => handleStatusFilter(value)}
+                  options={[
+                    { value: 'all', label: 'All Statuses' },
+                    { value: 'active', label: 'Active' },
+                    { value: 'completed', label: 'Completed' },
+                    { value: 'abandoned', label: 'Abandoned' },
+                    { value: 'escalated', label: 'Escalated' },
+                  ]}
+                />
               </div>
             </div>
           )}

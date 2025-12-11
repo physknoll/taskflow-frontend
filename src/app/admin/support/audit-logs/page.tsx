@@ -97,16 +97,15 @@ export default function AuditLogsPage() {
           {showFilters && (
             <div className="flex flex-wrap gap-4 pt-4 border-t border-surface-200 dark:border-surface-700">
               <div className="w-48">
-                <label className="block text-xs font-medium text-surface-500 mb-1">Category</label>
                 <Select
+                  label="Category"
                   value={params.category || 'all'}
-                  onChange={(e) => handleCategoryFilter(e.target.value)}
-                >
-                  <option value="all">All Categories</option>
-                  {AUDIT_CATEGORIES.map((category) => (
-                    <option key={category.id} value={category.id}>{category.label}</option>
-                  ))}
-                </Select>
+                  onChange={(value) => handleCategoryFilter(value)}
+                  options={[
+                    { value: 'all', label: 'All Categories' },
+                    ...AUDIT_CATEGORIES.map((category) => ({ value: category.id, label: category.label }))
+                  ]}
+                />
               </div>
             </div>
           )}
