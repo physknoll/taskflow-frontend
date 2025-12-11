@@ -14,7 +14,7 @@ import { useAdminUser, useSuspendUser, useUnsuspendUser, useImpersonateUser, use
 import { ACCOUNT_STATUS_COLORS, ORG_ROLE_COLORS, PLATFORM_ROLES } from '@/lib/admin-constants';
 import { hasAdminPermission, isSuperAdmin } from '@/lib/admin-permissions';
 import { useAdminAuthStore } from '@/stores/adminAuthStore';
-import { formatStatus } from '@/lib/utils';
+import { formatStatus, safeFormatDate } from '@/lib/utils';
 import { 
   ArrowLeft,
   Building2,
@@ -31,8 +31,10 @@ import {
   MessageSquare,
   Ticket,
   Activity,
+  Bot,
+  ExternalLink,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 
 type TabType = 'profile' | 'activity' | 'ai-usage';
 
@@ -410,9 +412,52 @@ export default function UserDetailPage() {
             <CardTitle>Recent Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-surface-500 text-center py-8">
-              Activity timeline will be displayed here
-            </p>
+            {!user.recentActivity || user.recentActivity.length === 0 ? (
+              <p className="text-surface-500 text-center py-8">
+                No recent activity found
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {user.recentActivity.map((activity: any, index: number) => (
+                  <div 
+                    key={activity._id || index} 
+                    className="flex items-start gap-4 p-4 rounded-lg bg-surface-50 dark:bg-surface-800/50"
+                  >
+                    <div className="p-2 rounded-full bg-primary-100 dark:bg-primary-900/30">
+                      <Activity className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-surface-900 dark:text-white">
+                        <span className="font-medium">{activity.action || activity.type || 'Activity'}</span>
+                        {activity.entityType && (
+                          <span className="text-surface-500"> on {activity.entityType}</span>
+                        )}
+                      </p>
+                      {activity.description && (
+                        <p className="text-sm text-surface-500 mt-1">{activity.description}</p>
+                      )}
+                      {activity.metadata?.ticketTitle && (
+                        <p className="text-sm text-surface-600 dark:text-surface-400 mt-1">
+                          Ticket: {activity.metadata.ticketTitle}
+                        </p>
+                      )}
+                      {activity.metadata?.projectName && (
+                        <p className="text-sm text-surface-600 dark:text-surface-400 mt-1">
+                          Project: {activity.metadata.projectName}
+                        </p>
+                      )}
+                      <p className="text-xs text-surface-400 mt-2">
+                        {safeFormatDate(
+                          activity.timestamp || activity.createdAt,
+                          (d) => formatDistanceToNow(d, { addSuffix: true }),
+                          'Unknown time'
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
@@ -423,9 +468,72 @@ export default function UserDetailPage() {
             <CardTitle>AI Conversations</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-surface-500 text-center py-8">
-              AI conversation history will be displayed here
-            </p>
+            {!user.recentConversations || user.recentConversations.length === 0 ? (
+              <p className="text-surface-500 text-center py-8">
+                No AI conversations found
+              </p>
+            ) : (
+              <div className="space-y-4">
+                {user.recentConversations.map((conversation: any, index: number) => (
+                  <div 
+                    key={conversation._id || conversation.conversationId || index} 
+                    className="p-4 rounded-lg bg-surface-50 dark:bg-surface-800/50 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 rounded-full bg-violet-100 dark:bg-violet-900/30">
+                          <Bot className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-surface-900 dark:text-white">
+                            {conversation.title || conversation.type || 'AI Conversation'}
+                          </p>
+                          <div className="flex items-center gap-3 mt-1">
+                            {conversation.status && (
+                              <Badge size="sm" className={
+                                conversation.status === 'completed' 
+                                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                  : conversation.status === 'active'
+                                  ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
+                                  : 'bg-surface-100 text-surface-600'
+                              }>
+                                {conversation.status}
+                              </Badge>
+                            )}
+                            {conversation.messageCount !== undefined && (
+                              <span className="text-xs text-surface-500 flex items-center gap-1">
+                                <MessageSquare className="w-3 h-3" />
+                                {conversation.messageCount} messages
+                              </span>
+                            )}
+                            {conversation.channel && (
+                              <span className="text-xs text-surface-500 capitalize">
+                                {formatStatus(conversation.channel)}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-surface-400 mt-2">
+                            {safeFormatDate(
+                              conversation.lastMessageAt || conversation.startedAt || conversation.createdAt,
+                              (d) => formatDistanceToNow(d, { addSuffix: true }),
+                              'Unknown time'
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      {conversation._id && (
+                        <Link
+                          href={`/admin/support/conversations/${conversation._id}`}
+                          className="text-primary-600 hover:text-primary-700 dark:text-primary-400"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

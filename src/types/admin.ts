@@ -127,8 +127,34 @@ export interface IAdminUserDetail extends IAdminUserListItem {
     reviewPassRate: number;
     currentStreak: number;
   };
-  recentActivity?: any[];
-  recentConversations?: any[];
+  // Recent activity entries - backend should populate this array
+  recentActivity?: Array<{
+    _id?: string;
+    action: string;           // e.g., 'created', 'updated', 'completed'
+    entityType?: string;      // e.g., 'ticket', 'project', 'comment'
+    entityId?: string;
+    description?: string;
+    timestamp?: string;
+    createdAt?: string;
+    metadata?: {
+      ticketTitle?: string;
+      projectName?: string;
+      [key: string]: any;
+    };
+  }>;
+  // Recent AI conversations - backend should populate this array
+  recentConversations?: Array<{
+    _id?: string;
+    conversationId?: string;
+    title?: string;
+    type?: string;            // e.g., 'task_help', 'general', 'code_review'
+    status?: 'active' | 'completed' | 'abandoned';
+    channel?: string;         // e.g., 'web_app', 'slack', 'api'
+    messageCount?: number;
+    startedAt?: string;
+    lastMessageAt?: string;
+    createdAt?: string;
+  }>;
 }
 
 // ============================================
