@@ -173,4 +173,27 @@ export function formatStatus(status?: string | null, fallback = '-'): string {
   return status.replace(/_/g, ' ');
 }
 
+/**
+ * Safely check if a date value is valid
+ */
+export function isValidDate(dateValue: string | Date | undefined | null): boolean {
+  if (!dateValue) return false;
+  const date = new Date(dateValue);
+  return !isNaN(date.getTime());
+}
+
+/**
+ * Safely format a date, returning fallback if invalid
+ */
+export function safeFormatDate(
+  dateValue: string | Date | undefined | null,
+  formatFn: (date: Date) => string,
+  fallback = '-'
+): string {
+  if (!dateValue) return fallback;
+  const date = new Date(dateValue);
+  if (isNaN(date.getTime())) return fallback;
+  return formatFn(date);
+}
+
 

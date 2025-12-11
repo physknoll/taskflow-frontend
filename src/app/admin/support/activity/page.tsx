@@ -23,6 +23,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
+import { safeFormatDate } from '@/lib/utils';
 
 const ACTION_ICONS: Record<string, React.ElementType> = {
   user: User,
@@ -157,9 +158,9 @@ export default function ActivityLogsPage() {
                       )}
                       <p className="text-xs text-surface-400 mt-2 flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
+                        {safeFormatDate(log.timestamp, (d) => formatDistanceToNow(d, { addSuffix: true }), 'Unknown')}
                         <span className="mx-1">·</span>
-                        {format(new Date(log.timestamp), 'MMM d, yyyy h:mm a')}
+                        {safeFormatDate(log.timestamp, (d) => format(d, 'MMM d, yyyy h:mm a'))}
                       </p>
                     </div>
                   </div>

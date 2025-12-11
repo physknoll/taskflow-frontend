@@ -25,6 +25,7 @@ import {
   Headphones,
 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
+import { safeFormatDate } from '@/lib/utils';
 
 const CATEGORY_ICONS: Record<string, React.ElementType> = {
   organization: Building2,
@@ -175,10 +176,10 @@ export default function AuditLogsPage() {
                         </Badge>
                         <span className="text-xs text-surface-400 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
+                          {safeFormatDate(log.timestamp, (d) => formatDistanceToNow(d, { addSuffix: true }), 'Unknown')}
                         </span>
                         <span className="text-xs text-surface-400">
-                          {format(new Date(log.timestamp), 'MMM d, yyyy h:mm a')}
+                          {safeFormatDate(log.timestamp, (d) => format(d, 'MMM d, yyyy h:mm a'))}
                         </span>
                       </div>
                       {log.changes && Object.keys(log.changes).length > 0 && (

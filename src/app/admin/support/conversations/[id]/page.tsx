@@ -18,6 +18,7 @@ import {
   Bot,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { safeFormatDate, formatStatus } from '@/lib/utils';
 
 export default function ConversationDetailPage() {
   const params = useParams();
@@ -131,7 +132,7 @@ export default function ConversationDetailPage() {
                         {message.role}
                       </span>
                       <span className="text-xs text-surface-400">
-                        {format(new Date(message.timestamp), 'h:mm a')}
+                        {safeFormatDate(message.timestamp, (d) => format(d, 'h:mm a'))}
                       </span>
                     </div>
                     <p className="text-surface-900 dark:text-white whitespace-pre-wrap">
@@ -189,20 +190,20 @@ export default function ConversationDetailPage() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-surface-500">Started</span>
                 <span className="text-sm text-surface-900 dark:text-white">
-                  {format(new Date(conversation.startedAt), 'MMM d, yyyy h:mm a')}
+                  {safeFormatDate(conversation.startedAt, (d) => format(d, 'MMM d, yyyy h:mm a'))}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm text-surface-500">Last Message</span>
                 <span className="text-sm text-surface-900 dark:text-white">
-                  {format(new Date(conversation.lastMessageAt), 'MMM d, yyyy h:mm a')}
+                  {safeFormatDate(conversation.lastMessageAt, (d) => format(d, 'MMM d, yyyy h:mm a'))}
                 </span>
               </div>
               {conversation.completedAt && (
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-surface-500">Completed</span>
                   <span className="text-sm text-surface-900 dark:text-white">
-                    {format(new Date(conversation.completedAt), 'MMM d, yyyy h:mm a')}
+                    {safeFormatDate(conversation.completedAt, (d) => format(d, 'MMM d, yyyy h:mm a'))}
                   </span>
                 </div>
               )}
@@ -215,7 +216,7 @@ export default function ConversationDetailPage() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-surface-500">Channel</span>
                 <span className="text-sm text-surface-900 dark:text-white capitalize">
-                  {conversation.channel.replace('_', ' ')}
+                  {formatStatus(conversation.channel)}
                 </span>
               </div>
             </CardContent>

@@ -23,7 +23,15 @@ import {
   Filter,
   Clock,
 } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, isValid } from 'date-fns';
+
+// Safe date formatting helper
+function safeFormatDistanceToNow(dateValue: string | Date | undefined | null): string {
+  if (!dateValue) return 'Unknown';
+  const date = new Date(dateValue);
+  if (!isValid(date)) return 'Unknown';
+  return formatDistanceToNow(date, { addSuffix: true });
+}
 
 export default function ConversationsPage() {
   const router = useRouter();
@@ -178,7 +186,7 @@ export default function ConversationsPage() {
                         </span>
                         <span className="text-xs text-surface-400 flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {formatDistanceToNow(new Date(conversation.lastMessageAt), { addSuffix: true })}
+                          {safeFormatDistanceToNow(conversation.lastMessageAt)}
                         </span>
                       </div>
                     </div>

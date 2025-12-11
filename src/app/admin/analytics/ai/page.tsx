@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
 import { useAdminAIAnalytics } from '@/hooks/admin/useAdminAnalytics';
 import { DATE_RANGE_PRESETS, CHART_COLORS, CONVERSATION_TYPES } from '@/lib/admin-constants';
+import { formatStatus } from '@/lib/utils';
 import { ArrowLeft, Bot, MessageSquare, Users, Building2, TrendingUp } from 'lucide-react';
 import { 
   BarChart, 
@@ -55,7 +56,7 @@ export default function AIAnalyticsPage() {
   })) || [];
 
   const channelChartData = data?.byChannel?.map((item) => ({
-    name: item.channel.replace('_', ' '),
+    name: formatStatus(item.channel),
     value: item.count,
   })) || [];
 

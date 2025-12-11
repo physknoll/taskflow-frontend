@@ -23,6 +23,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { safeFormatDate } from '@/lib/utils';
 
 interface TicketListParams extends AdminListParams {
   organizationId?: string;
@@ -224,10 +225,10 @@ export default function TicketsBrowserPage() {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-surface-600 dark:text-surface-400">
-                      {ticket.dueDate ? format(new Date(ticket.dueDate), 'MMM d, yyyy') : '-'}
+                      {safeFormatDate(ticket.dueDate, (d) => format(d, 'MMM d, yyyy'))}
                     </td>
                     <td className="px-6 py-4 text-surface-600 dark:text-surface-400">
-                      {format(new Date(ticket.createdAt), 'MMM d, yyyy')}
+                      {safeFormatDate(ticket.createdAt, (d) => format(d, 'MMM d, yyyy'))}
                     </td>
                   </tr>
                 ))
