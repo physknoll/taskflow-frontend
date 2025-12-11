@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { 
   Sparkles, 
   ThumbsUp, 
@@ -151,9 +153,17 @@ export function MessageBubble({
               : 'bg-primary-600 text-white rounded-tr-sm'
           )}
         >
-          <p className="text-sm whitespace-pre-wrap leading-relaxed">
-            {message.content}
-          </p>
+          {isAI ? (
+            <div className="text-sm leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-strong:text-surface-900 dark:prose-strong:text-white">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {message.content}
+              </ReactMarkdown>
+            </div>
+          ) : (
+            <p className="text-sm whitespace-pre-wrap leading-relaxed">
+              {message.content}
+            </p>
+          )}
         </div>
 
         {/* Suggested Actions */}

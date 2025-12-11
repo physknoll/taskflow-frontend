@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
+import { useEffect, useCallback, createContext, useContext, ReactNode, useState, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/authStore';
@@ -13,6 +13,10 @@ import {
   AIInteractiveCheckinData,
   AICheckinProcessedData,
   NotificationData,
+  KB_UPLOAD_EVENTS,
+  KBUploadStartedData,
+  KBUploadProgressData,
+  KBUploadCompleteData,
 } from '@/lib/socket';
 import { INotification } from '@/types';
 import type {
@@ -34,14 +38,23 @@ const AIPM_DASHBOARD_EVENTS = {
   FOCUS_UPDATED: 'aipm:focus:updated',
 } as const;
 
+// KB Upload event handlers type
+type KBUploadHandler = {
+  onStarted?: (data: KBUploadStartedData) => void;
+  onProgress?: (data: KBUploadProgressData) => void;
+  onComplete?: (data: KBUploadCompleteData) => void;
+};
+
 interface SocketContextValue {
   socket: Socket | null;
   isConnected: boolean;
+  subscribeToKBUpload: (handler: KBUploadHandler) => () => void;
 }
 
 const SocketContext = createContext<SocketContextValue>({
   socket: null,
   isConnected: false,
+  subscribeToKBUpload: () => () => {},
 });
 
 export const useSocket = () => useContext(SocketContext);
@@ -55,6 +68,21 @@ export function SocketProvider({ children }: SocketProviderProps) {
   const { token, isAuthenticated } = useAuthStore();
   const { addNotification } = useNotificationStore();
   const { openModal: openCheckinModal } = useAICheckinStore();
+  
+  // Track socket connection state
+  const [isConnected, setIsConnected] = useState(false);
+  const [socketInstance, setSocketInstance] = useState<Socket | null>(null);
+  
+  // KB Upload handlers
+  const kbUploadHandlersRef = useRef<Set<KBUploadHandler>>(new Set());
+  
+  // Subscribe to KB upload events
+  const subscribeToKBUpload = useCallback((handler: KBUploadHandler) => {
+    kbUploadHandlersRef.current.add(handler);
+    return () => {
+      kbUploadHandlersRef.current.delete(handler);
+    };
+  }, []);
 
   // Handle new notification
   const handleNotification = useCallback((data: NotificationData) => {
@@ -176,10 +204,31 @@ export function SocketProvider({ children }: SocketProviderProps) {
   useEffect(() => {
     if (!isAuthenticated || !token) {
       disconnectSocket();
+      setIsConnected(false);
+      setSocketInstance(null);
       return;
     }
 
     const socket = initializeSocket(token);
+    setSocketInstance(socket);
+
+    // Track connection state
+    const handleConnect = () => {
+      console.log('🔌 SocketProvider: Connected');
+      setIsConnected(true);
+    };
+
+    const handleDisconnect = () => {
+      console.log('🔌 SocketProvider: Disconnected');
+      setIsConnected(false);
+    };
+
+    // Set initial connection state
+    setIsConnected(socket.connected);
+
+    // Listen for connection state changes
+    socket.on('connect', handleConnect);
+    socket.on('disconnect', handleDisconnect);
 
     // Set up event listeners
     socket.on('notification', handleNotification);
@@ -195,7 +244,36 @@ export function SocketProvider({ children }: SocketProviderProps) {
     socket.on(AIPM_DASHBOARD_EVENTS.POINTS_EARNED, handlePointsEarned);
     socket.on(AIPM_DASHBOARD_EVENTS.FOCUS_UPDATED, handleFocusUpdated);
 
+    // KB Upload events - dispatch to subscribers
+    const handleKBUploadStarted = (data: KBUploadStartedData) => {
+      console.log('📤 KB Upload Started:', data);
+      kbUploadHandlersRef.current.forEach((handler) => handler.onStarted?.(data));
+    };
+
+    const handleKBUploadProgress = (data: KBUploadProgressData) => {
+      console.log('📤 KB Upload Progress:', data);
+      kbUploadHandlersRef.current.forEach((handler) => handler.onProgress?.(data));
+    };
+
+    const handleKBUploadComplete = (data: KBUploadCompleteData) => {
+      console.log('📤 KB Upload Complete:', data);
+      kbUploadHandlersRef.current.forEach((handler) => handler.onComplete?.(data));
+    };
+
+    socket.on(KB_UPLOAD_EVENTS.STARTED, handleKBUploadStarted);
+    socket.on(KB_UPLOAD_EVENTS.PROGRESS, handleKBUploadProgress);
+    socket.on(KB_UPLOAD_EVENTS.COMPLETE, handleKBUploadComplete);
+
+    // Debug: Log all kb: events
+    socket.onAny((eventName, ...args) => {
+      if (eventName.startsWith('kb:')) {
+        console.log('📨 KB Event received:', eventName, args);
+      }
+    });
+
     return () => {
+      socket.off('connect', handleConnect);
+      socket.off('disconnect', handleDisconnect);
       socket.off('notification', handleNotification);
       socket.off('ai:interactive_checkin', handleInteractiveCheckin);
       socket.off('ai:checkin_processed', handleCheckinProcessed);
@@ -208,6 +286,12 @@ export function SocketProvider({ children }: SocketProviderProps) {
       socket.off(AIPM_DASHBOARD_EVENTS.ACTION_EXECUTED, handleActionExecuted);
       socket.off(AIPM_DASHBOARD_EVENTS.POINTS_EARNED, handlePointsEarned);
       socket.off(AIPM_DASHBOARD_EVENTS.FOCUS_UPDATED, handleFocusUpdated);
+
+      // KB Upload events
+      socket.off(KB_UPLOAD_EVENTS.STARTED, handleKBUploadStarted);
+      socket.off(KB_UPLOAD_EVENTS.PROGRESS, handleKBUploadProgress);
+      socket.off(KB_UPLOAD_EVENTS.COMPLETE, handleKBUploadComplete);
+      socket.offAny();
     };
   }, [
     isAuthenticated, 
@@ -231,10 +315,8 @@ export function SocketProvider({ children }: SocketProviderProps) {
     };
   }, []);
 
-  const socket = getSocket();
-
   return (
-    <SocketContext.Provider value={{ socket, isConnected: socket?.connected || false }}>
+    <SocketContext.Provider value={{ socket: socketInstance, isConnected, subscribeToKBUpload }}>
       {children}
     </SocketContext.Provider>
   );

@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clientsService, KnowledgeBaseDocument, KNOWLEDGE_BASE_CATEGORIES } from '@/services/clients.service';
 import { ticketsService } from '@/services/tickets.service';
+import { BulkUploadModal } from '@/components/clients';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
@@ -38,6 +39,9 @@ import {
   Send,
   X,
   FolderOpen,
+  FolderUp,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { formatDate, cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -645,17 +649,24 @@ function ContactsTab({ client, clientId }: { client: any; clientId: string }) {
   );
 }
 
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+
 function DocumentsTab({ clientId }: { clientId: string }) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
   const [showAddTextModal, setShowAddTextModal] = useState(false);
   const [showQueryModal, setShowQueryModal] = useState(false);
   const [uploadCategory, setUploadCategory] = useState('general');
   const [uploadTags, setUploadTags] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
   
   // Text document form
   const [docTitle, setDocTitle] = useState('');
@@ -668,12 +679,26 @@ function DocumentsTab({ clientId }: { clientId: string }) {
   const [queryResult, setQueryResult] = useState<any>(null);
   const [isQuerying, setIsQuerying] = useState(false);
 
-  // Fetch documents
-  const { data: documents = [], isLoading, refetch } = useQuery({
-    queryKey: ['knowledge-base', clientId, selectedCategory],
-    queryFn: () => clientsService.getKnowledgeBase(clientId, { category: selectedCategory || undefined }),
+  // Reset page when category changes
+  useEffect(() => {
+    setPage(1);
+  }, [selectedCategory]);
+
+  // Fetch documents with pagination
+  const { data: documentsData, isLoading, refetch } = useQuery({
+    queryKey: ['knowledge-base', clientId, selectedCategory, page, pageSize],
+    queryFn: () => clientsService.getKnowledgeBase(clientId, { 
+      category: selectedCategory || undefined,
+      page,
+      limit: pageSize,
+    }),
     enabled: !!clientId,
   });
+
+  // Get documents from paginated response
+  const documents = documentsData?.data || [];
+  const totalDocuments = documentsData?.total || 0;
+  const totalPages = Math.ceil(totalDocuments / pageSize);
 
   // Upload file mutation
   const uploadMutation = useMutation({
@@ -815,9 +840,13 @@ function DocumentsTab({ clientId }: { clientId: string }) {
             <FileText className="h-4 w-4 mr-2" />
             Add Text
           </Button>
-          <Button onClick={() => fileInputRef.current?.click()}>
+          <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
             <Upload className="h-4 w-4 mr-2" />
             Upload File
+          </Button>
+          <Button onClick={() => setShowBulkUploadModal(true)}>
+            <FolderUp className="h-4 w-4 mr-2" />
+            Bulk Upload
           </Button>
           <input
             ref={fileInputRef}
@@ -913,6 +942,109 @@ function DocumentsTab({ clientId }: { clientId: string }) {
           </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {documents.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-4">
+          <div className="flex items-center gap-4 text-sm text-surface-600 dark:text-surface-400">
+            <span>
+              Showing {((page - 1) * pageSize) + 1}-{Math.min(page * pageSize, totalDocuments)} of {totalDocuments} documents
+            </span>
+            <div className="flex items-center gap-2">
+              <span>Show:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="px-2 py-1 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 text-surface-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            
+            <div className="flex items-center gap-1">
+              {/* First page */}
+              {page > 2 && (
+                <>
+                  <button
+                    onClick={() => setPage(1)}
+                    className="px-3 py-1 text-sm rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 text-surface-600 dark:text-surface-400"
+                  >
+                    1
+                  </button>
+                  {page > 3 && <span className="px-1 text-surface-400">...</span>}
+                </>
+              )}
+              
+              {/* Previous page */}
+              {page > 1 && (
+                <button
+                  onClick={() => setPage(page - 1)}
+                  className="px-3 py-1 text-sm rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 text-surface-600 dark:text-surface-400"
+                >
+                  {page - 1}
+                </button>
+              )}
+              
+              {/* Current page */}
+              <button
+                className="px-3 py-1 text-sm rounded-lg bg-primary-500 text-white font-medium"
+              >
+                {page}
+              </button>
+              
+              {/* Next page */}
+              {page < totalPages && (
+                <button
+                  onClick={() => setPage(page + 1)}
+                  className="px-3 py-1 text-sm rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 text-surface-600 dark:text-surface-400"
+                >
+                  {page + 1}
+                </button>
+              )}
+              
+              {/* Last page */}
+              {page < totalPages - 1 && (
+                <>
+                  {page < totalPages - 2 && <span className="px-1 text-surface-400">...</span>}
+                  <button
+                    onClick={() => setPage(totalPages)}
+                    className="px-3 py-1 text-sm rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 text-surface-600 dark:text-surface-400"
+                  >
+                    {totalPages}
+                  </button>
+                </>
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Upload Modal */}
       <Modal
@@ -1102,6 +1234,17 @@ function DocumentsTab({ clientId }: { clientId: string }) {
           )}
         </div>
       </Modal>
+
+      {/* Bulk Upload Modal */}
+      <BulkUploadModal
+        isOpen={showBulkUploadModal}
+        onClose={() => setShowBulkUploadModal(false)}
+        clientId={clientId}
+        onUploadComplete={() => {
+          queryClient.invalidateQueries({ queryKey: ['knowledge-base', clientId] });
+          queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+        }}
+      />
     </div>
   );
 }

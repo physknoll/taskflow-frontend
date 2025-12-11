@@ -157,6 +157,37 @@ export const PROJECT_CREATION_EVENTS = {
   CREATION_ERROR: 'project:creation_error',
 } as const;
 
+// Knowledge Base Upload Socket Event Names
+export const KB_UPLOAD_EVENTS = {
+  STARTED: 'kb:upload:started',
+  PROGRESS: 'kb:upload:progress',
+  COMPLETE: 'kb:upload:complete',
+} as const;
+
+// Knowledge Base Upload Event Data Types
+export interface KBUploadStartedData {
+  batchId: string;
+  clientId: string;
+  totalFiles: number;
+}
+
+export interface KBUploadProgressData {
+  batchId: string;
+  filename: string;
+  status: 'completed' | 'failed';
+  completed: number;
+  failed: number;
+  total: number;
+}
+
+export interface KBUploadCompleteData {
+  batchId: string;
+  completed: number;
+  failed: number;
+  total: number;
+  errors: Array<{ filename: string; error: string }>;
+}
+
 // Project Creation Event Data Types
 export interface ProjectCreatingData {
   sessionId: string;

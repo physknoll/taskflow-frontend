@@ -20,6 +20,8 @@ export interface SelectProps {
   error?: string;
   disabled?: boolean;
   className?: string;
+  /** When true, dropdown opens upward instead of downward */
+  openUpward?: boolean;
 }
 
 export function Select({
@@ -31,6 +33,7 @@ export function Select({
   error,
   disabled,
   className,
+  openUpward = false,
 }: SelectProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -95,7 +98,10 @@ export function Select({
         </button>
 
         {isOpen && (
-          <div className="absolute z-50 mt-1 w-full rounded-lg border border-surface-200 bg-white shadow-lg dark:border-surface-700 dark:bg-surface-800 animate-fade-in">
+          <div className={cn(
+            "absolute z-50 w-full rounded-lg border border-surface-200 bg-white shadow-lg dark:border-surface-700 dark:bg-surface-800 animate-fade-in",
+            openUpward ? "bottom-full mb-1" : "top-full mt-1"
+          )}>
             <div className="max-h-60 overflow-auto py-1">
               {options.map((option) => (
                 <button

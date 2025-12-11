@@ -66,3 +66,6 @@ export {
 // Integrations hooks
 export { useGoogleChatIntegration, googleChatKeys } from './useGoogleChatIntegration';
 
+// Knowledge Base hooks
+export { useKBUpload } from './useKBUpload';
+

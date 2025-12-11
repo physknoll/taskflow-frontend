@@ -27,6 +27,13 @@ export interface KnowledgeBaseFilters {
   limit?: number;
 }
 
+export interface PaginatedKnowledgeBase {
+  data: KnowledgeBaseDocument[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface AddDocumentDto {
   title: string;
   content: string;
@@ -43,6 +50,21 @@ export interface QueryKnowledgeBaseResponse {
     excerpt: string;
   }>;
   confidence: number;
+}
+
+// Batch Upload Types
+export interface BatchUploadResponse {
+  batchId: string;
+  totalFiles: number;
+}
+
+export interface BatchUploadStatus {
+  total: number;
+  completed: number;
+  failed: number;
+  inProgress: number;
+  pending: number;
+  errors: Array<{ fileName: string; error: string }>;
 }
 
 export const KNOWLEDGE_BASE_CATEGORIES = [
@@ -113,7 +135,7 @@ export const clientsService = {
   },
 
   // Knowledge Base
-  async getKnowledgeBase(clientId: string, filters: KnowledgeBaseFilters = {}): Promise<KnowledgeBaseDocument[]> {
+  async getKnowledgeBase(clientId: string, filters: KnowledgeBaseFilters = {}): Promise<PaginatedKnowledgeBase> {
     const params = new URLSearchParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== '') {
@@ -121,10 +143,21 @@ export const clientsService = {
       }
     });
 
-    const response = await api.get<ApiResponse<KnowledgeBaseDocument[]>>(
+    const response = await api.get<ApiResponse<PaginatedKnowledgeBase | KnowledgeBaseDocument[]>>(
       `/clients/${clientId}/knowledge-base?${params.toString()}`
     );
-    return response.data.data;
+    
+    // Handle both array response (old API) and paginated response (new API)
+    const data = response.data.data;
+    if (Array.isArray(data)) {
+      return {
+        data,
+        total: data.length,
+        page: filters.page || 1,
+        limit: filters.limit || data.length,
+      };
+    }
+    return data;
   },
 
   async addDocument(clientId: string, data: AddDocumentDto): Promise<KnowledgeBaseDocument> {
@@ -178,6 +211,35 @@ export const clientsService = {
 
   async deleteDocument(clientId: string, documentId: string): Promise<void> {
     await api.delete(`/clients/${clientId}/knowledge-base/${documentId}`);
+  },
+
+  // Batch Upload
+  async uploadBatch(clientId: string, files: File[], category: string): Promise<BatchUploadResponse> {
+    const formData = new FormData();
+    files.forEach(file => formData.append('files', file));
+    formData.append('category', category);
+
+    const response = await api.post<ApiResponse<BatchUploadResponse>>(
+      `/clients/${clientId}/knowledge-base/upload-batch`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data.data;
+  },
+
+  async getBatchStatus(clientId: string, batchId: string): Promise<BatchUploadStatus> {
+    const response = await api.get<ApiResponse<BatchUploadStatus>>(
+      `/clients/${clientId}/knowledge-base/upload-status/${batchId}`
+    );
+    return response.data.data;
+  },
+
+  async cancelBatch(clientId: string, batchId: string): Promise<void> {
+    await api.delete(`/clients/${clientId}/knowledge-base/upload-batch/${batchId}`);
   },
 
   // Brand Guidelines
