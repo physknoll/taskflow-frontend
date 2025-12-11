@@ -3,7 +3,8 @@
 // ============================================
 
 // API Configuration
-export const ADMIN_API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL || 'http://localhost:5001/api/v1/admin';
+// Use relative URL to leverage Next.js rewrite proxy (avoids CORS issues)
+export const ADMIN_API_URL = process.env.NEXT_PUBLIC_ADMIN_API_URL || '/api/v1/admin';
 
 // Platform Roles
 export const PLATFORM_ROLES = [
