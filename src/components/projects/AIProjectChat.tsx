@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useProjectAgent } from '@/hooks/useProjectAgent';
 import { ProjectConfirmationCard } from './ProjectConfirmationCard';
+import { CreationStatusFeed } from './CreationStatusFeed';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { CreatedProject, CreatedTicket } from '@/types';
@@ -39,6 +40,7 @@ export function AIProjectChat({ onProjectCreated, onCancel, selectedGuidelineId 
     error,
     createdProject,
     createdTickets,
+    creationStatusMessages,
     startSession,
     sendMessage,
     confirmAndCreate,
@@ -284,6 +286,11 @@ export function AIProjectChat({ onProjectCreated, onCancel, selectedGuidelineId 
               canConfirm={canConfirm}
             />
           </div>
+        )}
+
+        {/* Creation Status Feed - shows WebSocket progress messages */}
+        {creationStatusMessages.length > 0 && (
+          <CreationStatusFeed messages={creationStatusMessages} />
         )}
 
         {/* Scroll anchor */}

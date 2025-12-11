@@ -13,8 +13,6 @@ import {
   Building2,
   Flag,
   Ticket,
-  Clock,
-  Loader2,
 } from 'lucide-react';
 
 interface ProjectConfirmationCardProps {
@@ -43,8 +41,15 @@ function formatDate(dateStr: string | undefined): string {
 }
 
 function TicketRow({ ticket, index }: { ticket: TicketDraft; index: number }) {
-  const assignees = ticket.assignedTo?.map((a) => a.name).join(', ') || 'Unassigned';
-  const hasUnmatchedAssignee = ticket.assignedTo?.some((a) => !a.id);
+  // Support both new format (assigneeName) and legacy format (assignedTo array)
+  const assignees = ticket.assigneeName 
+    || ticket.assignedTo?.map((a) => a.name).join(', ') 
+    || 'Unassigned';
+  // Check for unmatched: new format checks if assigneeName exists but assignee (ID) is missing
+  // Legacy format checks if any TeamMemberDraft lacks an id
+  const hasUnmatchedAssignee = 
+    (ticket.assigneeName && !ticket.assignee) ||
+    ticket.assignedTo?.some((a) => !a.id);
 
   return (
     <div className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-surface-50 dark:hover:bg-surface-700/50 transition-colors">
@@ -167,7 +172,7 @@ export function ProjectConfirmationCard({
             <Calendar className="w-4 h-4 text-surface-400" />
             <span className="text-surface-600 dark:text-surface-400">Due:</span>
             <span className="font-medium text-surface-900 dark:text-white">
-              {formatDate(draft.targetEndDate)}
+              {formatDate(draft.deadline || draft.targetEndDate)}
             </span>
           </div>
         </div>
@@ -256,19 +261,10 @@ export function ProjectConfirmationCard({
             onClick={onConfirm}
             disabled={!canConfirm || isConfirming}
             isLoading={isConfirming}
+            leftIcon={!isConfirming ? <CheckCircle className="w-4 h-4" /> : undefined}
             className="min-w-[120px]"
           >
-            {isConfirming ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              <>
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Create Project
-              </>
-            )}
+            {isConfirming ? 'Creating...' : 'Create Project'}
           </Button>
         </div>
       </div>

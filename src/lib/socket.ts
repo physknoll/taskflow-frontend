@@ -146,3 +146,61 @@ export const AI_SOCKET_EVENTS = {
   TOOL_USAGE: 'ai:tool_usage',
 } as const;
 
+// Project Creation Socket Event Names
+export const PROJECT_CREATION_EVENTS = {
+  CREATING: 'project:creating',
+  CREATED: 'project:created',
+  TICKETS_ENRICHING: 'tickets:enriching',
+  TICKET_CREATING: 'ticket:creating',
+  TICKET_CREATED_PROGRESS: 'ticket:created:progress',
+  TICKETS_ALL_CREATED: 'tickets:all_created',
+  CREATION_ERROR: 'project:creation_error',
+} as const;
+
+// Project Creation Event Data Types
+export interface ProjectCreatingData {
+  sessionId: string;
+  projectName: string;
+}
+
+export interface ProjectCreatedData {
+  sessionId: string;
+  projectId: string;
+  projectNumber: string;
+  projectName: string;
+}
+
+export interface TicketsEnrichingData {
+  sessionId: string;
+  count: number;
+}
+
+export interface TicketCreatingData {
+  sessionId: string;
+  index: number;
+  total: number;
+  title: string;
+}
+
+export interface TicketCreatedProgressData {
+  sessionId: string;
+  ticketId: string;
+  ticketNumber: string;
+  title: string;
+  taskCount: number;
+  index: number;
+  total: number;
+}
+
+export interface TicketsAllCreatedData {
+  sessionId: string;
+  count: number;
+  totalTime: number;
+}
+
+export interface ProjectCreationErrorData {
+  sessionId: string;
+  error: string;
+  phase: string;
+}
+

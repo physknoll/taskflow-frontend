@@ -16,7 +16,11 @@ export interface TeamMemberDraft {
 export interface TicketDraft {
   title: string;
   description?: string;
-  assignedTo: TeamMemberDraft[];
+  // Backend sends single assignee fields (new format)
+  assignee?: string;         // User ObjectId
+  assigneeName?: string;     // Display name (e.g., "Harrison Knoll")
+  // Legacy array format (for backwards compatibility)
+  assignedTo?: TeamMemberDraft[];
   dueDate?: string;
   relativeDueDate?: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
@@ -46,6 +50,7 @@ export interface ProjectDraft {
   // Dates
   startDate?: string;
   targetEndDate?: string;
+  deadline?: string | null;  // Backend sends this field for due date
   relativeDueDate?: string;
   
   // Classification

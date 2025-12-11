@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectAgentService } from '@/services/projectAgent.service';
 import {
@@ -11,6 +11,18 @@ import {
   CreatedTicket,
   UpdateProjectDraftDto,
 } from '@/types';
+import {
+  PROJECT_CREATION_EVENTS,
+  ProjectCreatingData,
+  ProjectCreatedData,
+  TicketsEnrichingData,
+  TicketCreatingData,
+  TicketCreatedProgressData,
+  TicketsAllCreatedData,
+  ProjectCreationErrorData,
+} from '@/lib/socket';
+import { useSocket } from '@/components/providers/SocketProvider';
+import toast from 'react-hot-toast';
 
 // Local message type for project agent conversation
 interface ProjectAgentMessage {
@@ -18,7 +30,18 @@ interface ProjectAgentMessage {
   content: string;
   timestamp: string;
 }
-import toast from 'react-hot-toast';
+
+// Status message for creation progress
+export interface CreationStatusMessage {
+  id: string;
+  type: 'info' | 'success' | 'error' | 'progress';
+  message: string;
+  timestamp: string;
+  progress?: {
+    current: number;
+    total: number;
+  };
+}
 
 interface ProjectAgentState {
   sessionId: string | null;
@@ -30,6 +53,7 @@ interface ProjectAgentState {
   showConfirmation: boolean;
   createdProject: CreatedProject | null;
   createdTickets: CreatedTicket[];
+  creationStatusMessages: CreationStatusMessage[];
 }
 
 const initialState: ProjectAgentState = {
@@ -42,12 +66,149 @@ const initialState: ProjectAgentState = {
   showConfirmation: false,
   createdProject: null,
   createdTickets: [],
+  creationStatusMessages: [],
 };
 
 export function useProjectAgent() {
   const queryClient = useQueryClient();
+  const { socket } = useSocket();
   const [state, setState] = useState<ProjectAgentState>(initialState);
   const [error, setError] = useState<string | null>(null);
+
+  // Helper to add a status message
+  const addStatusMessage = useCallback((
+    type: CreationStatusMessage['type'],
+    message: string,
+    progress?: { current: number; total: number }
+  ) => {
+    setState((prev) => ({
+      ...prev,
+      creationStatusMessages: [
+        ...prev.creationStatusMessages,
+        {
+          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          type,
+          message,
+          timestamp: new Date().toISOString(),
+          progress,
+        },
+      ],
+    }));
+  }, []);
+
+  // Use refs to keep stable references for event handlers
+  const sessionIdRef = useRef<string | null>(null);
+  const addStatusMessageRef = useRef(addStatusMessage);
+  
+  // Keep refs updated
+  useEffect(() => {
+    sessionIdRef.current = state.sessionId;
+  }, [state.sessionId]);
+  
+  useEffect(() => {
+    addStatusMessageRef.current = addStatusMessage;
+  }, [addStatusMessage]);
+
+  // Subscribe to WebSocket events for project creation progress
+  // Only subscribe once when socket is available, use refs for current values
+  useEffect(() => {
+    if (!socket) {
+      return;
+    }
+
+    console.log('🔌 Setting up project creation event listeners');
+
+    const handleProjectCreating = (data: ProjectCreatingData) => {
+      console.log('📥 Received project:creating', data);
+      if (data.sessionId !== sessionIdRef.current) {
+        console.log('  ↳ Ignoring (session mismatch):', sessionIdRef.current);
+        return;
+      }
+      addStatusMessageRef.current('info', `Creating project: ${data.projectName}...`);
+    };
+
+    const handleProjectCreated = (data: ProjectCreatedData) => {
+      console.log('📥 Received project:created', data);
+      if (data.sessionId !== sessionIdRef.current) {
+        console.log('  ↳ Ignoring (session mismatch):', sessionIdRef.current);
+        return;
+      }
+      addStatusMessageRef.current('success', `✓ Project ${data.projectNumber} created`);
+    };
+
+    const handleTicketsEnriching = (data: TicketsEnrichingData) => {
+      console.log('📥 Received tickets:enriching', data);
+      if (data.sessionId !== sessionIdRef.current) {
+        console.log('  ↳ Ignoring (session mismatch):', sessionIdRef.current);
+        return;
+      }
+      addStatusMessageRef.current('info', `Enriching ${data.count} tickets with AI...`, {
+        current: 0,
+        total: data.count,
+      });
+    };
+
+    const handleTicketCreating = (data: TicketCreatingData) => {
+      console.log('📥 Received ticket:creating', data);
+      if (data.sessionId !== sessionIdRef.current) {
+        console.log('  ↳ Ignoring (session mismatch):', sessionIdRef.current);
+        return;
+      }
+      // Don't show intermediate "creating" status - we'll show the "created" result instead
+      // This avoids pills with spinners that never stop
+    };
+
+    const handleTicketCreatedProgress = (data: TicketCreatedProgressData) => {
+      console.log('📥 Received ticket:created:progress', data);
+      if (data.sessionId !== sessionIdRef.current) {
+        console.log('  ↳ Ignoring (session mismatch):', sessionIdRef.current);
+        return;
+      }
+      addStatusMessageRef.current('success', `✓ ${data.ticketNumber}: ${data.title} (${data.taskCount} tasks)`, {
+        current: data.index,
+        total: data.total,
+      });
+    };
+
+    const handleTicketsAllCreated = (data: TicketsAllCreatedData) => {
+      console.log('📥 Received tickets:all_created', data);
+      if (data.sessionId !== sessionIdRef.current) {
+        console.log('  ↳ Ignoring (session mismatch):', sessionIdRef.current);
+        return;
+      }
+      const timeInSeconds = (data.totalTime / 1000).toFixed(1);
+      addStatusMessageRef.current('success', `✓ All ${data.count} tickets created in ${timeInSeconds}s`);
+    };
+
+    const handleCreationError = (data: ProjectCreationErrorData) => {
+      console.log('📥 Received project:creation_error', data);
+      if (data.sessionId !== sessionIdRef.current) {
+        console.log('  ↳ Ignoring (session mismatch):', sessionIdRef.current);
+        return;
+      }
+      addStatusMessageRef.current('error', `Error during ${data.phase}: ${data.error}`);
+    };
+
+    // Subscribe to events
+    socket.on(PROJECT_CREATION_EVENTS.CREATING, handleProjectCreating);
+    socket.on(PROJECT_CREATION_EVENTS.CREATED, handleProjectCreated);
+    socket.on(PROJECT_CREATION_EVENTS.TICKETS_ENRICHING, handleTicketsEnriching);
+    socket.on(PROJECT_CREATION_EVENTS.TICKET_CREATING, handleTicketCreating);
+    socket.on(PROJECT_CREATION_EVENTS.TICKET_CREATED_PROGRESS, handleTicketCreatedProgress);
+    socket.on(PROJECT_CREATION_EVENTS.TICKETS_ALL_CREATED, handleTicketsAllCreated);
+    socket.on(PROJECT_CREATION_EVENTS.CREATION_ERROR, handleCreationError);
+
+    return () => {
+      console.log('🔌 Removing project creation event listeners');
+      socket.off(PROJECT_CREATION_EVENTS.CREATING, handleProjectCreating);
+      socket.off(PROJECT_CREATION_EVENTS.CREATED, handleProjectCreated);
+      socket.off(PROJECT_CREATION_EVENTS.TICKETS_ENRICHING, handleTicketsEnriching);
+      socket.off(PROJECT_CREATION_EVENTS.TICKET_CREATING, handleTicketCreating);
+      socket.off(PROJECT_CREATION_EVENTS.TICKET_CREATED_PROGRESS, handleTicketCreatedProgress);
+      socket.off(PROJECT_CREATION_EVENTS.TICKETS_ALL_CREATED, handleTicketsAllCreated);
+      socket.off(PROJECT_CREATION_EVENTS.CREATION_ERROR, handleCreationError);
+    };
+  }, [socket]); // Only depend on socket - use refs for everything else
 
   // Start session mutation
   const startMutation = useMutation({
@@ -67,6 +228,7 @@ export function useProjectAgent() {
         showConfirmation: false,
         createdProject: null,
         createdTickets: [],
+        creationStatusMessages: [],
       });
       setError(null);
     },
@@ -214,6 +376,8 @@ export function useProjectAgent() {
   // Confirm and create the project
   const confirmAndCreate = useCallback(async () => {
     if (!state.sessionId) throw new Error('No active session');
+    // Clear previous status messages before starting creation
+    setState((prev) => ({ ...prev, creationStatusMessages: [] }));
     return confirmMutation.mutateAsync(state.sessionId);
   }, [state.sessionId, confirmMutation]);
 
@@ -253,6 +417,7 @@ export function useProjectAgent() {
     showConfirmation: state.showConfirmation,
     createdProject: state.createdProject,
     createdTickets: state.createdTickets,
+    creationStatusMessages: state.creationStatusMessages || [],
     error,
     canConfirm,
 
