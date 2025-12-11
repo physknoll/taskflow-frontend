@@ -34,9 +34,60 @@ import {
   Bot,
   ExternalLink,
 } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, subDays, startOfDay, eachDayOfInterval } from 'date-fns';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+} from 'recharts';
 
 type TabType = 'profile' | 'activity' | 'ai-usage';
+
+// Helper to aggregate data by day for charts
+function aggregateByDay(
+  items: Array<{ timestamp?: string; createdAt?: string; startedAt?: string; lastMessageAt?: string }> | undefined,
+  days: number = 30
+): Array<{ date: string; count: number; fullDate: string }> {
+  const endDate = new Date();
+  const startDate = subDays(endDate, days - 1);
+  
+  // Create all days in range
+  const allDays = eachDayOfInterval({ start: startDate, end: endDate });
+  const dayMap = new Map<string, number>();
+  
+  allDays.forEach(day => {
+    dayMap.set(format(day, 'yyyy-MM-dd'), 0);
+  });
+  
+  // Count items per day
+  if (items) {
+    items.forEach(item => {
+      const dateStr = item.timestamp || item.createdAt || item.startedAt || item.lastMessageAt;
+      if (dateStr) {
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) {
+          const dayKey = format(startOfDay(date), 'yyyy-MM-dd');
+          if (dayMap.has(dayKey)) {
+            dayMap.set(dayKey, (dayMap.get(dayKey) || 0) + 1);
+          }
+        }
+      }
+    });
+  }
+  
+  // Convert to array
+  return Array.from(dayMap.entries()).map(([key, count]) => ({
+    date: format(new Date(key), 'MMM d'),
+    fullDate: key,
+    count,
+  }));
+}
 
 export default function UserDetailPage() {
   const params = useParams();
@@ -407,135 +458,305 @@ export default function UserDetailPage() {
       )}
 
       {activeTab === 'activity' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {!user.recentActivity || user.recentActivity.length === 0 ? (
-              <p className="text-surface-500 text-center py-8">
-                No recent activity found
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {user.recentActivity.map((activity: any, index: number) => (
-                  <div 
-                    key={activity._id || index} 
-                    className="flex items-start gap-4 p-4 rounded-lg bg-surface-50 dark:bg-surface-800/50"
-                  >
-                    <div className="p-2 rounded-full bg-primary-100 dark:bg-primary-900/30">
-                      <Activity className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+        <div className="space-y-6">
+          {/* Activity Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>Activity Over Time</span>
+                <span className="text-sm font-normal text-surface-500">Last 30 days</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const chartData = aggregateByDay(user.recentActivity, 30);
+                const totalActivity = chartData.reduce((sum, d) => sum + d.count, 0);
+                
+                if (totalActivity === 0) {
+                  return (
+                    <div className="h-48 flex items-center justify-center text-surface-500">
+                      No activity data to display
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-surface-900 dark:text-white">
-                        <span className="font-medium">{activity.action || activity.type || 'Activity'}</span>
-                        {activity.entityType && (
-                          <span className="text-surface-500"> on {activity.entityType}</span>
-                        )}
-                      </p>
-                      {activity.description && (
-                        <p className="text-sm text-surface-500 mt-1">{activity.description}</p>
-                      )}
-                      {activity.metadata?.ticketTitle && (
-                        <p className="text-sm text-surface-600 dark:text-surface-400 mt-1">
-                          Ticket: {activity.metadata.ticketTitle}
-                        </p>
-                      )}
-                      {activity.metadata?.projectName && (
-                        <p className="text-sm text-surface-600 dark:text-surface-400 mt-1">
-                          Project: {activity.metadata.projectName}
-                        </p>
-                      )}
-                      <p className="text-xs text-surface-400 mt-2">
-                        {safeFormatDate(
-                          activity.timestamp || activity.createdAt,
-                          (d) => formatDistanceToNow(d, { addSuffix: true }),
-                          'Unknown time'
-                        )}
-                      </p>
-                    </div>
+                  );
+                }
+                
+                return (
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="activityGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                        <XAxis 
+                          dataKey="date" 
+                          tick={{ fontSize: 12, fill: '#9ca3af' }}
+                          tickLine={false}
+                          axisLine={{ stroke: '#374151', opacity: 0.3 }}
+                          interval="preserveStartEnd"
+                        />
+                        <YAxis 
+                          tick={{ fontSize: 12, fill: '#9ca3af' }}
+                          tickLine={false}
+                          axisLine={{ stroke: '#374151', opacity: 0.3 }}
+                          allowDecimals={false}
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: '#1f2937', 
+                            border: 'none', 
+                            borderRadius: '8px',
+                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)'
+                          }}
+                          labelStyle={{ color: '#f3f4f6' }}
+                          itemStyle={{ color: '#a78bfa' }}
+                          formatter={(value: number) => [`${value} activities`, 'Count']}
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="count" 
+                          stroke="#8b5cf6" 
+                          strokeWidth={2}
+                          fill="url(#activityGradient)" 
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          {/* Activity List */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!user.recentActivity || user.recentActivity.length === 0 ? (
+                <p className="text-surface-500 text-center py-8">
+                  No recent activity found
+                </p>
+              ) : (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {user.recentActivity.map((activity: any, index: number) => (
+                    <div 
+                      key={activity._id || index} 
+                      className="flex items-start gap-4 p-4 rounded-lg bg-surface-50 dark:bg-surface-800/50"
+                    >
+                      <div className="p-2 rounded-full bg-primary-100 dark:bg-primary-900/30">
+                        <Activity className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-surface-900 dark:text-white">
+                          <span className="font-medium">{activity.action || activity.type || 'Activity'}</span>
+                          {activity.entityType && (
+                            <span className="text-surface-500"> on {activity.entityType}</span>
+                          )}
+                        </p>
+                        {activity.description && (
+                          <p className="text-sm text-surface-500 mt-1">{activity.description}</p>
+                        )}
+                        {activity.metadata?.ticketTitle && (
+                          <p className="text-sm text-surface-600 dark:text-surface-400 mt-1">
+                            Ticket: {activity.metadata.ticketTitle}
+                          </p>
+                        )}
+                        {activity.metadata?.projectName && (
+                          <p className="text-sm text-surface-600 dark:text-surface-400 mt-1">
+                            Project: {activity.metadata.projectName}
+                          </p>
+                        )}
+                        <p className="text-xs text-surface-400 mt-2">
+                          {safeFormatDate(
+                            activity.timestamp || activity.createdAt,
+                            (d) => formatDistanceToNow(d, { addSuffix: true }),
+                            'Unknown time'
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {activeTab === 'ai-usage' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>AI Conversations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {!user.recentConversations || user.recentConversations.length === 0 ? (
-              <p className="text-surface-500 text-center py-8">
-                No AI conversations found
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {user.recentConversations.map((conversation: any, index: number) => (
-                  <div 
-                    key={conversation._id || conversation.conversationId || index} 
-                    className="p-4 rounded-lg bg-surface-50 dark:bg-surface-800/50 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 rounded-full bg-violet-100 dark:bg-violet-900/30">
-                          <Bot className="w-4 h-4 text-violet-600 dark:text-violet-400" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-surface-900 dark:text-white">
-                            {conversation.title || conversation.type || 'AI Conversation'}
-                          </p>
-                          <div className="flex items-center gap-3 mt-1">
-                            {conversation.status && (
-                              <Badge size="sm" className={
-                                conversation.status === 'completed' 
-                                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                  : conversation.status === 'active'
-                                  ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
-                                  : 'bg-surface-100 text-surface-600'
-                              }>
-                                {conversation.status}
-                              </Badge>
-                            )}
-                            {conversation.messageCount !== undefined && (
-                              <span className="text-xs text-surface-500 flex items-center gap-1">
-                                <MessageSquare className="w-3 h-3" />
-                                {conversation.messageCount} messages
-                              </span>
-                            )}
-                            {conversation.channel && (
-                              <span className="text-xs text-surface-500 capitalize">
-                                {formatStatus(conversation.channel)}
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-surface-400 mt-2">
-                            {safeFormatDate(
-                              conversation.lastMessageAt || conversation.startedAt || conversation.createdAt,
-                              (d) => formatDistanceToNow(d, { addSuffix: true }),
-                              'Unknown time'
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                      {conversation._id && (
-                        <Link
-                          href={`/admin/support/conversations/${conversation._id}`}
-                          className="text-primary-600 hover:text-primary-700 dark:text-primary-400"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </Link>
-                      )}
+        <div className="space-y-6">
+          {/* AI Usage Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span>AI Conversations Over Time</span>
+                <span className="text-sm font-normal text-surface-500">Last 30 days</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const chartData = aggregateByDay(user.recentConversations, 30);
+                const totalConversations = chartData.reduce((sum, d) => sum + d.count, 0);
+                const totalMessages = user.recentConversations?.reduce(
+                  (sum: number, c: any) => sum + (c.messageCount || 0), 0
+                ) || 0;
+                
+                if (totalConversations === 0) {
+                  return (
+                    <div className="h-48 flex items-center justify-center text-surface-500">
+                      No AI usage data to display
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  );
+                }
+                
+                return (
+                  <>
+                    {/* Summary Stats */}
+                    <div className="grid grid-cols-3 gap-4 mb-6">
+                      <div className="p-4 rounded-lg bg-violet-50 dark:bg-violet-900/20">
+                        <p className="text-sm text-violet-600 dark:text-violet-400">Total Conversations</p>
+                        <p className="text-2xl font-bold text-violet-700 dark:text-violet-300">
+                          {user.recentConversations?.length || 0}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-primary-50 dark:bg-primary-900/20">
+                        <p className="text-sm text-primary-600 dark:text-primary-400">Total Messages</p>
+                        <p className="text-2xl font-bold text-primary-700 dark:text-primary-300">
+                          {totalMessages}
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-emerald-50 dark:bg-emerald-900/20">
+                        <p className="text-sm text-emerald-600 dark:text-emerald-400">Avg Messages/Conv</p>
+                        <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">
+                          {user.recentConversations?.length 
+                            ? Math.round(totalMessages / user.recentConversations.length) 
+                            : 0}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Bar Chart */}
+                    <div className="h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.2} />
+                          <XAxis 
+                            dataKey="date" 
+                            tick={{ fontSize: 12, fill: '#9ca3af' }}
+                            tickLine={false}
+                            axisLine={{ stroke: '#374151', opacity: 0.3 }}
+                            interval="preserveStartEnd"
+                          />
+                          <YAxis 
+                            tick={{ fontSize: 12, fill: '#9ca3af' }}
+                            tickLine={false}
+                            axisLine={{ stroke: '#374151', opacity: 0.3 }}
+                            allowDecimals={false}
+                          />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: '#1f2937', 
+                              border: 'none', 
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)'
+                            }}
+                            labelStyle={{ color: '#f3f4f6' }}
+                            itemStyle={{ color: '#a78bfa' }}
+                            formatter={(value: number) => [`${value} conversations`, 'Count']}
+                          />
+                          <Bar 
+                            dataKey="count" 
+                            fill="#8b5cf6" 
+                            radius={[4, 4, 0, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
+                );
+              })()}
+            </CardContent>
+          </Card>
+
+          {/* Conversations List */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Conversations</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!user.recentConversations || user.recentConversations.length === 0 ? (
+                <p className="text-surface-500 text-center py-8">
+                  No AI conversations found
+                </p>
+              ) : (
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {user.recentConversations.map((conversation: any, index: number) => (
+                    <div 
+                      key={conversation._id || conversation.conversationId || index} 
+                      className="p-4 rounded-lg bg-surface-50 dark:bg-surface-800/50 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 rounded-full bg-violet-100 dark:bg-violet-900/30">
+                            <Bot className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-surface-900 dark:text-white">
+                              {conversation.title || conversation.type || 'AI Conversation'}
+                            </p>
+                            <div className="flex items-center gap-3 mt-1">
+                              {conversation.status && (
+                                <Badge size="sm" className={
+                                  conversation.status === 'completed' 
+                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                    : conversation.status === 'active'
+                                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
+                                    : 'bg-surface-100 text-surface-600'
+                                }>
+                                  {conversation.status}
+                                </Badge>
+                              )}
+                              {conversation.messageCount !== undefined && (
+                                <span className="text-xs text-surface-500 flex items-center gap-1">
+                                  <MessageSquare className="w-3 h-3" />
+                                  {conversation.messageCount} messages
+                                </span>
+                              )}
+                              {conversation.channel && (
+                                <span className="text-xs text-surface-500 capitalize">
+                                  {formatStatus(conversation.channel)}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-surface-400 mt-2">
+                              {safeFormatDate(
+                                conversation.lastMessageAt || conversation.startedAt || conversation.createdAt,
+                                (d) => formatDistanceToNow(d, { addSuffix: true }),
+                                'Unknown time'
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        {conversation._id && (
+                          <Link
+                            href={`/admin/support/conversations/${conversation._id}`}
+                            className="text-primary-600 hover:text-primary-700 dark:text-primary-400"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Suspend Modal */}
