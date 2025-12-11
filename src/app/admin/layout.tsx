@@ -10,7 +10,7 @@ import { AdminHeader } from '@/components/admin/layout/AdminHeader';
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, isLoading } = useAdminAuthStore();
+  const { isAuthenticated, isLoading, _hasHydrated } = useAdminAuthStore();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
@@ -21,14 +21,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const isLoginPage = pathname === '/admin/login';
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && !isLoginPage) {
+    // Only redirect after hydration is complete
+    if (_hasHydrated && !isLoading && !isAuthenticated && !isLoginPage) {
       // Redirect to admin login if not authenticated
       router.push('/admin/login');
     }
-  }, [isAuthenticated, isLoading, isLoginPage, router]);
+  }, [isAuthenticated, isLoading, isLoginPage, router, _hasHydrated]);
 
-  // Show loading state
-  if (isLoading && !isLoginPage) {
+  // Wait for hydration before showing anything
+  if (!_hasHydrated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface-900">
         <div className="text-center">
@@ -42,6 +43,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // For login page, render without layout
   if (isLoginPage) {
     return <>{children}</>;
+  }
+
+  // Show loading while checking auth (only after hydration)
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <p className="text-surface-400">Verifying credentials...</p>
+        </div>
+      </div>
+    );
   }
 
   // If not authenticated and not loading, don't render anything (redirect will happen)

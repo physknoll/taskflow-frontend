@@ -8,12 +8,14 @@ interface AdminAuthState {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  _hasHydrated: boolean;
 
   setUser: (user: IAdminUser) => void;
   setToken: (token: string) => void;
   updateUser: (updates: Partial<IAdminUser>) => void;
   logout: () => void;
   setLoading: (loading: boolean) => void;
+  setHasHydrated: (state: boolean) => void;
 }
 
 export const useAdminAuthStore = create<AdminAuthState>()(
@@ -23,6 +25,7 @@ export const useAdminAuthStore = create<AdminAuthState>()(
       token: null,
       isAuthenticated: false,
       isLoading: true,
+      _hasHydrated: false,
 
       setUser: (user) => {
         set({ user, isAuthenticated: true, isLoading: false });
@@ -49,6 +52,8 @@ export const useAdminAuthStore = create<AdminAuthState>()(
       },
 
       setLoading: (loading) => set({ isLoading: loading }),
+      
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
     }),
     {
       name: 'taskflow-admin-auth',
@@ -58,6 +63,7 @@ export const useAdminAuthStore = create<AdminAuthState>()(
       }),
       onRehydrateStorage: () => (state) => {
         if (state) {
+          state.setHasHydrated(true);
           // Sync token with API service after rehydration
           if (state.token) {
             setAdminToken(state.token);
