@@ -143,12 +143,32 @@ export const clientsService = {
       }
     });
 
-    const response = await api.get<ApiResponse<PaginatedKnowledgeBase | KnowledgeBaseDocument[]>>(
+    const response = await api.get<{
+      success: boolean;
+      data: PaginatedKnowledgeBase | KnowledgeBaseDocument[];
+      pagination?: { total: number; page: number; limit: number; pages: number };
+    }>(
       `/clients/${clientId}/knowledge-base?${params.toString()}`
     );
     
-    // Handle both array response (old API) and paginated response (new API)
+    // Handle different response formats:
+    // 1. PaginatedResponse format: { data: [...], pagination: { total, page, limit, pages } }
+    // 2. Nested paginated format: { data: { data: [...], total, page, limit } }
+    // 3. Simple array format (legacy): { data: [...] }
     const data = response.data.data;
+    const pagination = response.data.pagination;
+    
+    // If pagination object exists at root level (PaginatedResponse format)
+    if (pagination && Array.isArray(data)) {
+      return {
+        data,
+        total: pagination.total,
+        page: pagination.page,
+        limit: pagination.limit,
+      };
+    }
+    
+    // If data is an array without pagination info (legacy format)
     if (Array.isArray(data)) {
       return {
         data,
@@ -157,6 +177,8 @@ export const clientsService = {
         limit: filters.limit || data.length,
       };
     }
+    
+    // Nested paginated format: data contains { data, total, page, limit }
     return data;
   },
 
