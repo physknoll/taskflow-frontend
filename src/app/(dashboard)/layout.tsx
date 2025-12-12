@@ -8,6 +8,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { AIPMProvider } from '@/components/providers';
 import { AIPMChatDialog, AIPMCheckInResultModal } from '@/components/aipm';
+import { DailyProgressModal } from '@/components/dashboard/DailyProgressModal';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -55,6 +56,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* AIPM Modals */}
       <AIPMChatDialog />
       <AIPMCheckInResultModal />
+      <DailyProgressModal />
     </AIPMProvider>
   );
 }

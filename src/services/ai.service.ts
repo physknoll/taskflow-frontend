@@ -1,6 +1,7 @@
 import api from './api';
 import {
   IParsedUpdate,
+  IDailyUpdate,
   ApiResponse,
   INotification,
   IAICheckinResponse,
@@ -51,6 +52,55 @@ export interface ParseUpdateResponse {
   aiResponse: string;
   clarificationNeeded: boolean;
   clarificationQuestion?: string;
+}
+
+// New Daily Progress Log response types (matching backend API spec)
+export interface ParseProgressResponse {
+  dailyUpdateId: string;
+  parsedUpdates: IParsedUpdate[];
+  aiResponse: string;
+  clarificationNeeded: boolean;
+  clarificationQuestion?: string;
+  conversationId?: string;
+}
+
+export interface AcceptUpdatesResponse {
+  applied: number;
+  errors: string[];
+}
+
+export interface DailyUpdatesHistoryParams {
+  page?: number;
+  limit?: number;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+}
+
+export interface DailyUpdatesHistoryResponse {
+  data: IDailyUpdate[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}
+
+export interface WeeklySummaryResponse {
+  updates: IDailyUpdate[];
+  summary: {
+    daysWithUpdates: number;
+    totalUpdates: number;
+    totalTimeLogged: number;
+    ticketsWorkedOn: number;
+    updatesByType: {
+      progress: number;
+      completed: number;
+      blocked: number;
+      started: number;
+    };
+  };
 }
 
 export interface GeneratedTicketContent {
@@ -166,6 +216,79 @@ export const aiService = {
 
   async applyDailyUpdates(updates: IParsedUpdate[]): Promise<{ success: boolean; applied: number }> {
     const response = await api.post<ApiResponse<{ success: boolean; applied: number }>>('/ai/apply-updates', { updates });
+    return response.data.data;
+  },
+
+  // Daily Progress Log Methods
+  /**
+   * Get today's daily update for the current user
+   * GET /api/v1/ai/daily-updates/today
+   */
+  async getDailyUpdateToday(): Promise<IDailyUpdate | null> {
+    const response = await api.get<ApiResponse<IDailyUpdate | null>>('/ai/daily-updates/today');
+    return response.data.data;
+  },
+
+  /**
+   * Get paginated history of daily updates
+   * GET /api/v1/ai/daily-updates
+   */
+  async getDailyUpdatesHistory(params?: DailyUpdatesHistoryParams): Promise<DailyUpdatesHistoryResponse> {
+    const response = await api.get<ApiResponse<IDailyUpdate[]>>('/ai/daily-updates', { params });
+    // Backend returns data and pagination separately
+    return {
+      data: response.data.data,
+      pagination: (response.data as any).pagination || { page: 1, limit: 10, total: 0, pages: 0 },
+    };
+  },
+
+  /**
+   * Get weekly summary of daily updates
+   * GET /api/v1/ai/daily-updates/weekly-summary
+   */
+  async getWeeklySummary(): Promise<WeeklySummaryResponse> {
+    const response = await api.get<ApiResponse<WeeklySummaryResponse>>('/ai/daily-updates/weekly-summary');
+    return response.data.data;
+  },
+
+  /**
+   * Submit a progress update for AI parsing
+   * POST /api/v1/ai/parse-update
+   */
+  async parseProgressUpdate(input: string): Promise<ParseProgressResponse> {
+    const response = await api.post<ApiResponse<ParseProgressResponse>>('/ai/parse-update', { input });
+    return response.data.data;
+  },
+
+  /**
+   * Accept selected parsed updates
+   * POST /api/v1/ai/accept-updates
+   */
+  async acceptUpdates(dailyUpdateId: string, acceptedIndices: number[]): Promise<AcceptUpdatesResponse> {
+    const response = await api.post<ApiResponse<AcceptUpdatesResponse>>('/ai/accept-updates', {
+      dailyUpdateId,
+      acceptedIndices,
+    });
+    return response.data.data;
+  },
+
+  /**
+   * Reject all parsed updates
+   * POST /api/v1/ai/reject-updates
+   */
+  async rejectUpdates(dailyUpdateId: string): Promise<{ message: string }> {
+    const response = await api.post<ApiResponse<{ message: string }>>('/ai/reject-updates', {
+      dailyUpdateId,
+    });
+    return response.data.data;
+  },
+
+  /**
+   * Get a specific daily update by ID
+   * GET /api/v1/ai/daily-updates/:id
+   */
+  async getDailyUpdateById(id: string): Promise<IDailyUpdate> {
+    const response = await api.get<ApiResponse<IDailyUpdate>>(`/ai/daily-updates/${id}`);
     return response.data.data;
   },
 

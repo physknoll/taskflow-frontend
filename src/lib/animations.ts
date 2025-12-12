@@ -177,6 +177,40 @@ export const numberCount = {
   },
 };
 
+// Attention-grabbing jiggle animation for buttons that need action
+export const attentionJiggle = {
+  rotate: [0, -3, 3, -2, 2, 0],
+  transition: { 
+    duration: 0.5, 
+    repeat: Infinity, 
+    repeatDelay: 5,
+  },
+};
+
+// Glowing red pulse for urgency (no log today)
+export const urgentGlow = {
+  boxShadow: [
+    '0 0 0 0 rgba(239, 68, 68, 0)',
+    '0 0 8px 4px rgba(239, 68, 68, 0.4)',
+    '0 0 0 0 rgba(239, 68, 68, 0)',
+  ],
+  transition: { 
+    duration: 2, 
+    repeat: Infinity,
+  },
+};
+
+// Combined attention animation (jiggle + subtle scale)
+export const attentionPulse = {
+  scale: [1, 1.02, 1],
+  rotate: [0, -2, 2, -1, 1, 0],
+  transition: {
+    duration: 0.6,
+    repeat: Infinity,
+    repeatDelay: 4,
+  },
+};
+
 // ============================================
 // Modal & Overlay Animations
 // ============================================

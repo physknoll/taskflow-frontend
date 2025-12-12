@@ -17,6 +17,8 @@ export { FocusQueueWidget } from './FocusQueueWidget';
 export { TodayStatsWidget } from './TodayStatsWidget';
 export { PendingReviewsWidget } from './PendingReviewsWidget';
 export { ConversationHistory } from './ConversationHistory';
+export { DailyProgressWidget } from './DailyProgressWidget';
+export { DailyProgressModal } from './DailyProgressModal';
 
 // Mobile Components
 export { MobileDashboard } from './MobileDashboard';

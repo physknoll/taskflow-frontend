@@ -6,7 +6,9 @@ import { FocusQueueWidget } from './FocusQueueWidget';
 import { TodayStatsWidget } from './TodayStatsWidget';
 import { PendingReviewsWidget } from './PendingReviewsWidget';
 import { ConversationHistory } from './ConversationHistory';
+import { DailyProgressWidget } from './DailyProgressWidget';
 import { useAIPMDashboard } from '@/hooks/useAIPM';
+import { useUIStore } from '@/stores/uiStore';
 import { cn } from '@/lib/utils';
 import type { ResumeConversationResponse } from '@/types';
 
@@ -18,6 +20,7 @@ interface ContextRailProps {
 
 export function ContextRail({ onTicketClick, onResumeConversation, className }: ContextRailProps) {
   const { streak, focusQueue, todayStats, isLoading } = useAIPMDashboard();
+  const { openModal } = useUIStore();
 
   // Handle conversation selection - call parent's resume handler instead of navigating
   const handleConversationSelect = (result: ResumeConversationResponse) => {
@@ -35,6 +38,9 @@ export function ContextRail({ onTicketClick, onResumeConversation, className }: 
 
       {/* Today's Stats - Compact inline */}
       <TodayStatsWidget stats={todayStats} compact />
+
+      {/* Daily Progress Widget - Log activity, view history */}
+      <DailyProgressWidget onLogClick={() => openModal('dailyUpdate')} />
 
       {/* Conversation History - Collapsible, starts collapsed */}
       <ConversationHistory
