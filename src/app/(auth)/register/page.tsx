@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { CodeInput } from '@/components/ui/CodeInput';
 import { SignupOptionsResponse } from '@/types';
 import {
   Sparkles,
@@ -24,6 +25,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
+  RefreshCw,
+  Clock,
+  AlertCircle,
 } from 'lucide-react';
 
 // Step 1 Schema - Account Creation
@@ -39,23 +43,23 @@ const step1Schema = z.object({
     .regex(/[0-9]/, 'Password must contain at least one number'),
 });
 
-// Step 2 Schema - Profile (all optional)
-const step2Schema = z.object({
+// Step 3 Schema - Profile (all optional)
+const step3Schema = z.object({
   phone: z.string().optional(),
   jobTitle: z.string().optional(),
   referralSource: z.string().optional(),
 });
 
-// Step 3 Schema - Organization
-const step3Schema = z.object({
+// Step 4 Schema - Organization
+const step4Schema = z.object({
   name: z.string().min(1, 'Organization name is required'),
   industry: z.string().optional(),
   size: z.string().optional(),
 });
 
 type Step1Form = z.infer<typeof step1Schema>;
-type Step2Form = z.infer<typeof step2Schema>;
 type Step3Form = z.infer<typeof step3Schema>;
+type Step4Form = z.infer<typeof step4Schema>;
 
 // Google Icon Component
 function GoogleIcon({ className }: { className?: string }) {
@@ -133,14 +137,29 @@ function StepIndicator({ currentStep, totalSteps }: { currentStep: number; total
   );
 }
 
+// Format seconds to MM:SS
+function formatTime(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
 export default function RegisterPage() {
-  const { signup, completeProfile, createOrganization, getSignupOptions, initiateGoogleAuth } = useAuth();
+  const { signup, verifyCode, resendVerificationCode, completeProfile, createOrganization, getSignupOptions, initiateGoogleAuth } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [signupOptions, setSignupOptions] = useState<SignupOptionsResponse | null>(null);
 
-  // Form for Step 1
+  // Verification step state
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const [timeRemaining, setTimeRemaining] = useState(600); // 10 minutes in seconds
+  const [isResending, setIsResending] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  // Form for Step 1 (Account Creation)
   const step1Form = useForm<Step1Form>({
     resolver: zodResolver(step1Schema),
     defaultValues: {
@@ -151,9 +170,9 @@ export default function RegisterPage() {
     },
   });
 
-  // Form for Step 2
-  const step2Form = useForm<Step2Form>({
-    resolver: zodResolver(step2Schema),
+  // Form for Step 3 (Profile)
+  const step3Form = useForm<Step3Form>({
+    resolver: zodResolver(step3Schema),
     defaultValues: {
       phone: '',
       jobTitle: '',
@@ -161,9 +180,9 @@ export default function RegisterPage() {
     },
   });
 
-  // Form for Step 3
-  const step3Form = useForm<Step3Form>({
-    resolver: zodResolver(step3Schema),
+  // Form for Step 4 (Organization)
+  const step4Form = useForm<Step4Form>({
+    resolver: zodResolver(step4Schema),
     defaultValues: {
       name: '',
       industry: '',
@@ -184,11 +203,49 @@ export default function RegisterPage() {
     fetchOptions();
   }, [getSignupOptions]);
 
-  // Step 1 Submit
+  // Countdown timer for verification code
+  useEffect(() => {
+    if (currentStep !== 1 || timeRemaining <= 0) return;
+
+    const timer = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [currentStep, timeRemaining]);
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  // Step 1 Submit - Account Creation
   const onStep1Submit = async (data: Step1Form) => {
     setIsLoading(true);
     try {
-      await signup(data);
+      const response = await signup(data);
+      setPendingEmail(response.email);
+      setTimeRemaining(response.expiresIn || 600);
+      setVerificationCode('');
+      setCodeError('');
       setCurrentStep(1);
     } catch (error) {
       // Error handled in hook
@@ -197,12 +254,54 @@ export default function RegisterPage() {
     }
   };
 
-  // Step 2 Submit
-  const onStep2Submit = async (data: Step2Form) => {
+  // Step 2 - Verify Code
+  const onVerifyCode = useCallback(async (code: string) => {
+    if (code.length !== 6) return;
+    
+    setIsLoading(true);
+    setCodeError('');
+    try {
+      await verifyCode(pendingEmail, code);
+      setCurrentStep(2);
+    } catch (error: any) {
+      const message = error.response?.data?.message || 'Invalid verification code';
+      setCodeError(message);
+      setVerificationCode('');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [pendingEmail, verifyCode]);
+
+  // Handle code change
+  const handleCodeChange = (code: string) => {
+    setVerificationCode(code);
+    setCodeError('');
+  };
+
+  // Handle resend code
+  const handleResendCode = async () => {
+    if (resendCooldown > 0 || isResending) return;
+
+    setIsResending(true);
+    try {
+      await resendVerificationCode(pendingEmail);
+      setTimeRemaining(600);
+      setResendCooldown(60); // 60 second cooldown between resends
+      setVerificationCode('');
+      setCodeError('');
+    } catch (error) {
+      // Error handled in hook
+    } finally {
+      setIsResending(false);
+    }
+  };
+
+  // Step 3 Submit - Profile
+  const onStep3Submit = async (data: Step3Form) => {
     setIsLoading(true);
     try {
       await completeProfile(data);
-      setCurrentStep(2);
+      setCurrentStep(3);
     } catch (error) {
       // Error handled in hook
     } finally {
@@ -210,13 +309,13 @@ export default function RegisterPage() {
     }
   };
 
-  // Step 2 Skip
-  const onStep2Skip = () => {
-    setCurrentStep(2);
+  // Step 3 Skip
+  const onStep3Skip = () => {
+    setCurrentStep(3);
   };
 
-  // Step 3 Submit
-  const onStep3Submit = async (data: Step3Form) => {
+  // Step 4 Submit - Organization
+  const onStep4Submit = async (data: Step4Form) => {
     setIsLoading(true);
     try {
       await createOrganization(data);
@@ -232,6 +331,7 @@ export default function RegisterPage() {
 
   const stepTitles = [
     { title: 'Create your account', subtitle: 'Start your journey with TaskFlow AI' },
+    { title: 'Verify your email', subtitle: 'Enter the 6-digit code we sent you' },
     { title: 'Tell us about yourself', subtitle: 'Help us personalize your experience' },
     { title: 'Create your organization', subtitle: 'Set up your workspace' },
   ];
@@ -311,9 +411,9 @@ export default function RegisterPage() {
           {/* Step Indicator */}
           <div className="flex items-center justify-between mb-6">
             <span className="text-sm font-medium text-surface-600 dark:text-surface-400">
-              Step {currentStep + 1} of 3
+              Step {currentStep + 1} of 4
             </span>
-            <StepIndicator currentStep={currentStep} totalSteps={3} />
+            <StepIndicator currentStep={currentStep} totalSteps={4} />
           </div>
 
           <div className="text-center mb-8">
@@ -419,12 +519,104 @@ export default function RegisterPage() {
             </>
           )}
 
-          {/* Step 2: Profile */}
+          {/* Step 2: Email Verification */}
           {currentStep === 1 && (
+            <div className="space-y-6">
+              {/* Email display */}
+              <div className="bg-surface-100 dark:bg-surface-800 rounded-xl p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                  <Mail className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm text-surface-500 dark:text-surface-400">Code sent to</p>
+                  <p className="font-medium text-surface-900 dark:text-white truncate">{pendingEmail}</p>
+                </div>
+              </div>
+
+              {/* Code Input */}
+              <div className="py-4">
+                <CodeInput
+                  value={verificationCode}
+                  onChange={handleCodeChange}
+                  onComplete={onVerifyCode}
+                  error={codeError}
+                  disabled={isLoading}
+                  autoFocus
+                />
+              </div>
+
+              {/* Timer */}
+              <div className="flex items-center justify-center gap-2">
+                {timeRemaining > 0 ? (
+                  <>
+                    <Clock className={`w-4 h-4 ${timeRemaining <= 120 ? 'text-amber-500' : 'text-surface-500'}`} />
+                    <span className={`text-sm font-medium ${timeRemaining <= 120 ? 'text-amber-600 dark:text-amber-400' : 'text-surface-600 dark:text-surface-400'}`}>
+                      Code expires in {formatTime(timeRemaining)}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="w-4 h-4 text-red-500" />
+                    <span className="text-sm font-medium text-red-600 dark:text-red-400">
+                      Code expired
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {/* Verify Button */}
+              <Button
+                type="button"
+                className="w-full"
+                size="lg"
+                isLoading={isLoading}
+                disabled={verificationCode.length !== 6 || timeRemaining === 0}
+                onClick={() => onVerifyCode(verificationCode)}
+              >
+                Verify Email
+                <Check className="w-5 h-5 ml-1" />
+              </Button>
+
+              {/* Resend Code */}
+              <div className="text-center">
+                <p className="text-sm text-surface-500 dark:text-surface-400 mb-2">
+                  Didn&apos;t receive the code?
+                </p>
+                <button
+                  type="button"
+                  onClick={handleResendCode}
+                  disabled={resendCooldown > 0 || isResending}
+                  className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isResending ? 'animate-spin' : ''}`} />
+                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
+                </button>
+              </div>
+
+              {/* Back to signup */}
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                size="lg"
+                onClick={() => {
+                  setCurrentStep(0);
+                  setVerificationCode('');
+                  setCodeError('');
+                }}
+              >
+                <ChevronLeft className="w-5 h-5 mr-1" />
+                Back to signup
+              </Button>
+            </div>
+          )}
+
+          {/* Step 3: Profile */}
+          {currentStep === 2 && (
             <>
-              <form onSubmit={step2Form.handleSubmit(onStep2Submit)} className="space-y-5">
+              <form onSubmit={step3Form.handleSubmit(onStep3Submit)} className="space-y-5">
                 <Input
-                  {...step2Form.register('phone')}
+                  {...step3Form.register('phone')}
                   type="tel"
                   label="Phone number (optional)"
                   placeholder="+1 (555) 123-4567"
@@ -433,7 +625,7 @@ export default function RegisterPage() {
                 />
 
                 <Input
-                  {...step2Form.register('jobTitle')}
+                  {...step3Form.register('jobTitle')}
                   label="Job title (optional)"
                   placeholder="Project Manager"
                   leftIcon={<Briefcase className="h-5 w-5" />}
@@ -448,22 +640,12 @@ export default function RegisterPage() {
                       value: source,
                       label: source,
                     }))}
-                    value={step2Form.watch('referralSource')}
-                    onChange={(value) => step2Form.setValue('referralSource', value)}
+                    value={step3Form.watch('referralSource')}
+                    onChange={(value) => step3Form.setValue('referralSource', value)}
                   />
                 )}
 
                 <div className="flex gap-3 pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="flex-1"
-                    size="lg"
-                    onClick={() => setCurrentStep(0)}
-                  >
-                    <ChevronLeft className="w-5 h-5 mr-1" />
-                    Back
-                  </Button>
                   <Button type="submit" className="flex-1" size="lg" isLoading={isLoading}>
                     Continue
                     <ChevronRight className="w-5 h-5 ml-1" />
@@ -473,7 +655,7 @@ export default function RegisterPage() {
 
               <button
                 type="button"
-                onClick={onStep2Skip}
+                onClick={onStep3Skip}
                 className="w-full mt-4 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
               >
                 Skip this step
@@ -481,14 +663,14 @@ export default function RegisterPage() {
             </>
           )}
 
-          {/* Step 3: Organization */}
-          {currentStep === 2 && (
-            <form onSubmit={step3Form.handleSubmit(onStep3Submit)} className="space-y-5">
+          {/* Step 4: Organization */}
+          {currentStep === 3 && (
+            <form onSubmit={step4Form.handleSubmit(onStep4Submit)} className="space-y-5">
               <Input
-                {...step3Form.register('name')}
+                {...step4Form.register('name')}
                 label="Organization name"
                 placeholder="Acme Corporation"
-                error={step3Form.formState.errors.name?.message}
+                error={step4Form.formState.errors.name?.message}
                 leftIcon={<Building2 className="h-5 w-5" />}
                 autoComplete="organization"
               />
@@ -502,8 +684,8 @@ export default function RegisterPage() {
                       value: industry,
                       label: industry,
                     }))}
-                    value={step3Form.watch('industry')}
-                    onChange={(value) => step3Form.setValue('industry', value)}
+                    value={step4Form.watch('industry')}
+                    onChange={(value) => step4Form.setValue('industry', value)}
                   />
 
                   <Select
@@ -513,8 +695,8 @@ export default function RegisterPage() {
                       value: size,
                       label: size,
                     }))}
-                    value={step3Form.watch('size')}
-                    onChange={(value) => step3Form.setValue('size', value)}
+                    value={step4Form.watch('size')}
+                    onChange={(value) => step4Form.setValue('size', value)}
                     className="mb-2"
                   />
                 </>
@@ -523,13 +705,13 @@ export default function RegisterPage() {
               {!signupOptions && (
                 <>
                   <Input
-                    {...step3Form.register('industry')}
+                    {...step4Form.register('industry')}
                     label="Industry (optional)"
                     placeholder="Technology"
                     leftIcon={<Briefcase className="h-5 w-5" />}
                   />
                   <Input
-                    {...step3Form.register('size')}
+                    {...step4Form.register('size')}
                     label="Team size (optional)"
                     placeholder="11-25"
                     leftIcon={<Users className="h-5 w-5" />}
@@ -543,7 +725,7 @@ export default function RegisterPage() {
                   variant="outline"
                   className="flex-1"
                   size="lg"
-                  onClick={() => setCurrentStep(1)}
+                  onClick={() => setCurrentStep(2)}
                 >
                   <ChevronLeft className="w-5 h-5 mr-1" />
                   Back
@@ -559,4 +741,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-

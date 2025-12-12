@@ -666,6 +666,18 @@ export interface SignupDto {
 }
 
 export interface SignupResponse {
+  email: string;
+  verificationPending: boolean;
+  message: string;
+  expiresIn: number; // seconds (600 = 10 minutes)
+}
+
+export interface VerifyCodeDto {
+  email: string;
+  code: string;
+}
+
+export interface VerifyCodeResponse {
   user: IUser;
   token: string;
   refreshToken: string;

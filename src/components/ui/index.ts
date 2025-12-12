@@ -28,3 +28,6 @@ export { StatCard } from './StatCard';
 
 export { DateRangePicker } from './DateRangePicker';
 
+export { CodeInput } from './CodeInput';
+export type { CodeInputProps } from './CodeInput';
+

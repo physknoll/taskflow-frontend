@@ -11,6 +11,7 @@ import {
   CompleteProfileResponse,
   CreateOrganizationDto,
   CreateOrganizationResponse,
+  VerifyCodeResponse,
 } from '@/types';
 
 interface AuthResponse {
@@ -103,9 +104,15 @@ export const authService = {
     return response.data.data;
   },
 
-  // Step 1: Create account with email/password
+  // Step 1: Create account with email/password (sends verification code)
   async signup(data: SignupDto): Promise<SignupResponse> {
     const response = await api.post<ApiResponse<SignupResponse>>('/auth/signup', data);
+    return response.data.data;
+  },
+
+  // Step 1b: Verify email with 6-digit code
+  async verifyCode(email: string, code: string): Promise<VerifyCodeResponse> {
+    const response = await api.post<ApiResponse<VerifyCodeResponse>>('/auth/verify-code', { email, code });
     const { token, refreshToken } = response.data.data;
     setTokens(token, refreshToken);
     return response.data.data;

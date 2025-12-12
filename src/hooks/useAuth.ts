@@ -90,14 +90,12 @@ export function useAuth() {
     }
   }, []);
 
-  // Step 1: Create account
+  // Step 1: Create account (sends verification code to email)
   const signup = useCallback(
     async (data: SignupDto) => {
       try {
         const response = await authService.signup(data);
-        setTokens(response.token, response.refreshToken);
-        setUser(response.user);
-        toast.success('Account created! Please complete your profile.');
+        toast.success('Verification code sent to your email!');
         return response;
       } catch (error: any) {
         const message = error.response?.data?.message || 'Signup failed';
@@ -105,7 +103,41 @@ export function useAuth() {
         throw error;
       }
     },
+    []
+  );
+
+  // Step 1b: Verify email with 6-digit code
+  const verifyCode = useCallback(
+    async (email: string, code: string) => {
+      try {
+        const response = await authService.verifyCode(email, code);
+        setTokens(response.token, response.refreshToken);
+        setUser(response.user);
+        toast.success('Email verified successfully!');
+        return response;
+      } catch (error: any) {
+        const message = error.response?.data?.message || 'Verification failed';
+        toast.error(message);
+        throw error;
+      }
+    },
     [setTokens, setUser]
+  );
+
+  // Resend verification code
+  const resendVerificationCode = useCallback(
+    async (email: string) => {
+      try {
+        const response = await authService.resendVerification(email);
+        toast.success('New verification code sent!');
+        return response;
+      } catch (error: any) {
+        const message = error.response?.data?.message || 'Failed to resend code';
+        toast.error(message);
+        throw error;
+      }
+    },
+    []
   );
 
   // Step 2: Complete profile
@@ -159,6 +191,8 @@ export function useAuth() {
     // Signup flow
     getSignupOptions,
     signup,
+    verifyCode,
+    resendVerificationCode,
     completeProfile,
     createOrganization,
     initiateGoogleAuth,

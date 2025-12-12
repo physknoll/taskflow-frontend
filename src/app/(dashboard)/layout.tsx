@@ -12,10 +12,13 @@ import { DailyProgressModal } from '@/components/dashboard/DailyProgressModal';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuthStore();
+  const { user, isAuthenticated, isLoading } = useAuthStore();
   
   // Initialize auth (will fetch user if token exists)
   useAuth();
+
+  // Check if user has completed onboarding (has an organization)
+  const hasCompletedOnboarding = user?.organizationId && user?.onboardingCompleted !== false;
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -23,8 +26,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       const currentPath = window.location.pathname + window.location.search;
       const redirectUrl = encodeURIComponent(currentPath);
       router.push(`/login?redirect=${redirectUrl}`);
+      return;
     }
-  }, [isAuthenticated, isLoading, router]);
+
+    // If authenticated but hasn't completed onboarding, redirect to complete it
+    if (!isLoading && isAuthenticated && !hasCompletedOnboarding) {
+      router.push('/onboarding/organization');
+    }
+  }, [isAuthenticated, isLoading, router, hasCompletedOnboarding]);
 
   if (isLoading) {
     return (
@@ -39,6 +48,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (!isAuthenticated) {
     return null;
+  }
+
+  // Don't render dashboard until onboarding is complete
+  if (!hasCompletedOnboarding) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface-50 dark:bg-surface-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <p className="text-surface-600 dark:text-surface-400">Redirecting to complete setup...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
