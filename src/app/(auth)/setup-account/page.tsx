@@ -32,6 +32,7 @@ function SetupAccountContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // Password validation
   const passwordRequirements = [
@@ -225,12 +226,44 @@ function SetupAccountContent() {
                 </div>
               )}
 
+              {/* Terms and Privacy Policy Acceptance */}
+              <div className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  id="acceptTerms"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-surface-300 text-primary-600 focus:ring-primary-500 dark:border-surface-600 dark:bg-surface-800"
+                  disabled={isLoading}
+                />
+                <label htmlFor="acceptTerms" className="text-sm text-surface-600 dark:text-surface-400">
+                  I agree to the{' '}
+                  <a
+                    href="https://www.taskflowai.biz/legal/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 underline"
+                  >
+                    Terms of Service
+                  </a>{' '}
+                  and{' '}
+                  <a
+                    href="https://www.taskflowai.biz/legal/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 underline"
+                  >
+                    Privacy Policy
+                  </a>
+                </label>
+              </div>
+
               {/* Submit Button */}
               <Button
                 type="submit"
                 className="w-full"
                 size="lg"
-                disabled={isLoading || !isPasswordValid || !doPasswordsMatch}
+                disabled={isLoading || !isPasswordValid || !doPasswordsMatch || !acceptedTerms}
               >
                 {isLoading ? (
                   <>

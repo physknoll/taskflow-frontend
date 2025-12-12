@@ -159,6 +159,9 @@ export default function RegisterPage() {
   const [isResending, setIsResending] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
+  // Terms acceptance state
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+
   // Form for Step 1 (Account Creation)
   const step1Form = useForm<Step1Form>({
     resolver: zodResolver(step1Schema),
@@ -477,7 +480,38 @@ export default function RegisterPage() {
                   <PasswordRequirements password={password || ''} />
                 </div>
 
-                <Button type="submit" className="w-full" size="lg" isLoading={isLoading}>
+                {/* Terms and Privacy Policy Acceptance */}
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="acceptTerms"
+                    checked={acceptedTerms}
+                    onChange={(e) => setAcceptedTerms(e.target.checked)}
+                    className="mt-1 h-4 w-4 rounded border-surface-300 text-primary-600 focus:ring-primary-500 dark:border-surface-600 dark:bg-surface-800"
+                  />
+                  <label htmlFor="acceptTerms" className="text-sm text-surface-600 dark:text-surface-400">
+                    I agree to the{' '}
+                    <a
+                      href="https://www.taskflowai.biz/legal/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 underline"
+                    >
+                      Terms of Service
+                    </a>{' '}
+                    and{' '}
+                    <a
+                      href="https://www.taskflowai.biz/legal/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 underline"
+                    >
+                      Privacy Policy
+                    </a>
+                  </label>
+                </div>
+
+                <Button type="submit" className="w-full" size="lg" isLoading={isLoading} disabled={!acceptedTerms}>
                   Continue
                   <ChevronRight className="w-5 h-5 ml-1" />
                 </Button>
