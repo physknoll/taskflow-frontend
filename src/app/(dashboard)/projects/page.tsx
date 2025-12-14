@@ -27,6 +27,7 @@ export default function ProjectsPage() {
   const { clients } = useClients();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<IProject | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const { board, isLoading, updateProjectStatus } = useProjectsBoard(
@@ -45,6 +46,10 @@ export default function ProjectsPage() {
 
   const handleProjectClick = (project: IProject) => {
     router.push(`/projects/${project._id}`);
+  };
+
+  const handleProjectEdit = (project: IProject) => {
+    setEditingProject(project);
   };
 
   const handleStatusChange = async (projectId: string, newStatus: string) => {
@@ -162,6 +167,7 @@ export default function ProjectsPage() {
             isLoading={isLoading || isListLoading}
             onStatusChange={handleStatusChange}
             onProjectClick={handleProjectClick}
+            onProjectEdit={handleProjectEdit}
           />
         ) : (
           <ProjectListView
@@ -172,10 +178,14 @@ export default function ProjectsPage() {
         )}
       </div>
 
-      {/* Create Project Modal */}
+      {/* Create/Edit Project Modal */}
       <CreateProjectModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        isOpen={isCreateModalOpen || !!editingProject}
+        onClose={() => {
+          setIsCreateModalOpen(false);
+          setEditingProject(null);
+        }}
+        editingProject={editingProject}
       />
     </div>
   );

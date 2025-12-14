@@ -16,6 +16,9 @@ import { Select } from '@/components/ui/Select';
 import { Input, Textarea } from '@/components/ui/Input';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { UserTagInput } from '@/components/ui/UserTagInput';
+import { LinkifiedText } from '@/components/ui/LinkifiedText';
+import { TagInput } from '@/components/ui/TagInput';
+import { ColorPicker } from '@/components/ui/ColorPicker';
 import { ResourceList, ResourceUploader } from '@/components/resources';
 import { TICKET_STATUSES, TICKET_PRIORITIES, TICKET_TYPES } from '@/lib/constants';
 import {
@@ -64,6 +67,7 @@ interface EditFormData {
   dueDate: string;
   client: string;
   tags: string[];
+  color?: string;
 }
 
 export default function TicketDetailPage() {
@@ -108,9 +112,11 @@ export default function TicketDetailPage() {
     dueDate: '',
     client: '',
     tags: [],
+    color: undefined,
   });
   const [assignedUsers, setAssignedUsers] = useState<IUserMinimal[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   // Permission checks
   const assignedUserIds = ticket ? getAssignedUserIds(ticket.assignedTo as any[]) : [];
@@ -135,6 +141,7 @@ export default function TicketDetailPage() {
         dueDate: ticket.dueDate ? new Date(ticket.dueDate).toISOString().split('T')[0] : '',
         client: typeof ticket.client === 'object' && ticket.client !== null ? ticket.client._id : ticket.client || '',
         tags: ticket.tags || [],
+        color: ticket.color,
       });
       
       // Initialize assigned users for edit mode
@@ -165,6 +172,7 @@ export default function TicketDetailPage() {
         dueDate: editForm.dueDate ? new Date(editForm.dueDate) : undefined,
         client: editForm.client,
         tags: editForm.tags,
+        color: editForm.color,
       };
       
       // Only include assignedTo if user has permission
@@ -397,14 +405,23 @@ export default function TicketDetailPage() {
               )}
 
               {/* Tags */}
-              <Input
+              <TagInput
                 label="Tags"
-                value={editForm.tags.join(', ')}
-                onChange={(e) => setEditForm({ 
-                  ...editForm, 
-                  tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean)
-                })}
-                placeholder="Enter tags separated by commas"
+                tags={editForm.tags}
+                onChange={(tags) => setEditForm({ ...editForm, tags })}
+                inheritedTags={
+                  ticket.project && typeof ticket.project === 'object' && 'tags' in ticket.project
+                    ? (ticket.project as any).tags || []
+                    : []
+                }
+                placeholder="Add a tag..."
+              />
+
+              {/* Color Picker */}
+              <ColorPicker
+                label="Card Color (Optional)"
+                value={editForm.color}
+                onChange={(color) => setEditForm({ ...editForm, color })}
               />
 
               {/* Danger Zone - Only show if user can delete */}
@@ -490,11 +507,24 @@ export default function TicketDetailPage() {
                 </div>
               </div>
 
-              {/* Description - Compact */}
+              {/* Description - Expandable */}
               {ticket.description && (
-                <p className="mt-4 text-sm text-surface-600 dark:text-surface-400 leading-relaxed line-clamp-3">
-                  {ticket.description}
-                </p>
+                <div className="mt-4">
+                  <p className={cn(
+                    'text-sm text-surface-600 dark:text-surface-400 leading-relaxed',
+                    !isDescriptionExpanded && 'line-clamp-3'
+                  )}>
+                    <LinkifiedText text={ticket.description} />
+                  </p>
+                  {ticket.description.length > 200 && (
+                    <button
+                      onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                      className="mt-1 text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                    >
+                      {isDescriptionExpanded ? 'Show less' : 'Show more'}
+                    </button>
+                  )}
+                </div>
               )}
 
               {/* Meta Info Row */}
@@ -541,6 +571,41 @@ export default function TicketDetailPage() {
                   );
                 })()}
               </div>
+
+              {/* Tags Display */}
+              {(() => {
+                const ownTags = ticket.tags || [];
+                const projectTags = ticket.project && typeof ticket.project === 'object' && 'tags' in ticket.project
+                  ? (ticket.project as any).tags || []
+                  : [];
+                const hasAnyTags = ownTags.length > 0 || projectTags.length > 0;
+                
+                if (!hasAnyTags) return null;
+                
+                return (
+                  <div className="flex flex-wrap items-center gap-2 mt-4">
+                    {/* Own tags (blue) */}
+                    {ownTags.map((tag: string) => (
+                      <span
+                        key={`own-${tag}`}
+                        className="px-2 py-1 text-xs font-medium rounded-md bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                    {/* Inherited project tags (gray) */}
+                    {projectTags.map((tag: string) => (
+                      <span
+                        key={`inherited-${tag}`}
+                        className="px-2 py-1 text-xs font-medium rounded-md bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-400"
+                        title="Inherited from project"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                );
+              })()}
             </>
           )}
         </div>
@@ -607,7 +672,7 @@ export default function TicketDetailPage() {
                         ? 'text-surface-500 line-through'
                         : 'text-surface-900 dark:text-white'
                     )}>
-                      {task.title}
+                      <LinkifiedText text={task.title} />
                     </p>
                     {task.description && (
                       <p className={cn(
@@ -616,7 +681,7 @@ export default function TicketDetailPage() {
                           ? 'text-surface-400 line-through'
                           : 'text-surface-500 dark:text-surface-400'
                       )}>
-                        {task.description}
+                        <LinkifiedText text={task.description} />
                       </p>
                     )}
                     {/* Show resource badge if required (support both old and new field names) */}

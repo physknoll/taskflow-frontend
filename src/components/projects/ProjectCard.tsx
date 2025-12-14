@@ -7,15 +7,17 @@ import { formatDate } from '@/lib/utils';
 import {
   Calendar,
   AlertTriangle,
+  Edit2,
 } from 'lucide-react';
 
 interface ProjectCardProps {
   project: IProject;
   onClick?: () => void;
+  onEdit?: (project: IProject) => void;
   isDragging?: boolean;
 }
 
-export function ProjectCard({ project, onClick, isDragging = false }: ProjectCardProps) {
+export function ProjectCard({ project, onClick, onEdit, isDragging = false }: ProjectCardProps) {
   const {
     attributes,
     listeners,
@@ -64,12 +66,26 @@ export function ProjectCard({ project, onClick, isDragging = false }: ProjectCar
       {...listeners}
       onClick={handleClick}
       className={cn(
-        'bg-white dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700 p-4 cursor-pointer transition-all touch-none',
+        'group relative bg-white dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700 p-4 cursor-pointer transition-all touch-none',
         'hover:shadow-md hover:border-surface-300 dark:hover:border-surface-600',
         (isDragging || isBeingDragged) && 'opacity-50 shadow-lg rotate-2 ring-2 ring-primary-400',
         isOverdue && 'border-l-4 border-l-red-500'
       )}
     >
+      {/* Edit Button - appears on hover */}
+      {onEdit && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit(project);
+          }}
+          className="absolute top-2 right-2 p-1.5 rounded-md opacity-0 group-hover:opacity-100 bg-white dark:bg-surface-700 shadow-sm border border-surface-200 dark:border-surface-600 text-surface-500 hover:text-primary-600 dark:hover:text-primary-400 transition-all z-10"
+          title="Edit project"
+        >
+          <Edit2 className="w-3.5 h-3.5" />
+        </button>
+      )}
+
       {/* Header with color indicator */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -100,6 +116,25 @@ export function ProjectCard({ project, onClick, isDragging = false }: ProjectCar
       <p className="text-sm text-surface-500 dark:text-surface-400 mb-3">
         {clientName}
       </p>
+
+      {/* Tags */}
+      {project.tags && project.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-3">
+          {project.tags.slice(0, 3).map((tag) => (
+            <span
+              key={tag}
+              className="text-xs bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-400 px-2 py-0.5 rounded-md"
+            >
+              {tag}
+            </span>
+          ))}
+          {project.tags.length > 3 && (
+            <span className="text-xs text-surface-400 dark:text-surface-500">
+              +{project.tags.length - 3}
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Progress bar */}
       <div className="mb-3">

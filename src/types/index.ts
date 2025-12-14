@@ -175,6 +175,8 @@ export interface ITicket {
   estimatedHours?: number;
   actualHours?: number;
   tags: string[];
+  effectiveTags?: string[];  // Virtual field: merged project + ticket tags
+  color?: string;  // Optional color for card banner
   labels: Array<{ name: string; color: string }>;
   parentTicket?: string;
   childTickets: string[];

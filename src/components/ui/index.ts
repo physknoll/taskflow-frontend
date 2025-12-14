@@ -31,3 +31,9 @@ export { DateRangePicker } from './DateRangePicker';
 export { CodeInput } from './CodeInput';
 export type { CodeInputProps } from './CodeInput';
 
+export { LinkifiedText } from './LinkifiedText';
+
+export { TagInput } from './TagInput';
+
+export { ColorPicker, PRESET_COLORS } from './ColorPicker';
+

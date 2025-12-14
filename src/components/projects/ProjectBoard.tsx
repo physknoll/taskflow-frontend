@@ -24,6 +24,7 @@ interface ProjectBoardProps {
   isLoading: boolean;
   onStatusChange: (projectId: string, newStatus: string) => void;
   onProjectClick: (project: IProject) => void;
+  onProjectEdit?: (project: IProject) => void;
 }
 
 export function ProjectBoard({
@@ -32,6 +33,7 @@ export function ProjectBoard({
   isLoading,
   onStatusChange,
   onProjectClick,
+  onProjectEdit,
 }: ProjectBoardProps) {
   const [activeProject, setActiveProject] = useState<IProject | null>(null);
 
@@ -148,6 +150,7 @@ export function ProjectBoard({
                   key={project._id}
                   project={project}
                   onClick={() => onProjectClick(project)}
+                  onEdit={onProjectEdit}
                 />
               ))}
             </KanbanColumn>

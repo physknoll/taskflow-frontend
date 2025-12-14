@@ -8,6 +8,7 @@ import { useResources } from '@/hooks/useResources';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Skeleton } from '@/components/ui/Skeleton';
+import { TagInput } from '@/components/ui/TagInput';
 import { ResourceListInline, ResourceUploader } from '@/components/resources';
 import { cn, formatDate } from '@/lib/utils';
 import {
@@ -38,7 +39,7 @@ interface ProjectSidebarProps {
 
 export function ProjectSidebar({ project, stats, onClose }: ProjectSidebarProps) {
   const router = useRouter();
-  const { generateBrief, isGeneratingBrief, archiveProject, isArchiving, deleteProject, isDeleting } = useProject(project._id);
+  const { generateBrief, isGeneratingBrief, archiveProject, isArchiving, deleteProject, isDeleting, updateProject, isUpdating } = useProject(project._id);
   const [expandedSections, setExpandedSections] = useState<string[]>([
     'details',
     'team',
@@ -270,23 +271,20 @@ export function ProjectSidebar({ project, stats, onClose }: ProjectSidebarProps)
                 </p>
               </div>
 
-              {project.tags && project.tags.length > 0 && (
-                <div>
-                  <span className="text-xs font-medium text-surface-500 dark:text-surface-400">
-                    Tags
-                  </span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {project.tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-0.5 text-xs bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 rounded-full"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Tags - Editable */}
+              <TagInput
+                label="Tags"
+                tags={project.tags || []}
+                onChange={async (newTags) => {
+                  try {
+                    await updateProject({ tags: newTags });
+                  } catch (error) {
+                    // Error handled by the mutation
+                  }
+                }}
+                placeholder="Add a tag..."
+                disabled={isUpdating}
+              />
             </div>
           )}
         </div>

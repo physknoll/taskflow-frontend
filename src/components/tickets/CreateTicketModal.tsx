@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Input, Textarea } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
+import { ColorPicker } from '@/components/ui/ColorPicker';
 import { useTickets } from '@/hooks/useTickets';
 import { useClients } from '@/hooks/useClients';
 import { useAI } from '@/hooks/useAI';
@@ -42,6 +43,7 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
   const [selectedTasks, setSelectedTasks] = useState<any[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined);
 
   const {
     register,
@@ -115,6 +117,7 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
       await createTicket({
         ...data,
         tags,
+        color: selectedColor,
         generateAIContent: !!aiGenerated,
       } as any);
       handleClose();
@@ -128,6 +131,7 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
     setAiGenerated(null);
     setSelectedTasks([]);
     setTags([]);
+    setSelectedColor(undefined);
     onClose();
   };
 
@@ -229,6 +233,13 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
             </Button>
           </div>
         </div>
+
+        {/* Color Picker */}
+        <ColorPicker
+          label="Card Color (Optional)"
+          value={selectedColor}
+          onChange={setSelectedColor}
+        />
 
         {/* AI Generation Button */}
         <div className="border-t border-surface-200 dark:border-surface-700 pt-6">
