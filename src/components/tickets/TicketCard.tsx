@@ -84,10 +84,16 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
     id: ticket._id,
   });
 
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    zIndex: 1000,
-  } : undefined;
+  const style = {
+    ...(transform ? {
+      transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      zIndex: 1000,
+    } : {}),
+    ...(ticket.color ? {
+      borderColor: ticket.color,
+      borderWidth: '2px',
+    } : {}),
+  };
 
   const completedTasks = ticket.tasks.filter(t => t.status === 'completed').length;
   const totalTasks = ticket.tasks.length;
