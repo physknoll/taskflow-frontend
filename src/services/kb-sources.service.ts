@@ -6,6 +6,7 @@ import {
   KBSourcesFilters,
   CreateKBSourceInput,
   UpdateKBSourceInput,
+  CreateSourceResponse,
   SyncJobStarted,
   SyncJobStatus,
   SyncedUrl,
@@ -52,12 +53,12 @@ export const kbSourcesService = {
     return response.data.data;
   },
 
-  // Create a new source
+  // Create a new source (returns source + discovered URLs + sync job)
   async createSource(
     clientId: string,
     data: CreateKBSourceInput
-  ): Promise<KnowledgeBaseSource> {
-    const response = await api.post<ApiResponse<KnowledgeBaseSource>>(
+  ): Promise<CreateSourceResponse> {
+    const response = await api.post<ApiResponse<CreateSourceResponse>>(
       `/clients/${clientId}/kb-sources`,
       data
     );
@@ -188,7 +189,7 @@ export function useKBSource(clientId: string, sourceId: string) {
   });
 }
 
-// Create source
+// Create source (returns source + discovered URLs + sync job)
 export function useCreateKBSource(clientId: string) {
   const queryClient = useQueryClient();
 
@@ -266,16 +267,26 @@ export function useTestConnection(clientId: string) {
   });
 }
 
-// Get synced URLs
+// Get synced URLs with optional polling for pending URLs
 export function useSyncedUrls(
   clientId: string,
   sourceId: string,
-  filters: SyncedUrlsFilters = {}
+  options?: SyncedUrlsFilters & { pollWhilePending?: boolean }
 ) {
+  const { pollWhilePending, ...filters } = options || {};
+  
   return useQuery({
     queryKey: ['synced-urls', clientId, sourceId, filters],
     queryFn: () => kbSourcesService.getSyncedUrls(clientId, sourceId, filters),
     enabled: !!clientId && !!sourceId,
+    refetchInterval: (query) => {
+      if (!pollWhilePending) return false;
+      // Check if there are still pending URLs
+      const hasPending = query.state.data?.data?.some(
+        (url: SyncedUrl) => url.status === 'pending'
+      );
+      return hasPending ? 5000 : false; // Poll every 5 seconds while pending
+    },
   });
 }
 
@@ -307,3 +318,4 @@ export function useSyncHistory(
     enabled: !!clientId && !!sourceId,
   });
 }
+

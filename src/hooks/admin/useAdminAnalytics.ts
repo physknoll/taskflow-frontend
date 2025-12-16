@@ -45,3 +45,4 @@ export function useAdminAIAnalytics(params?: AdminAnalyticsParams) {
     staleTime: 60 * 1000,
   });
 }
+

@@ -42,3 +42,4 @@ export const adminAdminsService = {
     await adminApi.delete(`/admins/${id}`);
   },
 };
+

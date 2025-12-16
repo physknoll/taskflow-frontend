@@ -208,3 +208,4 @@ export function ToolIndicator({ isThinking, currentTool, recentTools, className 
 
 export default ToolIndicator;
 
+

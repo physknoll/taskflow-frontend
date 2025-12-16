@@ -377,3 +377,4 @@ export function SyncHistoryPanel({
     </Modal>
   );
 }
+

@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { cn, formatDate } from '@/lib/utils';
+import { Progress } from '@/components/ui/Progress';
 import {
   ExternalLink,
   CheckCircle,
@@ -19,6 +20,8 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Loader2,
+  Info,
 } from 'lucide-react';
 
 interface SyncedURLsDrawerProps {
@@ -26,6 +29,7 @@ interface SyncedURLsDrawerProps {
   onClose: () => void;
   clientId: string;
   source: KnowledgeBaseSource;
+  pollWhilePending?: boolean;
 }
 
 const STATUS_FILTERS: { value: UrlSyncStatus | 'all'; label: string }[] = [
@@ -41,20 +45,31 @@ export function SyncedURLsDrawer({
   onClose,
   clientId,
   source,
+  pollWhilePending = false,
 }: SyncedURLsDrawerProps) {
   const [statusFilter, setStatusFilter] = useState<UrlSyncStatus | 'all'>('all');
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Fetch URLs
-  const { data: urlsData, isLoading } = useSyncedUrls(clientId, source._id, {
+  // Fetch URLs with optional polling for pending URLs
+  const { data: urlsData, isLoading, isFetching } = useSyncedUrls(clientId, source._id, {
     page,
     limit: 20,
     status: statusFilter === 'all' ? undefined : statusFilter,
+    pollWhilePending,
   });
 
   const urls = urlsData?.data || [];
   const pagination = urlsData?.pagination;
+
+  // Calculate sync progress from URL statuses
+  const pendingCount = urls.filter((u) => u.status === 'pending').length;
+  const syncedCount = urls.filter((u) => u.status === 'synced').length;
+  const failedCount = urls.filter((u) => u.status === 'failed').length;
+  const totalCount = urls.length;
+  const processedCount = syncedCount + failedCount;
+  const progressPercentage = totalCount > 0 ? Math.round((processedCount / totalCount) * 100) : 0;
+  const isSyncing = pollWhilePending && pendingCount > 0;
 
   // Get status icon and color
   const getStatusInfo = (status: UrlSyncStatus) => {
@@ -128,22 +143,53 @@ export function SyncedURLsDrawer({
       disableContentScroll
     >
       <div className="flex flex-col h-[70vh]">
+        {/* Sync Progress Banner (when actively syncing) */}
+        {isSyncing && (
+          <div className="mb-4 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl">
+            <div className="flex items-center gap-3 mb-3">
+              <Loader2 className="h-5 w-5 text-primary-500 animate-spin" />
+              <div className="flex-1">
+                <p className="font-medium text-surface-900 dark:text-white">
+                  Syncing in progress...
+                </p>
+                <p className="text-sm text-surface-500">
+                  {syncedCount} synced, {failedCount} failed, {pendingCount} pending
+                </p>
+              </div>
+              <span className="text-sm font-medium text-primary-600 dark:text-primary-400">
+                {progressPercentage}%
+              </span>
+            </div>
+            <Progress value={progressPercentage} />
+            <div className="mt-3 flex items-center gap-2 text-xs text-surface-500">
+              <Info className="h-3 w-3" />
+              <span>You can navigate away. Sync continues in the background.</span>
+            </div>
+          </div>
+        )}
+
         {/* Stats Summary */}
         <div className="flex items-center gap-6 mb-4 text-sm">
           <span className="text-surface-600 dark:text-surface-400">
-            <strong className="text-surface-900 dark:text-white">{source.totalUrls}</strong> total
+            <strong className="text-surface-900 dark:text-white">{source.totalUrls || totalCount}</strong> total
           </span>
           <span className="text-green-600">
-            <strong>{source.syncedUrls}</strong> synced
+            <strong>{source.syncedUrls || syncedCount}</strong> synced
           </span>
-          {source.failedUrls > 0 && (
+          {(source.failedUrls > 0 || failedCount > 0) && (
             <span className="text-red-600">
-              <strong>{source.failedUrls}</strong> failed
+              <strong>{source.failedUrls || failedCount}</strong> failed
             </span>
           )}
-          {source.pendingUrls > 0 && (
+          {(source.pendingUrls > 0 || pendingCount > 0) && (
             <span className="text-amber-600">
-              <strong>{source.pendingUrls}</strong> pending
+              <strong>{source.pendingUrls || pendingCount}</strong> pending
+            </span>
+          )}
+          {isFetching && !isLoading && (
+            <span className="flex items-center gap-1 text-surface-400">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Updating...
             </span>
           )}
         </div>
@@ -329,3 +375,4 @@ export function SyncedURLsDrawer({
     </Modal>
   );
 }
+

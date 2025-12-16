@@ -64,3 +64,4 @@ export function ColorPicker({ value, onChange, label, className }: ColorPickerPr
 }
 
 export { PRESET_COLORS };
+

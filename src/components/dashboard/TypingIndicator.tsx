@@ -30,3 +30,4 @@ export function TypingIndicator({ className }: TypingIndicatorProps) {
 
 export default TypingIndicator;
 
+

@@ -36,3 +36,4 @@ export const adminAuthService = {
     return response.data.data;
   },
 };
+

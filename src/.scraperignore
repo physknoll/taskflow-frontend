@@ -1,0 +1,17 @@
+# Default ignore patterns for git-scraper
+.claude
+.next
+node_modules
+.git
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+*/admin/*
+app/(auth)/*
+types/aipm.ts
+hooks/*
+types/*
+lib/*
+stores/index.ts
+.scraperignore

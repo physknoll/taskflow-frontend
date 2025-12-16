@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useKBSources, useDeleteKBSource } from '@/services/kb-sources.service';
 import { useAuthStore } from '@/stores/authStore';
 import { hasPermission } from '@/lib/permissions';
-import { KnowledgeBaseSource } from '@/types/kb-sources';
+import { KnowledgeBaseSource, CreateSourceResponse } from '@/types/kb-sources';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -41,6 +41,15 @@ export function KBSourcesList({ clientId }: KBSourcesListProps) {
   const [viewingUrlsSource, setViewingUrlsSource] = useState<KnowledgeBaseSource | null>(null);
   const [viewingHistorySource, setViewingHistorySource] = useState<KnowledgeBaseSource | null>(null);
   const [deletingSource, setDeletingSource] = useState<KnowledgeBaseSource | null>(null);
+  
+  // Track newly created source to show URLs drawer with polling
+  const [newlyCreatedSource, setNewlyCreatedSource] = useState<KnowledgeBaseSource | null>(null);
+
+  // Handle source creation - open URLs drawer with polling enabled
+  const handleSourceCreated = (response: CreateSourceResponse) => {
+    setShowAddModal(false);
+    setNewlyCreatedSource(response.source);
+  };
 
   // Mutations
   const deleteMutation = useDeleteKBSource(clientId);
@@ -138,7 +147,19 @@ export function KBSourcesList({ clientId }: KBSourcesListProps) {
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
           clientId={clientId}
+          onCreated={handleSourceCreated}
         />
+
+        {/* Synced URLs Drawer for newly created source (with polling) */}
+        {newlyCreatedSource && (
+          <SyncedURLsDrawer
+            isOpen={!!newlyCreatedSource}
+            onClose={() => setNewlyCreatedSource(null)}
+            clientId={clientId}
+            source={newlyCreatedSource}
+            pollWhilePending
+          />
+        )}
       </>
     );
   }
@@ -189,7 +210,19 @@ export function KBSourcesList({ clientId }: KBSourcesListProps) {
         }}
         clientId={clientId}
         source={editingSource || undefined}
+        onCreated={handleSourceCreated}
       />
+
+      {/* Synced URLs Drawer for newly created source (with polling) */}
+      {newlyCreatedSource && (
+        <SyncedURLsDrawer
+          isOpen={!!newlyCreatedSource}
+          onClose={() => setNewlyCreatedSource(null)}
+          clientId={clientId}
+          source={newlyCreatedSource}
+          pollWhilePending
+        />
+      )}
 
       {/* Sync Progress Modal */}
       {syncingSource && (
@@ -235,3 +268,4 @@ export function KBSourcesList({ clientId }: KBSourcesListProps) {
     </>
   );
 }
+

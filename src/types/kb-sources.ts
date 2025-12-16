@@ -201,6 +201,19 @@ export interface UpdateKBSourceInput {
   excludeSelectors?: string[];
 }
 
+// Create Source Response (includes discovered URLs and sync job)
+export interface CreateSourceResponse {
+  source: KnowledgeBaseSource;
+  discovery: {
+    totalUrls: number;
+    urls: Array<{ url: string; lastmod?: string }>;
+  };
+  syncJob: {
+    jobId: string;
+    message: string;
+  };
+}
+
 // ============================================
 // Filter Types
 // ============================================
@@ -299,3 +312,4 @@ export const SYNC_INTERVAL_OPTIONS = [
   { value: 12, label: 'Every 12 hours' },
   { value: 24, label: 'Every 24 hours' },
 ];
+

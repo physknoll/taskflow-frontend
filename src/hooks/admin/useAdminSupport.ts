@@ -49,3 +49,4 @@ export function useAdminAuditLogs(params?: AdminAuditParams) {
     queryFn: () => adminSupportService.listAuditLogs(params),
   });
 }
+

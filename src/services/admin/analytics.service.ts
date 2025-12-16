@@ -50,3 +50,4 @@ export const adminAnalyticsService = {
     return response.data.data;
   },
 };
+

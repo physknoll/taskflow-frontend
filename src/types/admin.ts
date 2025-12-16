@@ -496,3 +496,4 @@ export interface AdminAnalyticsParams {
   endDate?: string;
   granularity?: 'day' | 'week' | 'month';
 }
+

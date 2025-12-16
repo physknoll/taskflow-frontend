@@ -77,3 +77,4 @@ export const config = {
     '/((?!_next/static|_next/image|_next/webpack|favicon.ico).*)',
   ],
 };
+

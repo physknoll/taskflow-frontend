@@ -263,3 +263,4 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
     </>
   );
 }
+

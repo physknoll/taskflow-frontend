@@ -12,6 +12,7 @@ import {
   KBSourceType,
   CreateKBSourceInput,
   UpdateKBSourceInput,
+  CreateSourceResponse,
   KB_SOURCE_TYPES,
   SYNC_INTERVAL_OPTIONS,
 } from '@/types/kb-sources';
@@ -37,6 +38,7 @@ interface AddEditSourceModalProps {
   onClose: () => void;
   clientId: string;
   source?: KnowledgeBaseSource;
+  onCreated?: (response: CreateSourceResponse) => void;
 }
 
 export function AddEditSourceModal({
@@ -44,6 +46,7 @@ export function AddEditSourceModal({
   onClose,
   clientId,
   source,
+  onCreated,
 }: AddEditSourceModalProps) {
   const queryClient = useQueryClient();
   const isEditing = !!source;
@@ -155,6 +158,9 @@ export function AddEditSourceModal({
         };
         await updateMutation.mutateAsync(updateData);
         toast.success('Source updated successfully');
+        // Invalidate queries
+        queryClient.invalidateQueries({ queryKey: ['kb-sources', clientId] });
+        onClose();
       } else {
         const createData: CreateKBSourceInput = {
           name: name.trim(),
@@ -166,13 +172,20 @@ export function AddEditSourceModal({
           contentSelectors: parseSelectors(contentSelectors),
           excludeSelectors: parseSelectors(excludeSelectors),
         };
-        await createMutation.mutateAsync(createData);
-        toast.success('Source created successfully! Initial sync will start shortly.');
+        const response = await createMutation.mutateAsync(createData);
+        
+        // Invalidate queries to refresh the list
+        queryClient.invalidateQueries({ queryKey: ['kb-sources', clientId] });
+        
+        // Notify parent with the created source and sync job info
+        if (onCreated) {
+          toast.success(`Source created with ${response.discovery.totalUrls} URLs. Sync started.`);
+          onCreated(response);
+        } else {
+          toast.success('Source created successfully! Initial sync will start shortly.');
+          onClose();
+        }
       }
-
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ['kb-sources', clientId] });
-      onClose();
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to save source');
     }
@@ -403,3 +416,4 @@ export function AddEditSourceModal({
     </Modal>
   );
 }
+
