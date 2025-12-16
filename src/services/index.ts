@@ -16,6 +16,20 @@ export { sopAgentService } from './sopAgent.service';
 export { aipmService } from './aipm.service';
 export { conversationsService } from './conversations.service';
 export { integrationsService } from './integrations.service';
+export {
+  kbSourcesService,
+  useKBSources,
+  useKBSource,
+  useCreateKBSource,
+  useUpdateKBSource,
+  useDeleteKBSource,
+  useTriggerSync,
+  useSyncJobStatus,
+  useTestConnection,
+  useSyncedUrls,
+  useToggleSync,
+  useSyncHistory,
+} from './kb-sources.service';
 
 export type { TicketFilters, AIGeneratedContent } from './tickets.service';
 export type { GuidelinesFilters } from './guidelines.service';

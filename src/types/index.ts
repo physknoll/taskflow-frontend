@@ -946,6 +946,11 @@ export * from './guidelines';
 export * from './aipm';
 
 // ============================================
+// Knowledge Base Sources Types
+// ============================================
+export * from './kb-sources';
+
+// ============================================
 // Conversations API Types
 // ============================================
 

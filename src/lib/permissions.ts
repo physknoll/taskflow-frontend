@@ -13,6 +13,7 @@ const PERMISSIONS: Record<string, string[]> = {
   'clients.delete': ['owner'],
   'clients.manage_contacts': ['owner', 'manager'],
   'clients.manage_knowledge_base': ['owner', 'manager'],
+  'clients.manage_kb_sources': ['owner', 'manager'],
 
   // Ticket Management
   'tickets.view_all': ['owner', 'manager'],

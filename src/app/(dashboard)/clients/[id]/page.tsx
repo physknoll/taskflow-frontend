@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clientsService, KnowledgeBaseDocument, KNOWLEDGE_BASE_CATEGORIES } from '@/services/clients.service';
 import { ticketsService } from '@/services/tickets.service';
-import { BulkUploadModal } from '@/components/clients';
+import { BulkUploadModal, KBSourcesList } from '@/components/clients';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
@@ -655,6 +655,9 @@ function DocumentsTab({ clientId }: { clientId: string }) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Sub-tab navigation state
+  const [activeSubTab, setActiveSubTab] = useState<'files' | 'sources'>('files');
+  
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
@@ -817,46 +820,84 @@ function DocumentsTab({ clientId }: { clientId: string }) {
 
   return (
     <div className="space-y-6">
-      {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <div className="flex gap-2">
-          <Select
-            options={[
-              { value: '', label: 'All Categories' },
-              ...KNOWLEDGE_BASE_CATEGORIES.map(c => ({ value: c.id, label: `${c.icon} ${c.label}` })),
-            ]}
-            value={selectedCategory}
-            onChange={setSelectedCategory}
-            className="w-48"
-          />
-        </div>
-        
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setShowQueryModal(true)}>
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Ask AI
-          </Button>
-          <Button variant="outline" onClick={() => setShowAddTextModal(true)}>
-            <FileText className="h-4 w-4 mr-2" />
-            Add Text
-          </Button>
-          <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
-            <Upload className="h-4 w-4 mr-2" />
-            Upload File
-          </Button>
-          <Button onClick={() => setShowBulkUploadModal(true)}>
-            <FolderUp className="h-4 w-4 mr-2" />
-            Bulk Upload
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".txt,.md,.html,.json"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
+      {/* Sub-tab Navigation */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1 bg-surface-100 dark:bg-surface-800 p-1 rounded-lg">
+          <button
+            onClick={() => setActiveSubTab('files')}
+            className={cn(
+              'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
+              activeSubTab === 'files'
+                ? 'bg-white dark:bg-surface-700 text-surface-900 dark:text-white shadow-sm'
+                : 'text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
+            )}
+          >
+            <File className="h-4 w-4" />
+            Files
+          </button>
+          <button
+            onClick={() => setActiveSubTab('sources')}
+            className={cn(
+              'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
+              activeSubTab === 'sources'
+                ? 'bg-white dark:bg-surface-700 text-surface-900 dark:text-white shadow-sm'
+                : 'text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
+            )}
+          >
+            <Globe className="h-4 w-4" />
+            Sources
+          </button>
         </div>
       </div>
+
+      {/* Sources Sub-Tab */}
+      {activeSubTab === 'sources' && (
+        <KBSourcesList clientId={clientId} />
+      )}
+
+      {/* Files Sub-Tab */}
+      {activeSubTab === 'files' && (
+        <>
+          {/* Toolbar */}
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+            <div className="flex gap-2">
+              <Select
+                options={[
+                  { value: '', label: 'All Categories' },
+                  ...KNOWLEDGE_BASE_CATEGORIES.map(c => ({ value: c.id, label: `${c.icon} ${c.label}` })),
+                ]}
+                value={selectedCategory}
+                onChange={setSelectedCategory}
+                className="w-48"
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowQueryModal(true)}>
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Ask AI
+              </Button>
+              <Button variant="outline" onClick={() => setShowAddTextModal(true)}>
+                <FileText className="h-4 w-4 mr-2" />
+                Add Text
+              </Button>
+              <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="h-4 w-4 mr-2" />
+                Upload File
+              </Button>
+              <Button onClick={() => setShowBulkUploadModal(true)}>
+                <FolderUp className="h-4 w-4 mr-2" />
+                Bulk Upload
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".txt,.md,.html,.json"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </div>
+          </div>
 
       {/* Documents List */}
       <div className="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700">
@@ -1235,16 +1276,18 @@ function DocumentsTab({ clientId }: { clientId: string }) {
         </div>
       </Modal>
 
-      {/* Bulk Upload Modal */}
-      <BulkUploadModal
-        isOpen={showBulkUploadModal}
-        onClose={() => setShowBulkUploadModal(false)}
-        clientId={clientId}
-        onUploadComplete={() => {
-          queryClient.invalidateQueries({ queryKey: ['knowledge-base', clientId] });
-          queryClient.invalidateQueries({ queryKey: ['client', clientId] });
-        }}
-      />
+          {/* Bulk Upload Modal */}
+          <BulkUploadModal
+            isOpen={showBulkUploadModal}
+            onClose={() => setShowBulkUploadModal(false)}
+            clientId={clientId}
+            onUploadComplete={() => {
+              queryClient.invalidateQueries({ queryKey: ['knowledge-base', clientId] });
+              queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }
