@@ -6,38 +6,38 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
+  'inline-flex items-center justify-center whitespace-nowrap text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]',
   {
     variants: {
       variant: {
         default:
-          'bg-primary-600 text-white hover:bg-primary-700 shadow-sm hover:shadow-md',
+          'bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700 shadow-button hover:shadow-button-hover hover:-translate-y-0.5 rounded-full',
         destructive:
-          'bg-red-600 text-white hover:bg-red-700 shadow-sm hover:shadow-md',
+          'bg-error-500 text-white hover:bg-error-600 shadow-sm hover:shadow-md rounded-lg',
         danger:
-          'bg-red-600 text-white hover:bg-red-700 shadow-sm hover:shadow-md',
+          'bg-error-500 text-white hover:bg-error-600 shadow-sm hover:shadow-md rounded-lg',
         warning:
-          'bg-amber-600 text-white hover:bg-amber-700 shadow-sm hover:shadow-md',
+          'bg-warning-500 text-white hover:bg-warning-600 shadow-sm hover:shadow-md rounded-lg',
         outline:
-          'border-2 border-surface-300 bg-transparent hover:bg-surface-100 hover:border-surface-400 dark:border-surface-600 dark:hover:bg-surface-800 dark:hover:border-surface-500',
+          'border border-[var(--border-default)] bg-transparent hover:border-primary-500 hover:text-primary-500 rounded-full',
         secondary:
-          'bg-surface-200 text-surface-900 hover:bg-surface-300 dark:bg-surface-700 dark:text-surface-100 dark:hover:bg-surface-600',
+          'bg-[var(--bg-tertiary)] text-[var(--text-primary)] hover:bg-surface-300 [data-theme="dark"]:hover:bg-surface-600 rounded-lg',
         ghost:
-          'hover:bg-surface-100 dark:hover:bg-surface-800 text-surface-700 dark:text-surface-300',
-        link: 'text-primary-600 underline-offset-4 hover:underline dark:text-primary-400',
+          'hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] rounded-lg',
+        link: 'text-primary-500 underline-offset-4 hover:underline',
         success:
-          'bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm hover:shadow-md',
+          'bg-success-500 text-white hover:bg-success-600 shadow-sm hover:shadow-md rounded-lg',
         gradient:
-          'bg-gradient-to-r from-primary-600 to-accent-600 text-white hover:from-primary-700 hover:to-accent-700 shadow-sm hover:shadow-md',
+          'bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700 shadow-button hover:shadow-button-hover hover:-translate-y-0.5 rounded-full',
       },
       size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-8 rounded-md px-3 text-xs',
-        lg: 'h-12 rounded-lg px-8 text-base',
-        xl: 'h-14 rounded-xl px-10 text-lg',
-        icon: 'h-10 w-10',
-        'icon-sm': 'h-8 w-8',
-        'icon-lg': 'h-12 w-12',
+        default: 'h-10 px-6 py-2',
+        sm: 'h-8 px-4 text-xs rounded-md',
+        lg: 'h-12 px-8 text-base',
+        xl: 'h-14 px-10 text-lg',
+        icon: 'h-10 w-10 rounded-lg',
+        'icon-sm': 'h-8 w-8 rounded-lg',
+        'icon-lg': 'h-12 w-12 rounded-lg',
       },
     },
     defaultVariants: {
@@ -92,5 +92,3 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = 'Button';
 
 export { Button, buttonVariants };
-
-

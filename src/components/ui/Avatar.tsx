@@ -22,10 +22,10 @@ const sizeClasses = {
 };
 
 const statusClasses = {
-  online: 'bg-emerald-500',
+  online: 'bg-success-500',
   offline: 'bg-surface-400',
-  busy: 'bg-red-500',
-  away: 'bg-amber-500',
+  busy: 'bg-error-500',
+  away: 'bg-warning-500',
 };
 
 const statusSizes = {
@@ -50,16 +50,16 @@ export function Avatar({
   const [imageError, setImageError] = React.useState(false);
   const initials = getInitials(firstName, lastName);
 
-  // Generate a consistent background color based on initials
+  // Use orange gradient for avatar fallback
   const colors = [
-    'bg-primary-500',
-    'bg-accent-500',
-    'bg-emerald-500',
-    'bg-amber-500',
-    'bg-violet-500',
-    'bg-cyan-500',
-    'bg-rose-500',
-    'bg-indigo-500',
+    'bg-gradient-to-br from-primary-400 to-primary-600',
+    'bg-gradient-to-br from-success-400 to-success-600',
+    'bg-gradient-to-br from-warning-400 to-warning-600',
+    'bg-gradient-to-br from-info-400 to-info-600',
+    'bg-gradient-to-br from-error-400 to-error-600',
+    'bg-gradient-to-br from-violet-400 to-violet-600',
+    'bg-gradient-to-br from-cyan-400 to-cyan-600',
+    'bg-gradient-to-br from-rose-400 to-rose-600',
   ];
 
   const colorIndex = initials ? (initials.charCodeAt(0) + (initials.charCodeAt(1) || 0)) % colors.length : 0;
@@ -88,7 +88,7 @@ export function Avatar({
       {showStatus && (
         <span
           className={cn(
-            'absolute bottom-0 right-0 rounded-full border-2 border-white dark:border-surface-800',
+            'absolute bottom-0 right-0 rounded-full border-2 border-[var(--bg-primary)]',
             statusClasses[status],
             statusSizes[size]
           )}
@@ -121,13 +121,13 @@ export function AvatarGroup({ avatars, max = 4, size = 'sm' }: AvatarGroupProps)
           firstName={avatar.firstName}
           lastName={avatar.lastName}
           size={size}
-          className="ring-2 ring-white dark:ring-surface-800"
+          className="ring-2 ring-[var(--bg-primary)]"
         />
       ))}
       {remaining > 0 && (
         <div
           className={cn(
-            'rounded-full flex items-center justify-center bg-surface-200 dark:bg-surface-700 text-surface-600 dark:text-surface-300 font-medium ring-2 ring-white dark:ring-surface-800',
+            'rounded-full flex items-center justify-center bg-[var(--bg-tertiary)] text-[var(--text-secondary)] font-medium ring-2 ring-[var(--bg-primary)]',
             sizeClasses[size]
           )}
         >
@@ -137,6 +137,3 @@ export function AvatarGroup({ avatars, max = 4, size = 'sm' }: AvatarGroupProps)
     </div>
   );
 }
-
-
-

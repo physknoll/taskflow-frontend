@@ -78,8 +78,8 @@ export function TodayStatsWidget({ stats, className, compact = false }: TodaySta
       label: 'Hours',
       value: stats.hoursLogged,
       icon: TrendingUp,
-      color: 'text-purple-500',
-      bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+      color: 'text-primary-500',
+      bgColor: 'bg-primary-50 dark:bg-primary-900/20',
     },
   ];
 

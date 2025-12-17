@@ -164,8 +164,8 @@ export default function AnalyticsPage() {
         <Link href="/admin/analytics/ai" className="block">
           <Card hover className="h-full">
             <CardContent className="p-4 flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                <Bot className="w-5 h-5 text-purple-600" />
+              <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30">
+                <Bot className="w-5 h-5 text-primary-600" />
               </div>
               <div>
                 <p className="font-medium text-surface-900 dark:text-white">AI Usage</p>

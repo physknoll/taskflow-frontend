@@ -42,8 +42,8 @@ const updateTypeColors: Record<string, { bg: string; text: string; label: string
     label: 'Completed',
   },
   started: {
-    bg: 'bg-purple-50 dark:bg-purple-900/30',
-    text: 'text-purple-700 dark:text-purple-400',
+    bg: 'bg-primary-50 dark:bg-primary-900/30',
+    text: 'text-primary-700 dark:text-primary-400',
     label: 'Started',
   },
   blocked: {

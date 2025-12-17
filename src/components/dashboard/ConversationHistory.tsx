@@ -32,7 +32,7 @@ const typeConfig: Record<ConversationType, { icon: typeof MessageSquare; label: 
   knowledge_base: { icon: FileText, label: 'Knowledge', color: 'text-amber-500' },
   sop_creation: { icon: FileText, label: 'SOP', color: 'text-teal-500' },
   blocker_resolution: { icon: AlertCircle, label: 'Blocker', color: 'text-red-500' },
-  ticket_discussion: { icon: MessageSquare, label: 'Ticket', color: 'text-purple-500' },
+  ticket_discussion: { icon: MessageSquare, label: 'Ticket', color: 'text-primary-500' },
   general: { icon: Bot, label: 'General', color: 'text-surface-500' },
 };
 

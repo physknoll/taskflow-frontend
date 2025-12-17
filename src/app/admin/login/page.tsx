@@ -55,14 +55,14 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-surface-900 via-surface-800 to-purple-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-surface-900 via-surface-800 to-primary-900 flex items-center justify-center p-4">
       {/* Background pattern */}
       <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
       
       <div className="relative w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 mb-4 shadow-lg shadow-purple-500/30">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 mb-4 shadow-lg shadow-primary-500/30">
             <ShieldCheck className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white">Admin Panel</h1>
@@ -91,7 +91,7 @@ export default function AdminLoginPage() {
                 type="email"
                 placeholder="admin@example.com"
                 {...register('email')}
-                className="bg-white/5 border-white/10 text-white placeholder-surface-500 focus:border-purple-500"
+                className="bg-white/5 border-white/10 text-white placeholder-surface-500 focus:border-primary-500"
               />
               {errors.email && (
                 <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>
@@ -107,7 +107,7 @@ export default function AdminLoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
                   {...register('password')}
-                  className="bg-white/5 border-white/10 text-white placeholder-surface-500 focus:border-purple-500 pr-10"
+                  className="bg-white/5 border-white/10 text-white placeholder-surface-500 focus:border-primary-500 pr-10"
                 />
                 <button
                   type="button"
@@ -128,7 +128,7 @@ export default function AdminLoginPage() {
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+              className="w-full bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800"
               isLoading={isSubmitting}
             >
               Sign In

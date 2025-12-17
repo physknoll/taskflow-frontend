@@ -37,8 +37,8 @@ const actionColors: Record<SuggestedActionType, string> = {
   log_update: 'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400',
   send_email: 'bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400',
   mark_complete: 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400',
-  request_help: 'bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400',
-  schedule_meeting: 'bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-400',
+  request_help: 'bg-primary-100 text-primary-600 dark:bg-primary-900/50 dark:text-primary-400',
+  schedule_meeting: 'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400',
 };
 
 export function ActionCard({ action, onActionClick, isExecuting }: ActionCardProps) {

@@ -186,11 +186,11 @@ function BoardSkeleton() {
           >
             <Skeleton variant="text" width={100} height={20} />
           </div>
-          <div className="p-3 bg-surface-50 dark:bg-surface-800/50 rounded-b-xl space-y-3">
+          <div className="p-3 bg-[var(--bg-secondary)] rounded-b-xl space-y-3">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="p-4 bg-white dark:bg-surface-800 rounded-lg animate-pulse"
+                className="p-4 bg-[var(--bg-primary)] rounded-lg animate-pulse"
               >
                 <div className="flex justify-between mb-3">
                   <Skeleton variant="text" width="30%" />
@@ -199,7 +199,7 @@ function BoardSkeleton() {
                 <Skeleton variant="text" width="80%" className="mb-2" />
                 <Skeleton variant="text" width="50%" className="mb-4" />
                 <Skeleton variant="rounded" width="100%" height={8} className="mb-4" />
-                <div className="flex justify-between pt-3 border-t">
+                <div className="flex justify-between pt-3 border-t border-[var(--border-default)]">
                   <Skeleton variant="text" width={80} />
                   <div className="flex -space-x-2">
                     <Skeleton variant="circular" width={24} height={24} />
@@ -214,4 +214,3 @@ function BoardSkeleton() {
     </div>
   );
 }
-

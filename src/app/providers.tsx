@@ -34,11 +34,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <Toaster
           position="top-right"
           toastOptions={{
-            className: 'dark:bg-surface-800 dark:text-white',
+            className: '',
             duration: 4000,
             style: {
-              background: 'var(--toast-bg)',
-              color: 'var(--toast-color)',
+              background: 'var(--bg-secondary)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--border-default)',
             },
           }}
         />
@@ -50,12 +51,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
           closeButton
           toastOptions={{
             classNames: {
-              toast: 'dark:bg-surface-800 dark:text-white dark:border-surface-700',
-              title: 'dark:text-white',
-              description: 'dark:text-surface-400',
-              actionButton: 'dark:bg-primary-600 dark:text-white',
-              cancelButton: 'dark:bg-surface-700 dark:text-surface-300',
-              closeButton: 'dark:bg-surface-700 dark:text-surface-300 dark:hover:bg-surface-600',
+              toast: 'bg-[var(--bg-secondary)] text-[var(--text-primary)] border-[var(--border-default)]',
+              title: 'text-[var(--text-primary)]',
+              description: 'text-[var(--text-secondary)]',
+              actionButton: 'bg-primary-500 text-white',
+              cancelButton: 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)]',
+              closeButton: 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)]',
             },
           }}
         />
@@ -70,27 +71,24 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove('light', 'dark');
 
     if (theme === 'system') {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
         ? 'dark'
         : 'light';
-      root.classList.add(systemTheme);
+      root.setAttribute('data-theme', systemTheme);
 
       // Listen for system theme changes
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       const handleChange = (e: MediaQueryListEvent) => {
-        root.classList.remove('light', 'dark');
-        root.classList.add(e.matches ? 'dark' : 'light');
+        root.setAttribute('data-theme', e.matches ? 'dark' : 'light');
       };
       mediaQuery.addEventListener('change', handleChange);
       return () => mediaQuery.removeEventListener('change', handleChange);
     } else {
-      root.classList.add(theme);
+      root.setAttribute('data-theme', theme);
     }
   }, [theme]);
 
   return <>{children}</>;
 }
-

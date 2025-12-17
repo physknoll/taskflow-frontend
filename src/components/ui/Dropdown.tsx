@@ -31,7 +31,7 @@ export function Dropdown({ trigger, children, align = 'right', className }: Drop
       {isOpen && (
         <div
           className={cn(
-            'absolute z-50 mt-2 min-w-[200px] rounded-lg border border-surface-200 bg-white py-1 shadow-lg dark:border-surface-700 dark:bg-surface-800 animate-fade-in',
+            'absolute z-50 mt-2 min-w-[200px] rounded-lg border border-[var(--border-default)] bg-[var(--bg-primary)] py-1 shadow-lg animate-fade-in',
             align === 'right' ? 'right-0' : 'left-0',
             className
           )}
@@ -70,8 +70,8 @@ export function DropdownItem({
       className={cn(
         'flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors',
         variant === 'default'
-          ? 'text-surface-700 hover:bg-surface-100 dark:text-surface-300 dark:hover:bg-surface-700'
-          : 'text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20',
+          ? 'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
+          : 'text-error-500 hover:bg-error-50 [data-theme="dark"]:hover:bg-error-900/20',
         className
       )}
       {...props}
@@ -83,16 +83,13 @@ export function DropdownItem({
 }
 
 export function DropdownDivider() {
-  return <div className="my-1 border-t border-surface-200 dark:border-surface-700" />;
+  return <div className="my-1 border-t border-[var(--border-default)]" />;
 }
 
 export function DropdownLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="px-4 py-2 text-xs font-semibold text-surface-500 uppercase tracking-wider">
+    <div className="px-4 py-2 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
       {children}
     </div>
   );
 }
-
-
-

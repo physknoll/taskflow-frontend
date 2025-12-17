@@ -126,7 +126,7 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
       style={style}
       className={cn(
         'ticket-card touch-none',
-        (isDragging || isBeingDragged) && 'opacity-50 shadow-2xl ring-2 ring-primary-400 z-50'
+        (isDragging || isBeingDragged) && 'opacity-50 shadow-xl ring-2 ring-primary-400 z-50'
       )}
       {...attributes}
       {...listeners}
@@ -134,12 +134,12 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
       <div onClick={handleCardClick} className="cursor-pointer">
         {/* Project Indicator */}
         {ticket.project && isPopulatedProject(ticket.project) && (
-          <div className="flex items-center gap-1.5 mb-2 -mx-1 px-1 py-1 rounded-md bg-surface-50 dark:bg-surface-700/50">
+          <div className="flex items-center gap-1.5 mb-2 -mx-1 px-1 py-1 rounded-md bg-[var(--bg-tertiary)]">
             <span
               className="w-2 h-2 rounded-full flex-shrink-0"
               style={{ backgroundColor: ticket.project.color }}
             />
-            <span className="text-xs font-medium text-surface-600 dark:text-surface-300 truncate">
+            <span className="text-xs font-medium text-[var(--text-secondary)] truncate">
               {ticket.project.name}
             </span>
           </div>
@@ -147,7 +147,7 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
 
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-2">
-          <span className="text-xs font-mono text-surface-500 dark:text-surface-400">
+          <span className="text-xs font-mono text-[var(--text-muted)]">
             {ticket.ticketNumber}
           </span>
           <Badge className={getPriorityColor(ticket.priority)} size="sm">
@@ -156,7 +156,7 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
         </div>
 
         {/* Title */}
-        <h4 className="font-medium text-surface-900 dark:text-white mb-2 line-clamp-2">
+        <h4 className="font-medium text-[var(--text-primary)] mb-2 line-clamp-2">
           <span className="mr-1.5">{getTypeIcon(ticket.type)}</span>
           {ticket.title}
         </h4>
@@ -167,13 +167,13 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
             {ticket.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="text-xs bg-surface-100 dark:bg-surface-700 text-surface-600 dark:text-surface-400 px-2 py-0.5 rounded-md"
+                className="text-xs bg-[var(--bg-tertiary)] text-[var(--text-secondary)] px-2 py-0.5 rounded-md"
               >
                 {tag}
               </span>
             ))}
             {ticket.tags.length > 3 && (
-              <span className="text-xs text-surface-400 dark:text-surface-500">
+              <span className="text-xs text-[var(--text-muted)]">
                 +{ticket.tags.length - 3}
               </span>
             )}
@@ -183,7 +183,7 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
         {/* Progress */}
         {totalTasks > 0 && (
           <div className="mb-3">
-            <div className="flex items-center justify-between text-xs text-surface-500 dark:text-surface-400 mb-1">
+            <div className="flex items-center justify-between text-xs text-[var(--text-muted)] mb-1">
               <span className="flex items-center gap-1">
                 <CheckSquare className="h-3 w-3" />
                 {completedTasks}/{totalTasks} tasks
@@ -195,7 +195,7 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
         )}
 
         {/* Footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-surface-100 dark:border-surface-700">
+        <div className="flex items-center justify-between pt-3 border-t border-[var(--border-subtle)]">
           {/* Left side: Due date and comments */}
           <div className="flex items-center gap-2.5">
             {ticket.dueDate && (
@@ -203,10 +203,10 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
                 className={cn(
                   'flex items-center gap-1 text-xs',
                   overdue
-                    ? 'text-red-500 dark:text-red-400'
+                    ? 'text-error-500'
                     : dueSoon
-                    ? 'text-amber-500 dark:text-amber-400'
-                    : 'text-surface-500 dark:text-surface-400'
+                    ? 'text-warning-500'
+                    : 'text-[var(--text-muted)]'
                 )}
               >
                 <Calendar className="h-3 w-3" />
@@ -216,7 +216,7 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
             
             {/* Comments count */}
             {ticket.comments.length > 0 && (
-              <div className="flex items-center gap-0.5 text-xs text-surface-400 dark:text-surface-500">
+              <div className="flex items-center gap-0.5 text-xs text-[var(--text-muted)]">
                 <MessageCircle className="h-3 w-3" />
                 <span>{ticket.comments.length}</span>
               </div>
@@ -230,7 +230,7 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
               <div className="flex items-center gap-1.5">
                 {/* Images */}
                 {resourceCounts.images > 0 && (
-                  <div className="flex items-center gap-0.5 text-xs text-pink-500 dark:text-pink-400" title={`${resourceCounts.images} image${resourceCounts.images > 1 ? 's' : ''}`}>
+                  <div className="flex items-center gap-0.5 text-xs text-pink-500" title={`${resourceCounts.images} image${resourceCounts.images > 1 ? 's' : ''}`}>
                     <ImageIcon className="h-3 w-3" />
                     <span className="text-[10px] font-medium">{resourceCounts.images}</span>
                   </div>
@@ -238,7 +238,7 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
                 
                 {/* Videos */}
                 {resourceCounts.videos > 0 && (
-                  <div className="flex items-center gap-0.5 text-xs text-red-500 dark:text-red-400" title={`${resourceCounts.videos} video${resourceCounts.videos > 1 ? 's' : ''}`}>
+                  <div className="flex items-center gap-0.5 text-xs text-error-500" title={`${resourceCounts.videos} video${resourceCounts.videos > 1 ? 's' : ''}`}>
                     <Video className="h-3 w-3" />
                     <span className="text-[10px] font-medium">{resourceCounts.videos}</span>
                   </div>
@@ -246,7 +246,7 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
                 
                 {/* Links */}
                 {resourceCounts.links > 0 && (
-                  <div className="flex items-center gap-0.5 text-xs text-blue-500 dark:text-blue-400" title={`${resourceCounts.links} link${resourceCounts.links > 1 ? 's' : ''}`}>
+                  <div className="flex items-center gap-0.5 text-xs text-info-500" title={`${resourceCounts.links} link${resourceCounts.links > 1 ? 's' : ''}`}>
                     <LinkIcon className="h-3 w-3" />
                     <span className="text-[10px] font-medium">{resourceCounts.links}</span>
                   </div>
@@ -254,7 +254,7 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
                 
                 {/* Git */}
                 {resourceCounts.git > 0 && (
-                  <div className="flex items-center gap-0.5 text-xs text-emerald-500 dark:text-emerald-400" title={`${resourceCounts.git} git resource${resourceCounts.git > 1 ? 's' : ''}`}>
+                  <div className="flex items-center gap-0.5 text-xs text-success-500" title={`${resourceCounts.git} git resource${resourceCounts.git > 1 ? 's' : ''}`}>
                     <GitBranch className="h-3 w-3" />
                     <span className="text-[10px] font-medium">{resourceCounts.git}</span>
                   </div>
@@ -262,7 +262,7 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
                 
                 {/* Other files */}
                 {resourceCounts.files > 0 && (
-                  <div className="flex items-center gap-0.5 text-xs text-amber-500 dark:text-amber-400" title={`${resourceCounts.files} file${resourceCounts.files > 1 ? 's' : ''}`}>
+                  <div className="flex items-center gap-0.5 text-xs text-warning-500" title={`${resourceCounts.files} file${resourceCounts.files > 1 ? 's' : ''}`}>
                     <FileText className="h-3 w-3" />
                     <span className="text-[10px] font-medium">{resourceCounts.files}</span>
                   </div>
@@ -272,7 +272,7 @@ export function TicketCard({ ticket, isDragging = false }: TicketCardProps) {
             
             {/* Legacy attachment indicator (fallback) */}
             {legacyAttachmentCount > 0 && (
-              <div className="flex items-center gap-0.5 text-xs text-surface-400 dark:text-surface-500" title={`${legacyAttachmentCount} attachment${legacyAttachmentCount > 1 ? 's' : ''}`}>
+              <div className="flex items-center gap-0.5 text-xs text-[var(--text-muted)]" title={`${legacyAttachmentCount} attachment${legacyAttachmentCount > 1 ? 's' : ''}`}>
                 <File className="h-3 w-3" />
                 <span className="text-[10px] font-medium">{legacyAttachmentCount}</span>
               </div>

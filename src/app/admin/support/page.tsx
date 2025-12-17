@@ -10,8 +10,8 @@ const supportTools = [
     description: 'Browse and view AI conversation history',
     href: '/admin/support/conversations',
     icon: MessageSquare,
-    color: 'bg-purple-100 dark:bg-purple-900/30',
-    iconColor: 'text-purple-600',
+    color: 'bg-primary-100 dark:bg-primary-900/30',
+    iconColor: 'text-primary-600',
   },
   {
     name: 'Activity Logs',

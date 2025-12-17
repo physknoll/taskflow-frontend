@@ -264,7 +264,7 @@ export default function UsersPage() {
                             </Link>
                             {user.platformRole && (
                               <span title={`Platform ${user.platformRole}`}>
-                                <Shield className="w-4 h-4 text-purple-500" />
+                                <Shield className="w-4 h-4 text-primary-500" />
                               </span>
                             )}
                           </div>

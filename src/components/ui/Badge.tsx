@@ -9,14 +9,15 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-surface-200 text-surface-700 dark:bg-surface-700 dark:text-surface-300',
-        primary: 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300',
-        secondary: 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-400',
-        success: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300',
-        warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
-        danger: 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300',
-        info: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
-        outline: 'border border-surface-300 text-surface-700 dark:border-surface-600 dark:text-surface-300',
+        default: 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)]',
+        primary: 'bg-primary-100 text-primary-700 [data-theme="dark"]:bg-primary-900/50 [data-theme="dark"]:text-primary-300',
+        orange: 'bg-primary-100 text-primary-700 [data-theme="dark"]:bg-primary-900/50 [data-theme="dark"]:text-primary-300',
+        secondary: 'bg-[var(--bg-secondary)] text-[var(--text-secondary)]',
+        success: 'bg-success-100 text-success-700 [data-theme="dark"]:bg-success-900/50 [data-theme="dark"]:text-success-300',
+        warning: 'bg-warning-100 text-warning-700 [data-theme="dark"]:bg-warning-900/50 [data-theme="dark"]:text-warning-300',
+        danger: 'bg-error-100 text-error-700 [data-theme="dark"]:bg-error-900/50 [data-theme="dark"]:text-error-300',
+        info: 'bg-info-100 text-info-700 [data-theme="dark"]:bg-info-900/50 [data-theme="dark"]:text-info-300',
+        outline: 'border border-[var(--border-default)] text-[var(--text-secondary)]',
       },
       size: {
         sm: 'text-xs px-2 py-0.5',
@@ -52,6 +53,3 @@ function Badge({ className, variant, size, dot, dotColor, children, ...props }: 
 }
 
 export { Badge, badgeVariants };
-
-
-

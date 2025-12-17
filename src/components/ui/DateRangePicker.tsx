@@ -120,7 +120,7 @@ export function DateRangePicker({
             className="fixed inset-0 z-40" 
             onClick={() => setIsOpen(false)} 
           />
-          <div className="absolute top-full left-0 mt-2 w-full bg-white dark:bg-surface-800 rounded-lg shadow-lg border border-surface-200 dark:border-surface-700 z-50 py-2">
+          <div className="absolute top-full left-0 mt-2 w-full bg-[var(--bg-primary)] rounded-lg shadow-lg border border-[var(--border-default)] z-50 py-2">
             {presets.map((preset) => (
               <button
                 key={preset.value}
@@ -128,8 +128,8 @@ export function DateRangePicker({
                 className={cn(
                   'w-full px-4 py-2 text-left text-sm transition-colors',
                   preset.value === value
-                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
-                    : 'text-surface-700 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-700'
+                    ? 'bg-primary-100 text-primary-700 [data-theme="dark"]:bg-primary-900/30 [data-theme="dark"]:text-primary-300'
+                    : 'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
                 )}
               >
                 {preset.label}
@@ -141,4 +141,3 @@ export function DateRangePicker({
     </div>
   );
 }
-

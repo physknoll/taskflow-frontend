@@ -38,7 +38,7 @@ const CATEGORY_ICONS: Record<string, React.ElementType> = {
 
 const CATEGORY_COLORS: Record<string, string> = {
   organization: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  user: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+  user: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
   billing: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
   admin: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
   system: 'bg-surface-100 text-surface-700 dark:bg-surface-800 dark:text-surface-300',

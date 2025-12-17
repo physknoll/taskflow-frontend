@@ -32,7 +32,7 @@ const TOOL_INFO: Record<string, { label: string; icon: typeof Search; color: str
   agent_thinking: {
     label: 'Thinking',
     icon: Brain,
-    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300',
   },
   
   // Ticket tools

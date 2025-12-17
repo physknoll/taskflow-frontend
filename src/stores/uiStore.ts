@@ -59,18 +59,17 @@ export const useUIStore = create<UIState>()(
 
       setTheme: (theme) => {
         set({ theme });
-        // Apply theme to document
+        // Apply theme to document using data-theme attribute
         if (typeof document !== 'undefined') {
           const root = document.documentElement;
-          root.classList.remove('light', 'dark');
 
           if (theme === 'system') {
             const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
               ? 'dark'
               : 'light';
-            root.classList.add(systemTheme);
+            root.setAttribute('data-theme', systemTheme);
           } else {
-            root.classList.add(theme);
+            root.setAttribute('data-theme', theme);
           }
         }
       },
@@ -109,6 +108,3 @@ export const useUIStore = create<UIState>()(
     }
   )
 );
-
-
-

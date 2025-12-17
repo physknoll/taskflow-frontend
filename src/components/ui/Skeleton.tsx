@@ -7,14 +7,14 @@ interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'text' | 'circular' | 'rectangular' | 'rounded';
   width?: string | number;
   height?: string | number;
-  animation?: 'pulse' | 'wave' | 'none';
+  animation?: 'pulse' | 'shimmer' | 'none';
 }
 
 export function Skeleton({
   variant = 'rectangular',
   width,
   height,
-  animation = 'pulse',
+  animation = 'shimmer',
   className,
   ...props
 }: SkeletonProps) {
@@ -26,15 +26,14 @@ export function Skeleton({
   };
 
   const animationStyles = {
-    pulse: 'animate-pulse',
-    wave: 'animate-shimmer bg-gradient-to-r from-surface-200 via-surface-100 to-surface-200 bg-[length:200%_100%]',
-    none: '',
+    pulse: 'animate-pulse bg-[var(--bg-tertiary)]',
+    shimmer: 'skeleton',
+    none: 'bg-[var(--bg-tertiary)]',
   };
 
   return (
     <div
       className={cn(
-        'bg-surface-200 dark:bg-surface-700',
         variantStyles[variant],
         animationStyles[animation],
         className
@@ -51,7 +50,7 @@ export function Skeleton({
 // Pre-built skeleton patterns
 export function SkeletonCard() {
   return (
-    <div className="p-4 border border-surface-200 dark:border-surface-700 rounded-xl space-y-4">
+    <div className="p-4 border border-[var(--border-default)] rounded-xl space-y-4">
       <div className="flex items-center gap-3">
         <Skeleton variant="circular" width={40} height={40} />
         <div className="flex-1 space-y-2">
@@ -88,7 +87,7 @@ export function SkeletonList({ count = 5 }: { count?: number }) {
 export function SkeletonTable({ rows = 5, cols = 4 }: { rows?: number; cols?: number }) {
   return (
     <div className="space-y-2">
-      <div className="flex gap-4 p-4 border-b border-surface-200 dark:border-surface-700">
+      <div className="flex gap-4 p-4 border-b border-[var(--border-default)]">
         {Array.from({ length: cols }).map((_, i) => (
           <Skeleton key={i} variant="text" className="flex-1" height={20} />
         ))}
@@ -103,6 +102,3 @@ export function SkeletonTable({ rows = 5, cols = 4 }: { rows?: number; cols?: nu
     </div>
   );
 }
-
-
-

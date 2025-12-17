@@ -101,8 +101,8 @@ function PasswordRequirements({ password }: { password: string }) {
           key={index}
           className={`flex items-center gap-1 text-xs ${
             req.met
-              ? 'text-emerald-600 dark:text-emerald-400'
-              : 'text-surface-400 dark:text-surface-500'
+              ? 'text-success-500'
+              : 'text-[var(--text-muted)]'
           }`}
         >
           {req.met ? (
@@ -125,11 +125,9 @@ function StepIndicator({ currentStep, totalSteps }: { currentStep: number; total
         <div
           key={index}
           className={`w-2.5 h-2.5 rounded-full transition-colors ${
-            index < currentStep
-              ? 'bg-primary-600'
-              : index === currentStep
-              ? 'bg-primary-600'
-              : 'bg-surface-300 dark:bg-surface-600'
+            index <= currentStep
+              ? 'bg-primary-500'
+              : 'bg-[var(--bg-tertiary)]'
           }`}
         />
       ))}
@@ -341,28 +339,37 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left side - Branding (same as login) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 relative overflow-hidden">
+      {/* Left side - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 relative overflow-hidden">
         {/* Background pattern */}
-        <div className="absolute inset-0 bg-gradient-mesh opacity-10" />
+        <div className="absolute inset-0 opacity-10">
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5" />
+              </pattern>
+            </defs>
+            <rect width="100" height="100" fill="url(#grid)" />
+          </svg>
+        </div>
 
         {/* Floating shapes */}
         <div className="absolute top-20 left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-20 w-80 h-80 bg-accent-500/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-20 w-80 h-80 bg-primary-300/20 rounded-full blur-3xl" />
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-glow">
               <Sparkles className="w-8 h-8" />
             </div>
-            <span className="text-4xl font-bold">TaskFlow AI</span>
+            <span className="text-4xl font-bold font-heading">TaskFlow AI</span>
           </div>
 
-          <h1 className="text-5xl font-bold mb-6 leading-tight">
+          <h1 className="text-5xl font-bold font-heading mb-6 leading-tight">
             Manage projects
             <br />
-            with <span className="text-accent-300">AI-powered</span>
+            with <span className="text-primary-200">AI-powered</span>
             <br />
             intelligence
           </h1>
@@ -399,31 +406,31 @@ export default function RegisterPage() {
       </div>
 
       {/* Right side - Registration form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-surface-50 dark:bg-surface-900">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-[var(--bg-primary)]">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-glow">
               <Sparkles className="w-7 h-7 text-white" />
             </div>
-            <span className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
+            <span className="text-3xl font-bold font-heading gradient-text">
               TaskFlow AI
             </span>
           </div>
 
           {/* Step Indicator */}
           <div className="flex items-center justify-between mb-6">
-            <span className="text-sm font-medium text-surface-600 dark:text-surface-400">
+            <span className="text-sm font-medium text-[var(--text-secondary)]">
               Step {currentStep + 1} of 4
             </span>
             <StepIndicator currentStep={currentStep} totalSteps={4} />
           </div>
 
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-surface-900 dark:text-white mb-2">
+            <h2 className="text-3xl font-bold font-heading text-[var(--text-primary)] mb-2">
               {stepTitles[currentStep].title}
             </h2>
-            <p className="text-surface-600 dark:text-surface-400">
+            <p className="text-[var(--text-secondary)]">
               {stepTitles[currentStep].subtitle}
             </p>
           </div>
@@ -473,7 +480,7 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-[38px] text-surface-500 hover:text-surface-700 dark:hover:text-surface-300"
+                    className="absolute right-3 top-[38px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                   >
                     {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                   </button>
@@ -487,15 +494,15 @@ export default function RegisterPage() {
                     id="acceptTerms"
                     checked={acceptedTerms}
                     onChange={(e) => setAcceptedTerms(e.target.checked)}
-                    className="mt-1 h-4 w-4 rounded border-surface-300 text-primary-600 focus:ring-primary-500 dark:border-surface-600 dark:bg-surface-800"
+                    className="mt-1 h-4 w-4 rounded border-[var(--border-default)] text-primary-500 focus:ring-primary-500"
                   />
-                  <label htmlFor="acceptTerms" className="text-sm text-surface-600 dark:text-surface-400">
+                  <label htmlFor="acceptTerms" className="text-sm text-[var(--text-secondary)]">
                     I agree to the{' '}
                     <a
                       href="https://www.taskflowai.biz/legal/terms"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 underline"
+                      className="text-primary-500 hover:text-primary-600 underline"
                     >
                       Terms of Service
                     </a>{' '}
@@ -504,7 +511,7 @@ export default function RegisterPage() {
                       href="https://www.taskflowai.biz/legal/privacy"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 underline"
+                      className="text-primary-500 hover:text-primary-600 underline"
                     >
                       Privacy Policy
                     </a>
@@ -520,10 +527,10 @@ export default function RegisterPage() {
               {/* Divider */}
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-surface-300 dark:border-surface-600" />
+                  <div className="w-full border-t border-[var(--border-default)]" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-surface-50 dark:bg-surface-900 text-surface-500 dark:text-surface-400">
+                  <span className="px-4 bg-[var(--bg-primary)] text-[var(--text-muted)]">
                     or
                   </span>
                 </div>
@@ -541,11 +548,11 @@ export default function RegisterPage() {
                 Continue with Google
               </Button>
 
-              <p className="mt-6 text-center text-sm text-surface-500 dark:text-surface-400">
+              <p className="mt-6 text-center text-sm text-[var(--text-muted)]">
                 Already have an account?{' '}
                 <Link
                   href="/login"
-                  className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
+                  className="text-primary-500 hover:text-primary-600 font-medium"
                 >
                   Sign in
                 </Link>
@@ -557,13 +564,13 @@ export default function RegisterPage() {
           {currentStep === 1 && (
             <div className="space-y-6">
               {/* Email display */}
-              <div className="bg-surface-100 dark:bg-surface-800 rounded-xl p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
-                  <Mail className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              <div className="bg-[var(--bg-tertiary)] rounded-xl p-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary-100 [data-theme='dark']:bg-primary-900/30 flex items-center justify-center flex-shrink-0">
+                  <Mail className="w-5 h-5 text-primary-500" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm text-surface-500 dark:text-surface-400">Code sent to</p>
-                  <p className="font-medium text-surface-900 dark:text-white truncate">{pendingEmail}</p>
+                  <p className="text-sm text-[var(--text-muted)]">Code sent to</p>
+                  <p className="font-medium text-[var(--text-primary)] truncate">{pendingEmail}</p>
                 </div>
               </div>
 
@@ -583,15 +590,15 @@ export default function RegisterPage() {
               <div className="flex items-center justify-center gap-2">
                 {timeRemaining > 0 ? (
                   <>
-                    <Clock className={`w-4 h-4 ${timeRemaining <= 120 ? 'text-amber-500' : 'text-surface-500'}`} />
-                    <span className={`text-sm font-medium ${timeRemaining <= 120 ? 'text-amber-600 dark:text-amber-400' : 'text-surface-600 dark:text-surface-400'}`}>
+                    <Clock className={`w-4 h-4 ${timeRemaining <= 120 ? 'text-warning-500' : 'text-[var(--text-muted)]'}`} />
+                    <span className={`text-sm font-medium ${timeRemaining <= 120 ? 'text-warning-500' : 'text-[var(--text-secondary)]'}`}>
                       Code expires in {formatTime(timeRemaining)}
                     </span>
                   </>
                 ) : (
                   <>
-                    <AlertCircle className="w-4 h-4 text-red-500" />
-                    <span className="text-sm font-medium text-red-600 dark:text-red-400">
+                    <AlertCircle className="w-4 h-4 text-error-500" />
+                    <span className="text-sm font-medium text-error-500">
                       Code expired
                     </span>
                   </>
@@ -613,14 +620,14 @@ export default function RegisterPage() {
 
               {/* Resend Code */}
               <div className="text-center">
-                <p className="text-sm text-surface-500 dark:text-surface-400 mb-2">
+                <p className="text-sm text-[var(--text-muted)] mb-2">
                   Didn&apos;t receive the code?
                 </p>
                 <button
                   type="button"
                   onClick={handleResendCode}
                   disabled={resendCooldown > 0 || isResending}
-                  className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-primary-500 hover:text-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <RefreshCw className={`w-4 h-4 ${isResending ? 'animate-spin' : ''}`} />
                   {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
@@ -690,7 +697,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={onStep3Skip}
-                className="w-full mt-4 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
+                className="w-full mt-4 text-sm text-primary-500 hover:text-primary-600 font-medium"
               >
                 Skip this step
               </button>

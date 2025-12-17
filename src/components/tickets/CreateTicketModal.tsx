@@ -199,7 +199,7 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
 
         {/* Tags */}
         <div>
-          <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1.5">
+          <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">
             Tags
           </label>
           <div className="flex flex-wrap gap-2 mb-2">
@@ -209,7 +209,7 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
                 <button
                   type="button"
                   onClick={() => handleRemoveTag(tag)}
-                  className="ml-1 hover:text-red-500"
+                  className="ml-1 hover:text-error-500"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -242,7 +242,7 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
         />
 
         {/* AI Generation Button */}
-        <div className="border-t border-surface-200 dark:border-surface-700 pt-6">
+        <div className="border-t border-[var(--border-default)] pt-6">
           <Button
             type="button"
             variant="gradient"
@@ -258,7 +258,7 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
             {isGeneratingTicket ? 'Generating...' : 'Generate AI Instructions & Tasks'}
           </Button>
           {!canGenerateAI && (
-            <p className="text-xs text-surface-500 dark:text-surface-400 text-center mt-2">
+            <p className="text-xs text-[var(--text-muted)] text-center mt-2">
               Fill in client, title, description, and type to enable AI generation
             </p>
           )}
@@ -266,25 +266,25 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
 
         {/* AI Generated Content */}
         {aiGenerated && (
-          <div className="space-y-4 border border-primary-200 dark:border-primary-800 rounded-xl p-4 bg-primary-50/50 dark:bg-primary-900/20">
-            <div className="flex items-center gap-2 text-primary-700 dark:text-primary-300">
+          <div className="space-y-4 border border-primary-200 [data-theme='dark']:border-primary-800 rounded-xl p-4 bg-primary-50/50 [data-theme='dark']:bg-primary-900/20">
+            <div className="flex items-center gap-2 text-primary-700 [data-theme='dark']:text-primary-300">
               <Sparkles className="h-5 w-5" />
               <span className="font-semibold">AI Generated Content</span>
             </div>
 
             {/* Instructions Preview */}
-            <div className="bg-white dark:bg-surface-800 rounded-lg p-4">
-              <h4 className="font-medium text-surface-900 dark:text-white mb-2">Instructions</h4>
+            <div className="bg-[var(--bg-primary)] rounded-lg p-4">
+              <h4 className="font-medium text-[var(--text-primary)] mb-2">Instructions</h4>
               <div className="prose prose-sm dark:prose-invert max-h-40 overflow-y-auto">
                 <ReactMarkdown>{aiGenerated.aiGeneratedInstructions}</ReactMarkdown>
               </div>
             </div>
 
             {/* Tasks */}
-            <div className="bg-white dark:bg-surface-800 rounded-lg p-4">
+            <div className="bg-[var(--bg-primary)] rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
-                <h4 className="font-medium text-surface-900 dark:text-white">Tasks</h4>
-                <span className="text-sm text-surface-500 dark:text-surface-400">
+                <h4 className="font-medium text-[var(--text-primary)]">Tasks</h4>
+                <span className="text-sm text-[var(--text-muted)]">
                   {selectedTasks.length} selected
                 </span>
               </div>
@@ -292,25 +292,25 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
                 {aiGenerated.tasks.map((task: any, index: number) => (
                   <label
                     key={index}
-                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-surface-50 dark:hover:bg-surface-700 cursor-pointer"
+                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-[var(--bg-tertiary)] cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={selectedTasks.includes(task)}
                       onChange={() => handleToggleTask(index)}
-                      className="mt-1 rounded border-surface-300 text-primary-600 focus:ring-primary-500"
+                      className="mt-1 rounded border-[var(--border-default)] text-primary-500 focus:ring-primary-500"
                     />
                     <div className="flex-1">
-                      <p className="font-medium text-surface-900 dark:text-white text-sm">
+                      <p className="font-medium text-[var(--text-primary)] text-sm">
                         {task.title}
                       </p>
                       {task.description && (
-                        <p className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5">
                           {task.description}
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-surface-400 dark:text-surface-500">
+                    <div className="flex items-center gap-1 text-xs text-[var(--text-muted)]">
                       <Clock className="h-3 w-3" />
                       {task.estimatedMinutes}m
                     </div>
@@ -321,8 +321,8 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
 
             {/* Estimated Time */}
             <div className="flex items-center justify-between text-sm">
-              <span className="text-surface-600 dark:text-surface-400">Estimated Total</span>
-              <span className="font-medium text-surface-900 dark:text-white">
+              <span className="text-[var(--text-secondary)]">Estimated Total</span>
+              <span className="font-medium text-[var(--text-primary)]">
                 {aiGenerated.estimatedTotalHours} hours
               </span>
             </div>
@@ -330,7 +330,7 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
         )}
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-700">
+        <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-default)]">
           <Button type="button" variant="outline" onClick={handleClose}>
             Cancel
           </Button>
@@ -343,4 +343,3 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
     </Modal>
   );
 }
-

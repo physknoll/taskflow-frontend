@@ -100,23 +100,23 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
         <div className="flex items-start justify-between gap-4 mb-6">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-sm font-mono text-surface-500 dark:text-surface-400">
+              <span className="text-sm font-mono text-[var(--text-muted)]">
                 {ticket.ticketNumber}
               </span>
               <Badge className={getPriorityColor(ticket.priority)} size="sm">
                 {ticket.priority}
               </Badge>
             </div>
-            <h2 className="text-xl font-semibold text-surface-900 dark:text-white flex items-center gap-2">
+            <h2 className="text-xl font-semibold text-[var(--text-primary)] flex items-center gap-2">
               <span>{getTypeIcon(ticket.type)}</span>
               {ticket.title}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-surface-100 dark:hover:bg-surface-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-[var(--bg-tertiary)] rounded-lg transition-colors"
           >
-            <X className="h-5 w-5 text-surface-500" />
+            <X className="h-5 w-5 text-[var(--text-muted)]" />
           </button>
         </div>
 
@@ -125,10 +125,10 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
           <div className="lg:col-span-2 space-y-6">
             {/* Description */}
             <div>
-              <h3 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+              <h3 className="text-sm font-medium text-[var(--text-primary)] mb-2">
                 Description
               </h3>
-              <div className="prose prose-sm dark:prose-invert max-w-none text-surface-600 dark:text-surface-400">
+              <div className="prose prose-sm dark:prose-invert max-w-none text-[var(--text-secondary)]">
                 {ticket.description || 'No description provided'}
               </div>
             </div>
@@ -136,10 +136,10 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
             {/* AI Instructions */}
             {ticket.aiGeneratedInstructions && (
               <div>
-                <h3 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 flex items-center gap-2">
+                <h3 className="text-sm font-medium text-[var(--text-primary)] mb-2 flex items-center gap-2">
                   <span className="text-primary-500">✨</span> AI Instructions
                 </h3>
-                <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-4 text-sm text-surface-700 dark:text-surface-300 whitespace-pre-wrap">
+                <div className="bg-primary-50 [data-theme='dark']:bg-primary-900/20 border border-primary-200 [data-theme='dark']:border-primary-800 rounded-lg p-4 text-sm text-[var(--text-secondary)] whitespace-pre-wrap">
                   {ticket.aiGeneratedInstructions}
                 </div>
               </div>
@@ -149,25 +149,25 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
             {totalTasks > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-medium text-surface-700 dark:text-surface-300">
+                  <h3 className="text-sm font-medium text-[var(--text-primary)]">
                     Tasks ({completedTasks}/{totalTasks})
                   </h3>
-                  <span className="text-sm text-surface-500">{progress}%</span>
+                  <span className="text-sm text-[var(--text-muted)]">{progress}%</span>
                 </div>
                 <Progress value={progress} size="sm" className="mb-4" />
                 <div className="space-y-2">
                   {ticket.tasks.map((task) => (
                     <div
                       key={task._id}
-                      className="flex items-start gap-3 p-3 bg-surface-50 dark:bg-surface-800 rounded-lg"
+                      className="flex items-start gap-3 p-3 bg-[var(--bg-tertiary)] rounded-lg"
                     >
                       <button
                         onClick={() => handleTaskToggle(task)}
                         className={cn(
                           'mt-0.5 flex-shrink-0 transition-colors',
                           task.status === 'completed'
-                            ? 'text-green-500'
-                            : 'text-surface-400 hover:text-surface-600'
+                            ? 'text-success-500'
+                            : 'text-[var(--text-muted)] hover:text-[var(--text-secondary)]'
                         )}
                       >
                         {task.status === 'completed' ? (
@@ -181,19 +181,19 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
                           className={cn(
                             'text-sm font-medium',
                             task.status === 'completed'
-                              ? 'text-surface-500 line-through'
-                              : 'text-surface-900 dark:text-white'
+                              ? 'text-[var(--text-muted)] line-through'
+                              : 'text-[var(--text-primary)]'
                           )}
                         >
                           {task.title}
                         </p>
                         {task.description && (
-                          <p className="text-xs text-surface-500 mt-1">
+                          <p className="text-xs text-[var(--text-muted)] mt-1">
                             {task.description}
                           </p>
                         )}
                         {task.estimatedMinutes && (
-                          <p className="text-xs text-surface-400 mt-1 flex items-center gap-1">
+                          <p className="text-xs text-[var(--text-muted)] mt-1 flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {task.estimatedMinutes} min
                           </p>
@@ -207,7 +207,7 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
 
             {/* Comments */}
             <div>
-              <h3 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-3">
+              <h3 className="text-sm font-medium text-[var(--text-primary)] mb-3">
                 Comments ({ticket.comments.length})
               </h3>
               
@@ -218,7 +218,7 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Add a comment..."
-                  className="flex-1 px-3 py-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-800 text-surface-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="flex-1 px-3 py-2 rounded-lg border border-[var(--border-default)] bg-[var(--bg-secondary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-primary-500"
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault();
@@ -238,7 +238,7 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
               {/* Comments List */}
               <div className="space-y-4">
                 {ticket.comments.length === 0 ? (
-                  <p className="text-sm text-surface-400 text-center py-4">
+                  <p className="text-sm text-[var(--text-muted)] text-center py-4">
                     No comments yet
                   </p>
                 ) : (
@@ -252,16 +252,16 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
                       />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-surface-900 dark:text-white">
+                          <span className="text-sm font-medium text-[var(--text-primary)]">
                             {typeof comment.user === 'object'
                               ? `${comment.user.firstName} ${comment.user.lastName}`
                               : 'Unknown'}
                           </span>
-                          <span className="text-xs text-surface-400">
+                          <span className="text-xs text-[var(--text-muted)]">
                             {formatRelativeTime(comment.createdAt)}
                           </span>
                         </div>
-                        <p className="text-sm text-surface-600 dark:text-surface-400 mt-1">
+                        <p className="text-sm text-[var(--text-secondary)] mt-1">
                           {comment.content}
                         </p>
                       </div>
@@ -276,7 +276,7 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
           <div className="space-y-6">
             {/* Status */}
             <div>
-              <label className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 block">
+              <label className="text-sm font-medium text-[var(--text-primary)] mb-2 block">
                 Status
               </label>
               <Select
@@ -288,17 +288,17 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
 
             {/* Client */}
             <div>
-              <label className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 flex items-center gap-2">
+              <label className="text-sm font-medium text-[var(--text-primary)] mb-2 flex items-center gap-2">
                 <Building className="h-4 w-4" /> Client
               </label>
-              <p className="text-surface-900 dark:text-white">
+              <p className="text-[var(--text-primary)]">
                 {typeof ticket.client === 'object' ? ticket.client.name : 'Unknown'}
               </p>
             </div>
 
             {/* Assigned To */}
             <div>
-              <label className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 flex items-center gap-2">
+              <label className="text-sm font-medium text-[var(--text-primary)] mb-2 flex items-center gap-2">
                 <User className="h-4 w-4" /> Assigned To
               </label>
               {Array.isArray(ticket.assignedTo) && ticket.assignedTo.filter(u => u != null).length > 0 ? (
@@ -306,7 +306,7 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
                   {ticket.assignedTo.filter(u => u != null).map((user: any) => (
                     <div
                       key={user._id}
-                      className="flex items-center gap-2 bg-surface-100 dark:bg-surface-800 rounded-full px-3 py-1"
+                      className="flex items-center gap-2 bg-[var(--bg-tertiary)] rounded-full px-3 py-1"
                     >
                       <Avatar
                         src={user.avatar}
@@ -314,23 +314,23 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
                         lastName={user.lastName}
                         size="xs"
                       />
-                      <span className="text-sm text-surface-700 dark:text-surface-300">
+                      <span className="text-sm text-[var(--text-primary)]">
                         {user.firstName}
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-surface-400 text-sm">Unassigned</p>
+                <p className="text-[var(--text-muted)] text-sm">Unassigned</p>
               )}
             </div>
 
             {/* Due Date */}
             <div>
-              <label className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 flex items-center gap-2">
+              <label className="text-sm font-medium text-[var(--text-primary)] mb-2 flex items-center gap-2">
                 <Calendar className="h-4 w-4" /> Due Date
               </label>
-              <p className="text-surface-900 dark:text-white">
+              <p className="text-[var(--text-primary)]">
                 {ticket.dueDate ? formatDate(ticket.dueDate) : 'No due date'}
               </p>
             </div>
@@ -338,7 +338,7 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
             {/* Tags */}
             {ticket.tags.length > 0 && (
               <div>
-                <label className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-2 flex items-center gap-2">
+                <label className="text-sm font-medium text-[var(--text-primary)] mb-2 flex items-center gap-2">
                   <Tag className="h-4 w-4" /> Tags
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -352,7 +352,7 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
             )}
 
             {/* Timestamps */}
-            <div className="pt-4 border-t border-surface-200 dark:border-surface-700 text-xs text-surface-400 space-y-1">
+            <div className="pt-4 border-t border-[var(--border-default)] text-xs text-[var(--text-muted)] space-y-1">
               <p>Created {formatRelativeTime(ticket.createdAt)}</p>
               <p>Updated {formatRelativeTime(ticket.updatedAt)}</p>
             </div>
@@ -362,4 +362,3 @@ export function TicketDetailModal({ ticket, isOpen, onClose }: TicketDetailModal
     </Modal>
   );
 }
-

@@ -31,27 +31,27 @@ export function Progress({
   };
 
   const variantClasses = {
-    default: 'bg-primary-500',
-    success: 'bg-emerald-500',
-    warning: 'bg-amber-500',
-    danger: 'bg-red-500',
+    default: 'bg-gradient-to-r from-primary-400 to-primary-600',
+    success: 'bg-gradient-to-r from-success-400 to-success-600',
+    warning: 'bg-gradient-to-r from-warning-400 to-warning-600',
+    danger: 'bg-gradient-to-r from-error-400 to-error-600',
   };
 
   return (
     <div className={cn('w-full', className)}>
       {showLabel && (
         <div className="flex justify-between mb-1">
-          <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
+          <span className="text-sm font-medium text-[var(--text-primary)]">
             Progress
           </span>
-          <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
+          <span className="text-sm font-medium text-[var(--text-primary)]">
             {Math.round(percentage)}%
           </span>
         </div>
       )}
       <div
         className={cn(
-          'w-full rounded-full bg-surface-200 dark:bg-surface-700 overflow-hidden',
+          'w-full rounded-full bg-[var(--bg-tertiary)] overflow-hidden',
           sizeClasses[size]
         )}
       >
@@ -94,16 +94,16 @@ export function CircularProgress({
 
   const variantClasses = {
     default: 'text-primary-500',
-    success: 'text-emerald-500',
-    warning: 'text-amber-500',
-    danger: 'text-red-500',
+    success: 'text-success-500',
+    warning: 'text-warning-500',
+    danger: 'text-error-500',
   };
 
   return (
     <div className={cn('relative inline-flex items-center justify-center', className)}>
       <svg width={size} height={size} className="transform -rotate-90">
         <circle
-          className="text-surface-200 dark:text-surface-700"
+          className="text-[var(--bg-tertiary)]"
           strokeWidth={strokeWidth}
           stroke="currentColor"
           fill="transparent"
@@ -125,13 +125,10 @@ export function CircularProgress({
         />
       </svg>
       {showLabel && (
-        <span className="absolute text-xs font-medium text-surface-700 dark:text-surface-300">
+        <span className="absolute text-xs font-medium text-[var(--text-primary)]">
           {Math.round(percentage)}%
         </span>
       )}
     </div>
   );
 }
-
-
-

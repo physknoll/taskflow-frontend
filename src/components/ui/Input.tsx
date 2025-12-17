@@ -24,14 +24,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1.5"
+            className="block text-sm font-medium text-[var(--text-primary)] mb-1.5"
           >
             {label}
           </label>
         )}
         <div className="relative">
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-500">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
               {leftIcon}
             </div>
           )}
@@ -39,14 +39,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={type}
             id={inputId}
             className={cn(
-              'flex h-10 w-full rounded-lg border bg-white px-4 py-2 text-sm transition-all duration-200',
-              'placeholder:text-surface-400',
+              'flex h-10 w-full rounded-lg border px-4 py-2 text-sm transition-all duration-200',
+              'bg-[var(--bg-tertiary)] text-[var(--text-primary)]',
+              'placeholder:text-[var(--text-muted)]',
               'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-              'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-surface-100',
-              'dark:bg-surface-800 dark:text-white dark:placeholder:text-surface-500',
+              'disabled:cursor-not-allowed disabled:opacity-50',
               error
-                ? 'border-red-500 focus:ring-red-500'
-                : 'border-surface-300 dark:border-surface-600',
+                ? 'border-error-500 focus:ring-error-500'
+                : 'border-[var(--border-default)]',
               leftIcon && 'pl-10',
               rightIcon && 'pr-10',
               className
@@ -55,14 +55,14 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {...props}
           />
           {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-surface-500">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]">
               {rightIcon}
             </div>
           )}
         </div>
-        {error && <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="mt-1.5 text-sm text-error-500">{error}</p>}
         {helperText && !error && (
-          <p className="mt-1.5 text-sm text-surface-500 dark:text-surface-400">{helperText}</p>
+          <p className="mt-1.5 text-sm text-[var(--text-muted)]">{helperText}</p>
         )}
       </div>
     );
@@ -87,7 +87,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             htmlFor={textareaId}
-            className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1.5"
+            className="block text-sm font-medium text-[var(--text-primary)] mb-1.5"
           >
             {label}
           </label>
@@ -95,22 +95,22 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
         <textarea
           id={textareaId}
           className={cn(
-            'flex min-h-[100px] w-full rounded-lg border bg-white px-4 py-3 text-sm transition-all duration-200',
-            'placeholder:text-surface-400 resize-none',
+            'flex min-h-[100px] w-full rounded-lg border px-4 py-3 text-sm transition-all duration-200',
+            'bg-[var(--bg-tertiary)] text-[var(--text-primary)]',
+            'placeholder:text-[var(--text-muted)] resize-none',
             'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
-            'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-surface-100',
-            'dark:bg-surface-800 dark:text-white dark:placeholder:text-surface-500',
+            'disabled:cursor-not-allowed disabled:opacity-50',
             error
-              ? 'border-red-500 focus:ring-red-500'
-              : 'border-surface-300 dark:border-surface-600',
+              ? 'border-error-500 focus:ring-error-500'
+              : 'border-[var(--border-default)]',
             className
           )}
           ref={ref}
           {...props}
         />
-        {error && <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="mt-1.5 text-sm text-error-500">{error}</p>}
         {helperText && !error && (
-          <p className="mt-1.5 text-sm text-surface-500 dark:text-surface-400">{helperText}</p>
+          <p className="mt-1.5 text-sm text-[var(--text-muted)]">{helperText}</p>
         )}
       </div>
     );
@@ -120,4 +120,3 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
 Textarea.displayName = 'Textarea';
 
 export { Input, Textarea };
-

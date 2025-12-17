@@ -38,12 +38,12 @@ function DroppableColumn({ id, label, color, tickets }: DroppableColumnProps) {
   });
 
   return (
-    <div className="kanban-column">
+    <div className="kanban-column" data-status={id}>
       {/* Column Header */}
-      <div className={cn('kanban-column-header', color)}>
+      <div className="kanban-column-header">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold">{label}</h3>
-          <span className="bg-white dark:bg-surface-700 rounded-full px-2 py-0.5 text-xs font-medium text-surface-600 dark:text-surface-300">
+          <h3 className="font-semibold text-[var(--text-secondary)]">{label}</h3>
+          <span className="bg-[var(--bg-tertiary)] rounded-full px-2 py-0.5 text-xs font-medium text-[var(--text-muted)]">
             {tickets.length}
           </span>
         </div>
@@ -54,15 +54,15 @@ function DroppableColumn({ id, label, color, tickets }: DroppableColumnProps) {
         ref={setNodeRef}
         className={cn(
           'kanban-column-body min-h-[200px] transition-all duration-200',
-          isOver && 'ring-2 ring-primary-500 ring-inset bg-primary-50/50 dark:bg-primary-900/20'
+          isOver && 'ring-2 ring-primary-500 ring-inset bg-primary-50/50 [data-theme="dark"]:bg-primary-900/20'
         )}
       >
         {tickets.length === 0 ? (
           <div className={cn(
-            'flex items-center justify-center h-32 text-surface-400 dark:text-surface-500 text-sm border-2 border-dashed rounded-lg transition-colors',
+            'flex items-center justify-center h-32 text-[var(--text-muted)] text-sm border-2 border-dashed rounded-lg transition-colors',
             isOver 
-              ? 'border-primary-400 text-primary-500 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30' 
-              : 'border-surface-200 dark:border-surface-700'
+              ? 'border-primary-400 text-primary-500 bg-primary-50 [data-theme="dark"]:bg-primary-900/30' 
+              : 'border-[var(--border-default)]'
           )}>
             {isOver ? 'Drop here to move' : 'No tickets'}
           </div>
@@ -98,7 +98,7 @@ export function TicketBoard({ tickets, isLoading, onStatusChange }: TicketBoardP
   const sensors = useSensors(mouseSensor, touchSensor);
 
   const handleDragStart = (event: DragStartEvent) => {
-    console.log('🎯 Drag started:', event.active.id);
+    console.log('Drag started:', event.active.id);
     const ticket = tickets.find((t) => t._id === event.active.id);
     if (ticket) {
       setActiveTicket(ticket);
@@ -107,11 +107,11 @@ export function TicketBoard({ tickets, isLoading, onStatusChange }: TicketBoardP
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    console.log('🎯 Drag ended:', { activeId: active.id, overId: over?.id });
+    console.log('Drag ended:', { activeId: active.id, overId: over?.id });
     setActiveTicket(null);
 
     if (!over) {
-      console.log('❌ No drop target');
+      console.log('No drop target');
       return;
     }
 
@@ -125,18 +125,18 @@ export function TicketBoard({ tickets, isLoading, onStatusChange }: TicketBoardP
       // Dropped on a column - update status
       const ticket = tickets.find((t) => t._id === ticketId);
       if (ticket && ticket.status !== targetColumn.id) {
-        console.log(`✅ Updating ticket ${ticketId} from ${ticket.status} to ${targetColumn.id}`);
+        console.log(`Updating ticket ${ticketId} from ${ticket.status} to ${targetColumn.id}`);
         onStatusChange(ticketId, targetColumn.id);
       } else {
-        console.log('ℹ️ Same status, no update needed');
+        console.log('Same status, no update needed');
       }
     } else {
-      console.log('⚠️ Dropped on non-column target:', overId);
+      console.log('Dropped on non-column target:', overId);
     }
   };
 
   const handleDragCancel = () => {
-    console.log('🚫 Drag cancelled');
+    console.log('Drag cancelled');
     setActiveTicket(null);
   };
 
@@ -191,13 +191,13 @@ function BoardSkeleton() {
   return (
     <div className="flex gap-6">
       {TICKET_STATUSES.map((column) => (
-        <div key={column.id} className="kanban-column">
-          <div className={cn('kanban-column-header', column.color)}>
+        <div key={column.id} className="kanban-column" data-status={column.id}>
+          <div className="kanban-column-header">
             <Skeleton variant="text" width={100} height={20} />
           </div>
           <div className="kanban-column-body">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="p-4 bg-white dark:bg-surface-800 rounded-lg animate-pulse">
+              <div key={i} className="p-4 bg-[var(--bg-primary)] rounded-lg animate-pulse">
                 <Skeleton variant="text" width="50%" className="mb-2" />
                 <Skeleton variant="text" width="80%" className="mb-2" />
                 <Skeleton variant="text" width="60%" className="mb-4" />

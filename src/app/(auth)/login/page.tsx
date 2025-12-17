@@ -73,26 +73,36 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700 relative overflow-hidden">
         {/* Background pattern */}
-        <div className="absolute inset-0 bg-gradient-mesh opacity-10" />
+        <div className="absolute inset-0 opacity-10">
+          <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                <path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" strokeWidth="0.5" />
+              </pattern>
+            </defs>
+            <rect width="100" height="100" fill="url(#grid)" />
+          </svg>
+        </div>
         
         {/* Floating shapes */}
         <div className="absolute top-20 left-20 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-20 w-80 h-80 bg-accent-500/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-20 w-80 h-80 bg-primary-300/20 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary-400/10 rounded-full blur-3xl" />
         
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-glow">
               <Sparkles className="w-8 h-8" />
             </div>
-            <span className="text-4xl font-bold">TaskFlow AI</span>
+            <span className="text-4xl font-bold font-heading">TaskFlow AI</span>
           </div>
           
-          <h1 className="text-5xl font-bold mb-6 leading-tight">
+          <h1 className="text-5xl font-bold font-heading mb-6 leading-tight">
             Manage projects<br />
-            with <span className="text-accent-300">AI-powered</span><br />
+            with <span className="text-primary-200">AI-powered</span><br />
             intelligence
           </h1>
           
@@ -123,23 +133,23 @@ export default function LoginPage() {
       </div>
 
       {/* Right side - Login form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-surface-50 dark:bg-surface-900">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-[var(--bg-primary)]">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-glow">
               <Sparkles className="w-7 h-7 text-white" />
             </div>
-            <span className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
+            <span className="text-3xl font-bold font-heading gradient-text">
               TaskFlow AI
             </span>
           </div>
 
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-surface-900 dark:text-white mb-2">
+            <h2 className="text-3xl font-bold font-heading text-[var(--text-primary)] mb-2">
               Welcome back
             </h2>
-            <p className="text-surface-600 dark:text-surface-400">
+            <p className="text-[var(--text-secondary)]">
               Sign in to continue to your dashboard
             </p>
           </div>
@@ -168,7 +178,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[38px] text-surface-500 hover:text-surface-700 dark:hover:text-surface-300"
+                className="absolute right-3 top-[38px] text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
@@ -177,7 +187,7 @@ export default function LoginPage() {
             <div className="flex justify-end">
               <a
                 href="/forgot-password"
-                className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+                className="text-sm text-primary-500 hover:text-primary-600"
               >
                 Forgot password?
               </a>
@@ -196,10 +206,10 @@ export default function LoginPage() {
           {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-surface-300 dark:border-surface-600" />
+              <div className="w-full border-t border-[var(--border-default)]" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-surface-50 dark:bg-surface-900 text-surface-500 dark:text-surface-400">
+              <span className="px-4 bg-[var(--bg-primary)] text-[var(--text-muted)]">
                 or
               </span>
             </div>
@@ -217,11 +227,11 @@ export default function LoginPage() {
             Continue with Google
           </Button>
 
-          <p className="mt-6 text-center text-sm text-surface-500 dark:text-surface-400">
+          <p className="mt-6 text-center text-sm text-[var(--text-muted)]">
             Don&apos;t have an account?{' '}
             <Link
               href="/register"
-              className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
+              className="text-primary-500 hover:text-primary-600 font-medium"
             >
               Sign up
             </Link>
@@ -231,4 +241,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

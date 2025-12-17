@@ -76,16 +76,16 @@ export function Header() {
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800 flex items-center justify-between px-4 lg:px-6">
+    <header className="h-16 bg-[var(--bg-primary)] border-b border-[var(--border-default)] flex items-center justify-between px-4 lg:px-6">
       {/* Left side */}
       <div className="flex items-center gap-4">
         <button
           onClick={() => setSidebarOpen(true)}
-          className="lg:hidden p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800"
+          className="lg:hidden p-2 rounded-lg hover:bg-[var(--bg-tertiary)]"
         >
-          <Menu className="h-5 w-5 text-surface-600 dark:text-surface-400" />
+          <Menu className="h-5 w-5 text-[var(--text-secondary)]" />
         </button>
-        <h1 className="text-xl font-bold text-surface-900 dark:text-white">
+        <h1 className="text-xl font-bold text-[var(--text-primary)]">
           {getPageTitle()}
         </h1>
       </div>
@@ -96,14 +96,14 @@ export function Header() {
         <AIPMStatusBar />
 
         {/* Divider */}
-        <div className="h-6 w-px bg-surface-200 dark:bg-surface-700 mx-1" />
+        <div className="h-6 w-px bg-[var(--border-default)] mx-1" />
 
         {/* Search */}
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setSearchOpen(!searchOpen)}
-          className="text-surface-600 dark:text-surface-400"
+          className="text-[var(--text-secondary)]"
         >
           <Search className="h-5 w-5" />
         </Button>
@@ -111,7 +111,7 @@ export function Header() {
         {/* Quick create */}
         <Dropdown
           trigger={
-            <Button variant="ghost" size="icon" className="text-surface-600 dark:text-surface-400">
+            <Button variant="ghost" size="icon" className="text-[var(--text-secondary)]">
               <Plus className="h-5 w-5" />
             </Button>
           }
@@ -128,7 +128,7 @@ export function Header() {
         {/* Theme toggle */}
         <Dropdown
           trigger={
-            <Button variant="ghost" size="icon" className="text-surface-600 dark:text-surface-400">
+            <Button variant="ghost" size="icon" className="text-[var(--text-secondary)]">
               {theme === 'dark' ? (
                 <Moon className="h-5 w-5" />
               ) : theme === 'light' ? (
@@ -154,10 +154,10 @@ export function Header() {
         {/* Notifications */}
         <Dropdown
           trigger={
-            <button className="relative p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 text-surface-600 dark:text-surface-400">
+            <button className="relative p-2 rounded-lg hover:bg-[var(--bg-tertiary)] text-[var(--text-secondary)]">
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-accent-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                <span className="absolute top-1 right-1 w-4 h-4 bg-primary-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
@@ -165,12 +165,12 @@ export function Header() {
           }
           className="w-80"
         >
-          <div className="px-4 py-3 border-b border-surface-200 dark:border-surface-700 flex items-center justify-between">
-            <span className="font-semibold text-surface-900 dark:text-white">Notifications</span>
+          <div className="px-4 py-3 border-b border-[var(--border-default)] flex items-center justify-between">
+            <span className="font-semibold text-[var(--text-primary)]">Notifications</span>
             {unreadCount > 0 && (
               <button
                 onClick={() => markAllAsRead()}
-                className="text-xs text-primary-600 hover:text-primary-700 dark:text-primary-400"
+                className="text-xs text-primary-500 hover:text-primary-600"
               >
                 Mark all read
               </button>
@@ -178,7 +178,7 @@ export function Header() {
           </div>
           <div className="max-h-80 overflow-y-auto">
             {notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center text-surface-500 dark:text-surface-400">
+              <div className="px-4 py-8 text-center text-[var(--text-muted)]">
                 <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No notifications yet</p>
               </div>
@@ -191,8 +191,8 @@ export function Header() {
                     href={normalizeActionUrl(notification.actionUrl)}
                     onClick={() => !notification.isRead && markAsRead(notification._id)}
                     className={cn(
-                      'block px-4 py-3 hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors',
-                      !notification.isRead && 'bg-primary-50/50 dark:bg-primary-900/20'
+                      'block px-4 py-3 hover:bg-[var(--bg-tertiary)] transition-colors',
+                      !notification.isRead && 'bg-primary-50 [data-theme="dark"]:bg-primary-900/20'
                     )}
                   >
                     <div className="flex gap-3">
@@ -200,8 +200,8 @@ export function Header() {
                         className={cn(
                           'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
                           notification.isRead
-                            ? 'bg-surface-100 dark:bg-surface-700 text-surface-500'
-                            : 'bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400'
+                            ? 'bg-[var(--bg-tertiary)] text-[var(--text-muted)]'
+                            : 'bg-primary-100 [data-theme="dark"]:bg-primary-900/50 text-primary-600 [data-theme="dark"]:text-primary-400'
                         )}
                       >
                         <Icon className="h-4 w-4" />
@@ -211,16 +211,16 @@ export function Header() {
                           className={cn(
                             'text-sm',
                             notification.isRead
-                              ? 'text-surface-600 dark:text-surface-400'
-                              : 'text-surface-900 dark:text-white font-medium'
+                              ? 'text-[var(--text-secondary)]'
+                              : 'text-[var(--text-primary)] font-medium'
                           )}
                         >
                           {notification.title}
                         </p>
-                        <p className="text-xs text-surface-500 dark:text-surface-500 truncate">
+                        <p className="text-xs text-[var(--text-muted)] truncate">
                           {notification.message}
                         </p>
-                        <p className="text-xs text-surface-400 dark:text-surface-600 mt-1">
+                        <p className="text-xs text-[var(--text-muted)] mt-1">
                           {formatRelativeTime(notification.createdAt)}
                         </p>
                       </div>
@@ -234,10 +234,10 @@ export function Header() {
             )}
           </div>
           {notifications.length > 0 && (
-            <div className="px-4 py-3 border-t border-surface-200 dark:border-surface-700">
+            <div className="px-4 py-3 border-t border-[var(--border-default)]">
               <Link
                 href="/settings/notifications"
-                className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400"
+                className="text-sm text-primary-500 hover:text-primary-600"
               >
                 View all notifications
               </Link>
@@ -248,4 +248,3 @@ export function Header() {
     </header>
   );
 }
-

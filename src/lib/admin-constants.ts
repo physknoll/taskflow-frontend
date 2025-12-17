@@ -12,7 +12,7 @@ export const PLATFORM_ROLES = [
     id: 'super_admin', 
     label: 'Super Admin', 
     description: 'Full platform access - can manage everything',
-    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
+    color: 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300',
   },
   { 
     id: 'billing_admin', 
@@ -147,8 +147,8 @@ export const ADMIN_PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
 // Chart Colors
 export const CHART_COLORS = {
-  primary: '#5c7cfa',
-  secondary: '#f06595',
+  primary: '#F97316',
+  secondary: '#FB923C',
   success: '#10B981',
   warning: '#F59E0B',
   danger: '#EF4444',
@@ -157,7 +157,7 @@ export const CHART_COLORS = {
   // Plan colors for charts
   free: '#9CA3AF',
   starter: '#3B82F6',
-  professional: '#8B5CF6',
+  professional: '#F97316',
   enterprise: '#F59E0B',
 } as const;
 

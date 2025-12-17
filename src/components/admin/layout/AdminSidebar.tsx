@@ -114,7 +114,7 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
         <div className="h-16 flex items-center justify-between px-4 border-b border-surface-700">
           {!collapsed && (
             <Link href="/admin/dashboard" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
                 <ShieldCheck className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold">Admin Panel</span>
@@ -122,7 +122,7 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
           )}
           {collapsed && (
             <div className="w-full flex justify-center">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
                 <ShieldCheck className="w-6 h-6 text-white" />
               </div>
             </div>
@@ -174,7 +174,7 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
                     className={cn(
                       'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group',
                       active
-                        ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30'
                         : 'text-surface-400 hover:bg-surface-800 hover:text-white'
                     )}
                   >
@@ -196,7 +196,7 @@ export function AdminSidebar({ collapsed, onToggle, mobileOpen, onMobileClose }:
                           className={cn(
                             'block px-3 py-2 rounded-lg text-sm transition-colors',
                             childActive
-                              ? 'bg-purple-600/20 text-purple-300'
+                              ? 'bg-primary-600/20 text-primary-300'
                               : 'text-surface-400 hover:bg-surface-800 hover:text-white'
                           )}
                         >

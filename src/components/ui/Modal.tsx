@@ -59,29 +59,29 @@ export function Modal({
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
+        className="absolute inset-0 bg-black/50 [data-theme='dark']:bg-black/70 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
 
       {/* Modal */}
       <div
         className={cn(
-          'relative w-full mx-4 bg-white dark:bg-surface-800 rounded-2xl shadow-2xl animate-scale-in',
+          'relative w-full mx-4 bg-[var(--bg-primary)] rounded-xl shadow-xl animate-scale-in',
           sizeClasses[size],
           className
         )}
       >
         {/* Header */}
         {(title || showCloseButton) && (
-          <div className="flex items-start justify-between p-6 border-b border-surface-200 dark:border-surface-700">
+          <div className="flex items-start justify-between p-6 border-b border-[var(--border-default)]">
             <div>
               {title && (
-                <h2 className="text-xl font-semibold text-surface-900 dark:text-white">
+                <h2 className="text-xl font-semibold text-[var(--text-primary)]">
                   {title}
                 </h2>
               )}
               {description && (
-                <p className="mt-1 text-sm text-surface-500 dark:text-surface-400">
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">
                   {description}
                 </p>
               )}
@@ -89,7 +89,7 @@ export function Modal({
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="p-2 -mr-2 -mt-2 rounded-lg text-surface-500 hover:text-surface-700 hover:bg-surface-100 dark:hover:text-surface-300 dark:hover:bg-surface-700 transition-colors"
+                className="p-2 -mr-2 -mt-2 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)] transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -132,17 +132,17 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   const variantStyles = {
     danger: 'destructive',
-    warning: 'default',
+    warning: 'warning',
     info: 'default',
   } as const;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="sm">
       <div className="text-center">
-        <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
+        <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">
           {title}
         </h3>
-        <p className="text-surface-600 dark:text-surface-400 mb-6">{description}</p>
+        <p className="text-[var(--text-secondary)] mb-6">{description}</p>
         <div className="flex gap-3 justify-center">
           <Button variant="outline" onClick={onClose} disabled={isLoading}>
             {cancelText}
@@ -159,4 +159,3 @@ export function ConfirmModal({
     </Modal>
   );
 }
-

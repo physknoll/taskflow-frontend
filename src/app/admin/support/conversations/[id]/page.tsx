@@ -103,8 +103,8 @@ export default function ConversationDetailPage() {
                 >
                   <div className="flex-shrink-0">
                     {message.role === 'assistant' ? (
-                      <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                        <Bot className="w-4 h-4 text-purple-600" />
+                      <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                        <Bot className="w-4 h-4 text-primary-600" />
                       </div>
                     ) : message.role === 'user' ? (
                       <Avatar
@@ -121,7 +121,7 @@ export default function ConversationDetailPage() {
                   <div 
                     className={`flex-1 p-3 rounded-lg ${
                       message.role === 'assistant' 
-                        ? 'bg-purple-50 dark:bg-purple-900/20' 
+                        ? 'bg-primary-50 dark:bg-primary-900/20' 
                         : message.role === 'user'
                         ? 'bg-surface-100 dark:bg-surface-800'
                         : 'bg-surface-50 dark:bg-surface-800/50'

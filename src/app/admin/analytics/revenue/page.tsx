@@ -138,8 +138,8 @@ export default function RevenueAnalyticsPage() {
                   </p>
                   <p className="text-sm text-surface-500 mt-1">Avg Revenue Per User</p>
                 </div>
-                <div className="p-3 rounded-xl bg-purple-100 dark:bg-purple-900/30">
-                  <Activity className="w-6 h-6 text-purple-600" />
+                <div className="p-3 rounded-xl bg-primary-100 dark:bg-primary-900/30">
+                  <Activity className="w-6 h-6 text-primary-600" />
                 </div>
               </div>
             )}

@@ -148,8 +148,8 @@ export default function AdminDashboardPage() {
           <CardContent className="space-y-3">
             <button className="w-full p-3 text-left rounded-lg bg-surface-50 dark:bg-surface-800 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">
-                  <Building2 className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30">
+                  <Building2 className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                 </div>
                 <span className="font-medium text-surface-900 dark:text-white">
                   View Flagged Organizations

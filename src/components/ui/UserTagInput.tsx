@@ -104,7 +104,7 @@ export function UserTagInput({
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
       case 'owner':
-        return 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300';
+        return 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300';
       case 'manager':
         return 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300';
       case 'employee':

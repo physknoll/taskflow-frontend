@@ -44,27 +44,27 @@ export function StatCard({
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm font-medium text-surface-500 dark:text-surface-400">
+            <p className="text-sm font-medium text-[var(--text-secondary)]">
               {title}
             </p>
-            <p className="text-3xl font-bold text-surface-900 dark:text-white mt-2">
+            <p className="text-3xl font-bold text-[var(--text-primary)] mt-2">
               {value}
             </p>
             {subtitle && (
-              <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
+              <p className="text-sm text-[var(--text-secondary)] mt-1">
                 {subtitle}
               </p>
             )}
             {trend && trendValue && (
               <div className="flex items-center gap-1 mt-2">
                 {trend === 'up' ? (
-                  <ArrowUpRight className="w-4 h-4 text-emerald-500" />
+                  <ArrowUpRight className="w-4 h-4 text-success-500" />
                 ) : (
-                  <ArrowDownRight className="w-4 h-4 text-red-500" />
+                  <ArrowDownRight className="w-4 h-4 text-error-500" />
                 )}
                 <span className={cn(
                   'text-sm font-medium',
-                  trend === 'up' ? 'text-emerald-500' : 'text-red-500'
+                  trend === 'up' ? 'text-success-500' : 'text-error-500'
                 )}>
                   {trendValue}
                 </span>
@@ -72,8 +72,8 @@ export function StatCard({
             )}
           </div>
           {Icon && (
-            <div className="p-3 rounded-xl bg-surface-100 dark:bg-surface-800">
-              <Icon className="w-6 h-6 text-surface-600 dark:text-surface-400" />
+            <div className="p-3 rounded-xl bg-primary-100 [data-theme='dark']:bg-primary-900/30">
+              <Icon className="w-6 h-6 text-primary-600 [data-theme='dark']:text-primary-400" />
             </div>
           )}
         </div>
@@ -81,4 +81,3 @@ export function StatCard({
     </Card>
   );
 }
-

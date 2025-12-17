@@ -17,9 +17,9 @@ type StreakLevel = 'legendary' | 'epic' | 'good' | 'starting';
 
 const gradients: Record<StreakLevel, string> = {
   legendary: 'from-amber-500 via-orange-500 to-red-500',
-  epic: 'from-purple-500 via-pink-500 to-rose-500',
-  good: 'from-primary-500 to-accent-500',
-  starting: 'from-blue-500 to-primary-600',
+  epic: 'from-primary-600 via-primary-500 to-amber-500',
+  good: 'from-primary-500 to-primary-600',
+  starting: 'from-primary-400 to-primary-500',
 };
 
 function getStreakLevel(streak: number): StreakLevel {
