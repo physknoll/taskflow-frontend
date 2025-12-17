@@ -183,12 +183,25 @@ export const kbSourcesService = {
 // React Query Hooks
 // ============================================
 
-// List sources for a client
-export function useKBSources(clientId: string, filters: KBSourcesFilters = {}) {
+// List sources for a client (with optional polling when sources have pending URLs)
+export function useKBSources(
+  clientId: string,
+  options?: KBSourcesFilters & { pollWhilePending?: boolean }
+) {
+  const { pollWhilePending, ...filters } = options || {};
+
   return useQuery({
     queryKey: ['kb-sources', clientId, filters],
     queryFn: () => kbSourcesService.getSources(clientId, filters),
     enabled: !!clientId,
+    refetchInterval: (query) => {
+      if (!pollWhilePending) return false;
+      // Check if any source has pending URLs
+      const hasPending = query.state.data?.data?.some(
+        (source: KnowledgeBaseSource) => source.pendingUrls > 0
+      );
+      return hasPending ? 10000 : false; // Poll every 10 seconds while pending
+    },
   });
 }
 

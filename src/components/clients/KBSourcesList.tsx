@@ -30,8 +30,10 @@ export function KBSourcesList({ clientId }: KBSourcesListProps) {
   const { user } = useAuthStore();
   const canManage = hasPermission(user?.role, 'clients.manage_kb_sources');
 
-  // Fetch sources
-  const { data: sourcesData, isLoading, error } = useKBSources(clientId);
+  // Fetch sources with polling while any source has pending URLs
+  const { data: sourcesData, isLoading, error } = useKBSources(clientId, {
+    pollWhilePending: true,
+  });
   const sources = sourcesData?.data || [];
 
   // Modal states
@@ -234,13 +236,14 @@ export function KBSourcesList({ clientId }: KBSourcesListProps) {
         />
       )}
 
-      {/* Synced URLs Drawer */}
+      {/* Synced URLs Drawer (with polling if source has pending URLs) */}
       {viewingUrlsSource && (
         <SyncedURLsDrawer
           isOpen={!!viewingUrlsSource}
           onClose={() => setViewingUrlsSource(null)}
           clientId={clientId}
           source={viewingUrlsSource}
+          pollWhilePending={viewingUrlsSource.pendingUrls > 0}
         />
       )}
 
