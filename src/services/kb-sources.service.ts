@@ -18,7 +18,7 @@ import {
   PaginatedSyncedUrlsResponse,
   PaginatedSyncHistoryResponse,
 } from '@/types/kb-sources';
-import { ApiResponse } from '@/types';
+import { ApiResponse, PaginatedResponse } from '@/types';
 
 // ============================================
 // API Service
@@ -36,10 +36,14 @@ export const kbSourcesService = {
         params.append(key, String(value));
       }
     });
-    const response = await api.get<ApiResponse<PaginatedKBSourcesResponse>>(
+    // Backend returns flat structure: { success, data: [...], pagination: {...} }
+    const response = await api.get<PaginatedResponse<KnowledgeBaseSource>>(
       `/clients/${clientId}/kb-sources?${params.toString()}`
     );
-    return response.data.data;
+    return {
+      data: response.data.data,
+      pagination: response.data.pagination,
+    };
   },
 
   // Get single source with stats
@@ -117,10 +121,14 @@ export const kbSourcesService = {
         params.append(key, String(value));
       }
     });
-    const response = await api.get<ApiResponse<PaginatedSyncedUrlsResponse>>(
+    // Backend returns flat structure: { success, data: [...], pagination: {...} }
+    const response = await api.get<PaginatedResponse<SyncedUrl>>(
       `/clients/${clientId}/kb-sources/${sourceId}/urls?${params.toString()}`
     );
-    return response.data.data;
+    return {
+      data: response.data.data,
+      pagination: response.data.pagination,
+    };
   },
 
   // Get sync history for a source
@@ -135,10 +143,14 @@ export const kbSourcesService = {
         params.append(key, String(value));
       }
     });
-    const response = await api.get<ApiResponse<PaginatedSyncHistoryResponse>>(
+    // Backend returns flat structure: { success, data: [...], pagination: {...} }
+    const response = await api.get<PaginatedResponse<SyncHistoryEntry>>(
       `/clients/${clientId}/kb-sources/${sourceId}/history?${params.toString()}`
     );
-    return response.data.data;
+    return {
+      data: response.data.data,
+      pagination: response.data.pagination,
+    };
   },
 
   // Test connection to a sitemap URL
