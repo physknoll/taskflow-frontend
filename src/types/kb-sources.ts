@@ -228,6 +228,7 @@ export interface SyncedUrlsFilters {
   page?: number;
   limit?: number;
   status?: UrlSyncStatus;
+  search?: string;
 }
 
 export interface SyncHistoryFilters {

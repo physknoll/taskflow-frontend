@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSyncedUrls } from '@/services/kb-sources.service';
-import { KnowledgeBaseSource, UrlSyncStatus, SyncedUrl } from '@/types/kb-sources';
+import { KnowledgeBaseSource, UrlSyncStatus } from '@/types/kb-sources';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -50,12 +50,23 @@ export function SyncedURLsDrawer({
   const [statusFilter, setStatusFilter] = useState<UrlSyncStatus | 'all'>('all');
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Debounce search query (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1); // Reset to page 1 when search changes
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Fetch URLs with optional polling for pending URLs
   const { data: urlsData, isLoading, isFetching } = useSyncedUrls(clientId, source._id, {
     page,
     limit: 20,
     status: statusFilter === 'all' ? undefined : statusFilter,
+    search: debouncedSearch || undefined,
     pollWhilePending,
   });
 
@@ -112,14 +123,8 @@ export function SyncedURLsDrawer({
     }
   };
 
-  // Filter URLs by search query (client-side)
-  const filteredUrls = searchQuery
-    ? urls.filter(
-        (url) =>
-          url.url.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          url.title?.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : urls;
+  // URLs are now filtered server-side via the search parameter
+  const filteredUrls = urls;
 
   // Format word count
   const formatWordCount = (count?: number) => {
@@ -250,7 +255,7 @@ export function SyncedURLsDrawer({
             <div className="flex flex-col items-center justify-center h-full text-surface-400 py-12">
               <FileText className="h-12 w-12 mb-3 opacity-50" />
               <p className="text-sm">
-                {searchQuery
+                {debouncedSearch
                   ? 'No URLs match your search.'
                   : statusFilter !== 'all'
                   ? `No ${statusFilter} URLs found.`
