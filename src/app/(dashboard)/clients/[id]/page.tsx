@@ -682,10 +682,21 @@ function DocumentsTab({ clientId }: { clientId: string }) {
   const [queryResult, setQueryResult] = useState<any>(null);
   const [isQuerying, setIsQuerying] = useState(false);
 
-  // Reset page when category changes
+  // Selection state for bulk operations
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteProgress, setDeleteProgress] = useState({ current: 0, total: 0 });
+
+  // Reset page and selection when category changes
   useEffect(() => {
     setPage(1);
+    setSelectedIds(new Set());
   }, [selectedCategory]);
+
+  // Reset selection when page changes
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [page]);
 
   // Fetch documents with pagination
   const { data: documentsData, isLoading, refetch } = useQuery({
@@ -818,6 +829,69 @@ function DocumentsTab({ clientId }: { clientId: string }) {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  // Selection helpers
+  const toggleSelectAll = () => {
+    if (selectedIds.size === documents.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(documents.map((doc: KnowledgeBaseDocument) => doc._id)));
+    }
+  };
+
+  const toggleSelectOne = (docId: string) => {
+    setSelectedIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(docId)) {
+        newSet.delete(docId);
+      } else {
+        newSet.add(docId);
+      }
+      return newSet;
+    });
+  };
+
+  const isAllSelected = documents.length > 0 && selectedIds.size === documents.length;
+  const isSomeSelected = selectedIds.size > 0 && selectedIds.size < documents.length;
+
+  // Bulk delete handler
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    
+    const confirmed = confirm(`Are you sure you want to delete ${selectedIds.size} document${selectedIds.size > 1 ? 's' : ''}? This action cannot be undone.`);
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+    setDeleteProgress({ current: 0, total: selectedIds.size });
+    
+    const idsToDelete = Array.from(selectedIds);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < idsToDelete.length; i++) {
+      setDeleteProgress({ current: i + 1, total: idsToDelete.length });
+      try {
+        await clientsService.deleteDocument(clientId, idsToDelete[i]);
+        successCount++;
+      } catch (error) {
+        failCount++;
+        console.error(`Failed to delete document ${idsToDelete[i]}:`, error);
+      }
+    }
+
+    setIsDeleting(false);
+    setSelectedIds(new Set());
+    
+    // Refresh data
+    queryClient.invalidateQueries({ queryKey: ['knowledge-base', clientId] });
+    queryClient.invalidateQueries({ queryKey: ['client', clientId] });
+
+    if (failCount === 0) {
+      toast.success(`Successfully deleted ${successCount} document${successCount > 1 ? 's' : ''}`);
+    } else {
+      toast.error(`Deleted ${successCount} document${successCount > 1 ? 's' : ''}, ${failCount} failed`);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Sub-tab Navigation */}
@@ -860,7 +934,7 @@ function DocumentsTab({ clientId }: { clientId: string }) {
         <>
           {/* Toolbar */}
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="flex gap-2">
+            <div className="flex items-center gap-4">
               <Select
                 options={[
                   { value: '', label: 'All Categories' },
@@ -870,6 +944,41 @@ function DocumentsTab({ clientId }: { clientId: string }) {
                 onChange={setSelectedCategory}
                 className="w-48"
               />
+              
+              {/* Select All Checkbox */}
+              {documents.length > 0 && (
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isSomeSelected;
+                    }}
+                    onChange={toggleSelectAll}
+                    className="w-4 h-4 rounded border-surface-300 text-primary-600 focus:ring-primary-500"
+                    disabled={isDeleting}
+                  />
+                  <span className="text-sm text-surface-600 dark:text-surface-400">
+                    Select All ({documents.length})
+                  </span>
+                </label>
+              )}
+              
+              {/* Delete Selected Button */}
+              {selectedIds.size > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={handleBulkDelete}
+                  disabled={isDeleting}
+                  className="text-red-600 border-red-300 hover:bg-red-50 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/20"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {isDeleting 
+                    ? `Deleting ${deleteProgress.current}/${deleteProgress.total}...`
+                    : `Delete Selected (${selectedIds.size})`
+                  }
+                </Button>
+              )}
             </div>
             
             <div className="flex gap-2">
@@ -937,9 +1046,26 @@ function DocumentsTab({ clientId }: { clientId: string }) {
           <div className="divide-y divide-surface-200 dark:divide-surface-700">
             {documents.map((doc: KnowledgeBaseDocument) => {
               const category = getCategoryInfo(doc.category);
+              const isSelected = selectedIds.has(doc._id);
               return (
-                <div key={doc._id} className="p-4 flex items-center gap-4 hover:bg-surface-50 dark:hover:bg-surface-700/50 transition-colors">
-                  <div className="w-12 h-12 rounded-lg bg-surface-100 dark:bg-surface-700 flex items-center justify-center text-2xl">
+                <div 
+                  key={doc._id} 
+                  className={cn(
+                    "p-4 flex items-center gap-4 transition-colors",
+                    isSelected 
+                      ? "bg-primary-50 dark:bg-primary-900/20" 
+                      : "hover:bg-surface-50 dark:hover:bg-surface-700/50"
+                  )}
+                >
+                  {/* Selection Checkbox */}
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleSelectOne(doc._id)}
+                    className="w-4 h-4 rounded border-surface-300 text-primary-600 focus:ring-primary-500 flex-shrink-0"
+                    disabled={isDeleting}
+                  />
+                  <div className="w-12 h-12 rounded-lg bg-surface-100 dark:bg-surface-700 flex items-center justify-center text-2xl flex-shrink-0">
                     {category.icon}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -974,6 +1100,7 @@ function DocumentsTab({ clientId }: { clientId: string }) {
                         deleteMutation.mutate(doc._id);
                       }
                     }}
+                    disabled={isDeleting}
                   >
                     <Trash2 className="h-4 w-4 text-surface-400 hover:text-red-500" />
                   </Button>
