@@ -872,6 +872,14 @@ function DocumentsTab({ clientId }: { clientId: string }) {
       try {
         await clientsService.deleteDocument(clientId, idsToDelete[i]);
         successCount++;
+        
+        // Remove from selection and refetch immediately so item disappears
+        setSelectedIds((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(idsToDelete[i]);
+          return newSet;
+        });
+        await queryClient.invalidateQueries({ queryKey: ['knowledge-base', clientId] });
       } catch (error) {
         failCount++;
         console.error(`Failed to delete document ${idsToDelete[i]}:`, error);
@@ -879,10 +887,8 @@ function DocumentsTab({ clientId }: { clientId: string }) {
     }
 
     setIsDeleting(false);
-    setSelectedIds(new Set());
     
-    // Refresh data
-    queryClient.invalidateQueries({ queryKey: ['knowledge-base', clientId] });
+    // Final refresh for client stats
     queryClient.invalidateQueries({ queryKey: ['client', clientId] });
 
     if (failCount === 0) {
