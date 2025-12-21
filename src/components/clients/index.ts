@@ -5,3 +5,4 @@ export { AddEditSourceModal } from './AddEditSourceModal';
 export { SyncProgressModal } from './SyncProgressModal';
 export { SyncedURLsDrawer } from './SyncedURLsDrawer';
 export { SyncHistoryPanel } from './SyncHistoryPanel';
+export { HubSpotSetupModal } from './HubSpotSetupModal';

@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
+import { HubSpotSetupModal } from './HubSpotSetupModal';
 import { cn } from '@/lib/utils';
 import {
   CheckCircle,
@@ -30,6 +31,7 @@ import {
   ChevronUp,
   Globe,
   AlertTriangle,
+  Settings,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -68,6 +70,9 @@ export function AddEditSourceModal({
     urlCount?: number;
     error?: string;
   } | null>(null);
+
+  // HubSpot setup modal state
+  const [showHubSpotSetup, setShowHubSpotSetup] = useState(false);
 
   // Mutations
   const createMutation = useCreateKBSource(clientId);
@@ -247,6 +252,33 @@ export function AddEditSourceModal({
           </div>
         )}
 
+        {/* HubSpot Setup Prompt */}
+        {sourceType === 'hubspot_kb' && (
+          <div className="flex items-start gap-3 p-4 bg-[#FFF4F0] dark:bg-[#FF7A59]/10 rounded-xl border border-[#FF7A59]/20">
+            <div className="w-10 h-10 rounded-lg bg-[#FF7A59] flex items-center justify-center flex-shrink-0">
+              <Settings className="h-5 w-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="font-medium text-surface-900 dark:text-white mb-1">
+                Enable Real-Time Article Tracking
+              </p>
+              <p className="text-sm text-surface-600 dark:text-surface-400 mb-3">
+                For best results, add a small code snippet to your HubSpot settings to track article updates every 2 hours.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShowHubSpotSetup(true)}
+                className="border-[#FF7A59] text-[#FF7A59] hover:bg-[#FF7A59]/10"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                View Setup Instructions
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Name */}
         <Input
           label="Name *"
@@ -413,6 +445,12 @@ export function AddEditSourceModal({
           </Button>
         </div>
       </form>
+
+      {/* HubSpot Setup Modal */}
+      <HubSpotSetupModal
+        isOpen={showHubSpotSetup}
+        onClose={() => setShowHubSpotSetup(false)}
+      />
     </Modal>
   );
 }
