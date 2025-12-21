@@ -163,7 +163,7 @@ export default function SessionDetailPage() {
         <StatCard
           icon={MessageSquare}
           label="Messages"
-          value={session.messages.length}
+          value={session.messages?.length ?? 0}
           color="primary"
         />
         <StatCard
@@ -249,9 +249,15 @@ export default function SessionDetailPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {session.messages.map((message, index) => (
-              <TranscriptMessage key={index} message={message} />
-            ))}
+            {(session.messages ?? []).length > 0 ? (
+              (session.messages ?? []).map((message, index) => (
+                <TranscriptMessage key={index} message={message} />
+              ))
+            ) : (
+              <p className="text-surface-500 dark:text-surface-400 text-center py-4">
+                No messages in this session yet.
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
