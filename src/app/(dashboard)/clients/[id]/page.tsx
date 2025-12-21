@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clientsService, KnowledgeBaseDocument, KNOWLEDGE_BASE_CATEGORIES } from '@/services/clients.service';
 import { ticketsService } from '@/services/tickets.service';
+import { useKBSources } from '@/services/kb-sources.service';
 import { BulkUploadModal, KBSourcesList } from '@/components/clients';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -68,7 +69,16 @@ export default function ClientDetailPage() {
     enabled: !!clientId,
   });
 
+  // Fetch KB sources for aggregated document count
+  const { data: kbSourcesData } = useKBSources(clientId);
+
   const tickets = ticketsData?.data || [];
+  
+  // Calculate total synced URLs from all KB sources
+  const totalSyncedFromSources = kbSourcesData?.data?.reduce(
+    (sum, source) => sum + (source.syncedUrls || 0),
+    0
+  ) || 0;
 
   if (isLoading) {
     return <ClientDetailSkeleton />;
@@ -102,7 +112,7 @@ export default function ClientDetailPage() {
     { id: 'overview', label: 'Overview', icon: Building },
     { id: 'tickets', label: 'Tickets', icon: Ticket, count: totalTickets },
     { id: 'contacts', label: 'Contacts', icon: Users, count: client.contacts?.length || 0 },
-    { id: 'documents', label: 'Documents', icon: FileText, count: client.knowledgeBase?.documentCount || 0 },
+    { id: 'documents', label: 'Documents', icon: FileText, count: (client.knowledgeBase?.documentCount || 0) + totalSyncedFromSources },
     { id: 'brand', label: 'Brand', icon: Palette },
   ];
 
