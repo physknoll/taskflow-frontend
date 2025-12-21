@@ -67,7 +67,8 @@ export interface BatchUploadStatus {
   errors: Array<{ fileName: string; error: string }>;
 }
 
-export const KNOWLEDGE_BASE_CATEGORIES = [
+// Suggested categories for upload modals (shown when creating new documents)
+export const SUGGESTED_KB_CATEGORIES = [
   { id: 'brand_guidelines', label: 'Brand Guidelines', icon: '🎨' },
   { id: 'products', label: 'Products', icon: '📦' },
   { id: 'processes', label: 'Processes', icon: '⚙️' },
@@ -77,6 +78,9 @@ export const KNOWLEDGE_BASE_CATEGORIES = [
   { id: 'seo', label: 'SEO', icon: '🔍' },
   { id: 'general', label: 'General', icon: '📄' },
 ] as const;
+
+// Legacy alias for backward compatibility
+export const KNOWLEDGE_BASE_CATEGORIES = SUGGESTED_KB_CATEGORIES;
 
 export const clientsService = {
   async getClients(filters: ClientFilters = {}): Promise<PaginatedResponse<IClient>> {
@@ -274,5 +278,13 @@ export const clientsService = {
   async getClientStats(clientId: string): Promise<any> {
     const response = await api.get<ApiResponse<any>>(`/analytics/client/${clientId}`);
     return response.data.data;
+  },
+
+  // Knowledge Base Categories
+  async getKBCategories(clientId: string): Promise<string[]> {
+    const response = await api.get<{ success: boolean; data: { categories: string[] } }>(
+      `/clients/${clientId}/knowledge-base/categories`
+    );
+    return response.data.data.categories;
   },
 };

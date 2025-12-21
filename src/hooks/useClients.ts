@@ -103,5 +103,15 @@ export function useClient(clientId: string) {
   };
 }
 
-
-
+/**
+ * Hook to fetch knowledge base categories for a client
+ * Categories are fetched from the backend and cached for 60 seconds
+ */
+export function useKBCategories(clientId: string) {
+  return useQuery({
+    queryKey: ['kb-categories', clientId],
+    queryFn: () => clientsService.getKBCategories(clientId),
+    enabled: !!clientId,
+    staleTime: 60_000, // Categories don't change often
+  });
+}

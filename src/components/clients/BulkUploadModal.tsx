@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { Progress } from '@/components/ui/Progress';
 import { Badge } from '@/components/ui/Badge';
-import { KNOWLEDGE_BASE_CATEGORIES } from '@/services/clients.service';
+import { SUGGESTED_KB_CATEGORIES } from '@/services/clients.service';
 import { useKBUpload, FileUploadItem } from '@/hooks/useKBUpload';
+import { useKBCategories } from '@/hooks/useClients';
 import { cn } from '@/lib/utils';
 import {
   Upload,
@@ -55,6 +56,9 @@ export function BulkUploadModal({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
+
+  // Fetch dynamic categories from backend
+  const { data: backendCategories = [] } = useKBCategories(clientId);
 
   // Use the WebSocket-based upload hook
   const {
@@ -578,10 +582,21 @@ export function BulkUploadModal({
         {/* Footer */}
         <div className="flex items-center justify-between gap-4 mt-4 pt-4 border-t border-surface-200 dark:border-surface-700">
           <Select
-            options={KNOWLEDGE_BASE_CATEGORIES.map((c) => ({
-              value: c.id,
-              label: `${c.icon} ${c.label}`,
-            }))}
+            options={(() => {
+              // Combine existing categories with suggested categories
+              const existingOptions = backendCategories.map(cat => {
+                const suggested = SUGGESTED_KB_CATEGORIES.find(s => s.id === cat);
+                return {
+                  value: cat,
+                  label: suggested ? `${suggested.icon} ${suggested.label}` : `📁 ${cat}`,
+                };
+              });
+              // Add suggested categories that don't exist yet
+              const suggestedOptions = SUGGESTED_KB_CATEGORIES
+                .filter(s => !backendCategories.includes(s.id))
+                .map(s => ({ value: s.id, label: `${s.icon} ${s.label} (new)` }));
+              return [...existingOptions, ...suggestedOptions];
+            })()}
             value={category}
             onChange={setCategory}
             className="w-48"

@@ -3,9 +3,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { clientsService, KnowledgeBaseDocument, KNOWLEDGE_BASE_CATEGORIES } from '@/services/clients.service';
+import { clientsService, KnowledgeBaseDocument, KNOWLEDGE_BASE_CATEGORIES, SUGGESTED_KB_CATEGORIES } from '@/services/clients.service';
+import { useKBCategories } from '@/hooks/useClients';
 import { ticketsService } from '@/services/tickets.service';
-import { useKBSources } from '@/services/kb-sources.service';
 import { BulkUploadModal, KBSourcesList } from '@/components/clients';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -69,16 +69,7 @@ export default function ClientDetailPage() {
     enabled: !!clientId,
   });
 
-  // Fetch KB sources for aggregated document count
-  const { data: kbSourcesData } = useKBSources(clientId);
-
   const tickets = ticketsData?.data || [];
-  
-  // Calculate total synced URLs from all KB sources
-  const totalSyncedFromSources = kbSourcesData?.data?.reduce(
-    (sum, source) => sum + (source.syncedUrls || 0),
-    0
-  ) || 0;
 
   if (isLoading) {
     return <ClientDetailSkeleton />;
@@ -112,7 +103,7 @@ export default function ClientDetailPage() {
     { id: 'overview', label: 'Overview', icon: Building },
     { id: 'tickets', label: 'Tickets', icon: Ticket, count: totalTickets },
     { id: 'contacts', label: 'Contacts', icon: Users, count: client.contacts?.length || 0 },
-    { id: 'documents', label: 'Documents', icon: FileText, count: (client.knowledgeBase?.documentCount || 0) + totalSyncedFromSources },
+    { id: 'documents', label: 'Documents', icon: FileText, count: client.knowledgeBase?.documentCount || 0 },
     { id: 'brand', label: 'Brand', icon: Palette },
   ];
 
@@ -697,6 +688,9 @@ function DocumentsTab({ clientId }: { clientId: string }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteProgress, setDeleteProgress] = useState({ current: 0, total: 0 });
 
+  // Fetch dynamic categories from backend
+  const { data: backendCategories = [], isLoading: isCategoriesLoading } = useKBCategories(clientId);
+
   // Reset page and selection when category changes
   useEffect(() => {
     setPage(1);
@@ -954,11 +948,19 @@ function DocumentsTab({ clientId }: { clientId: string }) {
               <Select
                 options={[
                   { value: '', label: 'All Categories' },
-                  ...KNOWLEDGE_BASE_CATEGORIES.map(c => ({ value: c.id, label: `${c.icon} ${c.label}` })),
+                  ...backendCategories.map(cat => {
+                    // Try to find a matching suggested category for icon/label
+                    const suggested = SUGGESTED_KB_CATEGORIES.find(s => s.id === cat);
+                    return {
+                      value: cat,
+                      label: suggested ? `${suggested.icon} ${suggested.label}` : `📁 ${cat}`,
+                    };
+                  }),
                 ]}
                 value={selectedCategory}
                 onChange={setSelectedCategory}
                 className="w-48"
+                disabled={isCategoriesLoading}
               />
               
               {/* Select All Checkbox */}
@@ -1246,7 +1248,21 @@ function DocumentsTab({ clientId }: { clientId: string }) {
           
           <Select
             label="Category"
-            options={KNOWLEDGE_BASE_CATEGORIES.map(c => ({ value: c.id, label: `${c.icon} ${c.label}` }))}
+            options={(() => {
+              // Combine existing categories with suggested categories
+              const existingOptions = backendCategories.map(cat => {
+                const suggested = SUGGESTED_KB_CATEGORIES.find(s => s.id === cat);
+                return {
+                  value: cat,
+                  label: suggested ? `${suggested.icon} ${suggested.label}` : `📁 ${cat}`,
+                };
+              });
+              // Add suggested categories that don't exist yet
+              const suggestedOptions = SUGGESTED_KB_CATEGORIES
+                .filter(s => !backendCategories.includes(s.id))
+                .map(s => ({ value: s.id, label: `${s.icon} ${s.label} (new)` }));
+              return [...existingOptions, ...suggestedOptions];
+            })()}
             value={uploadCategory}
             onChange={setUploadCategory}
           />
@@ -1287,7 +1303,21 @@ function DocumentsTab({ clientId }: { clientId: string }) {
           <div className="grid grid-cols-2 gap-4">
             <Select
               label="Category"
-              options={KNOWLEDGE_BASE_CATEGORIES.map(c => ({ value: c.id, label: `${c.icon} ${c.label}` }))}
+              options={(() => {
+                // Combine existing categories with suggested categories
+                const existingOptions = backendCategories.map(cat => {
+                  const suggested = SUGGESTED_KB_CATEGORIES.find(s => s.id === cat);
+                  return {
+                    value: cat,
+                    label: suggested ? `${suggested.icon} ${suggested.label}` : `📁 ${cat}`,
+                  };
+                });
+                // Add suggested categories that don't exist yet
+                const suggestedOptions = SUGGESTED_KB_CATEGORIES
+                  .filter(s => !backendCategories.includes(s.id))
+                  .map(s => ({ value: s.id, label: `${s.icon} ${s.label} (new)` }));
+                return [...existingOptions, ...suggestedOptions];
+              })()}
               value={docCategory}
               onChange={setDocCategory}
             />
