@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from 'react';
 import { useAI } from '@/hooks/useAI';
 import { useClients } from '@/hooks/useClients';
 import { useConversationHistory } from '@/hooks/useConversations';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Select } from '@/components/ui/Select';
@@ -239,11 +238,6 @@ export default function AIAssistantPage() {
 
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col">
-      <PageHeader
-        title="AI Assistant"
-        description="Your intelligent project management companion"
-      />
-
       <div className="flex-1 flex gap-6 min-h-0">
         {/* Sidebar */}
         <div className="w-64 flex-shrink-0 space-y-4">

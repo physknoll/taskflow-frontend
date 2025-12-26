@@ -6,7 +6,6 @@ import { useProjectsBoard, useProjects } from '@/hooks/useProjects';
 import { useClients } from '@/hooks/useClients';
 import { useProjectStore } from '@/stores/projectStore';
 import { ProjectBoard, CreateProjectModal } from '@/components/projects';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { Input } from '@/components/ui/Input';
@@ -60,21 +59,6 @@ export default function ProjectsPage() {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Page Header */}
-      <PageHeader
-        title="Projects"
-        description="Manage and track all your projects"
-        icon={FolderKanban}
-        actions={
-          <div className="flex items-center gap-3">
-            <Button onClick={() => setIsCreateModalOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Project
-            </Button>
-          </div>
-        }
-      />
-
       {/* Filters & Controls */}
       <div className="px-6 py-4 border-b border-surface-200 dark:border-surface-800 bg-white dark:bg-surface-900">
         <div className="flex items-center justify-between gap-4">
@@ -132,8 +116,8 @@ export default function ProjectsPage() {
             />
           </div>
 
-          {/* Right side - View toggle */}
-          <div className="flex items-center gap-2">
+          {/* Right side - View toggle and New Project */}
+          <div className="flex items-center gap-3">
             <div className="flex items-center gap-1 bg-surface-100 dark:bg-surface-800 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('board')}
@@ -169,6 +153,10 @@ export default function ProjectsPage() {
                 <CalendarDays className="w-4 h-4" />
               </button>
             </div>
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Project
+            </Button>
           </div>
         </div>
       </div>

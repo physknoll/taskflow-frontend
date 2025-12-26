@@ -6,7 +6,6 @@ import { useClients } from '@/hooks/useClients';
 import { useProjects } from '@/hooks/useProjects';
 import { useUIStore } from '@/stores/uiStore';
 import { useTicketStore } from '@/stores/ticketStore';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
@@ -61,17 +60,6 @@ export default function TicketsPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Tickets"
-        description="Manage and track all your project tasks"
-        action={
-          <Button onClick={() => setCreateModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Ticket
-          </Button>
-        }
-      />
-
       {/* Toolbar */}
       <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
         {/* Search and Filters */}
@@ -102,41 +90,47 @@ export default function TicketsPage() {
           </Button>
         </div>
 
-        {/* View Toggle */}
-        <div className="flex items-center gap-2 border border-surface-300 dark:border-surface-600 rounded-lg p-1">
-          <button
-            onClick={() => setTicketViewMode('board')}
-            className={`p-2 rounded ${
-              ticketViewMode === 'board'
-                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
-                : 'text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800'
-            }`}
-            title="Board view"
-          >
-            <LayoutGrid className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setTicketViewMode('list')}
-            className={`p-2 rounded ${
-              ticketViewMode === 'list'
-                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
-                : 'text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800'
-            }`}
-            title="List view"
-          >
-            <List className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setTicketViewMode('calendar')}
-            className={`p-2 rounded ${
-              ticketViewMode === 'calendar'
-                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
-                : 'text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800'
-            }`}
-            title="Calendar view"
-          >
-            <CalendarDays className="h-4 w-4" />
-          </button>
+        {/* View Toggle and New Ticket */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 border border-surface-300 dark:border-surface-600 rounded-lg p-1">
+            <button
+              onClick={() => setTicketViewMode('board')}
+              className={`p-2 rounded ${
+                ticketViewMode === 'board'
+                  ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
+                  : 'text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800'
+              }`}
+              title="Board view"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setTicketViewMode('list')}
+              className={`p-2 rounded ${
+                ticketViewMode === 'list'
+                  ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
+                  : 'text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800'
+              }`}
+              title="List view"
+            >
+              <List className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setTicketViewMode('calendar')}
+              className={`p-2 rounded ${
+                ticketViewMode === 'calendar'
+                  ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
+                  : 'text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800'
+              }`}
+              title="Calendar view"
+            >
+              <CalendarDays className="h-4 w-4" />
+            </button>
+          </div>
+          <Button onClick={() => setCreateModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Ticket
+          </Button>
         </div>
       </div>
 

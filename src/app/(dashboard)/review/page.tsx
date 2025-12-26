@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useReviews } from '@/hooks/useReviews';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -82,11 +81,6 @@ export default function ReviewPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Review Queue"
-        description={`${ticketsInReviewCount} tickets in review`}
-      />
-
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
