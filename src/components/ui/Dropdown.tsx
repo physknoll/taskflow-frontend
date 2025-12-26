@@ -71,7 +71,7 @@ export function DropdownItem({
         'flex w-full items-center gap-2 px-4 py-2 text-sm transition-colors',
         variant === 'default'
           ? 'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
-          : 'text-error-500 hover:bg-error-50 [data-theme="dark"]:hover:bg-error-900/20',
+          : 'text-error-500 hover:bg-error-50 dark:hover:bg-error-900/20',
         className
       )}
       {...props}

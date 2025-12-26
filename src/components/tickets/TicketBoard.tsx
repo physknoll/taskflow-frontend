@@ -54,14 +54,14 @@ function DroppableColumn({ id, label, color, tickets }: DroppableColumnProps) {
         ref={setNodeRef}
         className={cn(
           'kanban-column-body min-h-[200px] transition-all duration-200',
-          isOver && 'ring-2 ring-primary-500 ring-inset bg-primary-50/50 [data-theme="dark"]:bg-primary-900/20'
+          isOver && 'ring-2 ring-primary-500 ring-inset bg-primary-50/50 dark:bg-primary-900/20'
         )}
       >
         {tickets.length === 0 ? (
           <div className={cn(
             'flex items-center justify-center h-32 text-[var(--text-muted)] text-sm border-2 border-dashed rounded-lg transition-colors',
             isOver 
-              ? 'border-primary-400 text-primary-500 bg-primary-50 [data-theme="dark"]:bg-primary-900/30' 
+              ? 'border-primary-400 text-primary-500 bg-primary-50 dark:bg-primary-900/30' 
               : 'border-[var(--border-default)]'
           )}>
             {isOver ? 'Drop here to move' : 'No tickets'}

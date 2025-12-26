@@ -192,7 +192,7 @@ export function Header() {
                     onClick={() => !notification.isRead && markAsRead(notification._id)}
                     className={cn(
                       'block px-4 py-3 hover:bg-[var(--bg-tertiary)] transition-colors',
-                      !notification.isRead && 'bg-primary-50 [data-theme="dark"]:bg-primary-900/20'
+                      !notification.isRead && 'bg-primary-50 dark:bg-primary-950/50'
                     )}
                   >
                     <div className="flex gap-3">
@@ -201,7 +201,7 @@ export function Header() {
                           'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
                           notification.isRead
                             ? 'bg-[var(--bg-tertiary)] text-[var(--text-muted)]'
-                            : 'bg-primary-100 [data-theme="dark"]:bg-primary-900/50 text-primary-600 [data-theme="dark"]:text-primary-400'
+                            : 'bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400'
                         )}
                       >
                         <Icon className="h-4 w-4" />

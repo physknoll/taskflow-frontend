@@ -115,14 +115,14 @@ export function Sidebar() {
                 className={cn(
                   'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative',
                   isActive
-                    ? 'bg-primary-100 text-primary-700 [data-theme="dark"]:bg-primary-900/30 [data-theme="dark"]:text-primary-300 shadow-sm'
+                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300 shadow-sm'
                     : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]'
                 )}
               >
                 <item.icon
                   className={cn(
                     'h-5 w-5 flex-shrink-0',
-                    isActive ? 'text-primary-600 [data-theme="dark"]:text-primary-400' : 'text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]'
+                    isActive ? 'text-primary-600 dark:text-primary-400' : 'text-[var(--text-muted)] group-hover:text-[var(--text-secondary)]'
                   )}
                 />
                 {!sidebarCollapsed && (
@@ -182,7 +182,7 @@ export function Sidebar() {
             <button
               onClick={handleLogout}
               className={cn(
-                'p-2 rounded-lg text-[var(--text-muted)] hover:text-error-500 hover:bg-error-50 [data-theme="dark"]:hover:bg-error-900/20 transition-colors',
+                'p-2 rounded-lg text-[var(--text-muted)] hover:text-error-500 hover:bg-error-50 dark:hover:bg-error-900/20 transition-colors',
                 sidebarCollapsed && 'mt-2'
               )}
               title="Logout"

@@ -36,10 +36,10 @@ export function ProjectCard({ project, onClick, onEdit, isDragging = false }: Pr
     : undefined;
 
   const priorityColors: Record<string, string> = {
-    low: 'bg-surface-100 text-surface-600 [data-theme="dark"]:bg-surface-700 [data-theme="dark"]:text-surface-300',
-    medium: 'bg-primary-100 text-primary-700 [data-theme="dark"]:bg-primary-900/50 [data-theme="dark"]:text-primary-300',
-    high: 'bg-warning-100 text-warning-700 [data-theme="dark"]:bg-warning-900/50 [data-theme="dark"]:text-warning-300',
-    critical: 'bg-error-100 text-error-700 [data-theme="dark"]:bg-error-900/50 [data-theme="dark"]:text-error-300',
+    low: 'bg-surface-100 text-surface-600 dark:bg-surface-700 dark:text-surface-300',
+    medium: 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300',
+    high: 'bg-warning-100 text-warning-700 dark:bg-warning-900/50 dark:text-warning-300',
+    critical: 'bg-error-100 text-error-700 dark:bg-error-900/50 dark:text-error-300',
   };
 
   const isOverdue =

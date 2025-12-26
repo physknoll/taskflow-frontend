@@ -128,7 +128,7 @@ export function DateRangePicker({
                 className={cn(
                   'w-full px-4 py-2 text-left text-sm transition-colors',
                   preset.value === value
-                    ? 'bg-primary-100 text-primary-700 [data-theme="dark"]:bg-primary-900/30 [data-theme="dark"]:text-primary-300'
+                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
                     : 'text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
                 )}
               >

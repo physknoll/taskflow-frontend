@@ -47,7 +47,7 @@ export function KanbanColumn({
             className={cn(
               'rounded-full px-2 py-0.5 text-xs font-medium',
               isOverLimit 
-                ? 'bg-error-100 text-error-700 [data-theme="dark"]:bg-error-900/50 [data-theme="dark"]:text-error-300'
+                ? 'bg-error-100 text-error-700 dark:bg-error-900/50 dark:text-error-300'
                 : 'bg-[var(--bg-primary)] text-[var(--text-secondary)]'
             )}
           >
@@ -70,7 +70,7 @@ export function KanbanColumn({
         className={cn(
           'kanban-column-body p-3 rounded-b-xl min-h-[200px] flex-1 overflow-y-auto transition-all duration-200',
           'bg-[var(--bg-secondary)]',
-          isOver && 'ring-2 ring-primary-500 ring-inset bg-primary-50/50 [data-theme="dark"]:bg-primary-900/20'
+          isOver && 'ring-2 ring-primary-500 ring-inset bg-primary-50/50 dark:bg-primary-900/20'
         )}
       >
         {count === 0 ? (
@@ -78,7 +78,7 @@ export function KanbanColumn({
             className={cn(
               'flex items-center justify-center h-32 text-[var(--text-muted)] text-sm border-2 border-dashed rounded-lg transition-colors',
               isOver
-                ? 'border-primary-400 text-primary-500 bg-primary-50 [data-theme="dark"]:bg-primary-900/30'
+                ? 'border-primary-400 text-primary-500 bg-primary-50 dark:bg-primary-900/30'
                 : 'border-[var(--border-default)]'
             )}
           >

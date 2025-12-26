@@ -113,7 +113,7 @@ export function Select({
                     'flex w-full items-center justify-between px-4 py-2 text-sm transition-colors',
                     'hover:bg-[var(--bg-tertiary)]',
                     option.disabled && 'opacity-50 cursor-not-allowed',
-                    value === option.value && 'bg-primary-100 text-primary-700 [data-theme="dark"]:bg-primary-900/30 [data-theme="dark"]:text-primary-300'
+                    value === option.value && 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
                   )}
                 >
                   <span className="flex items-center gap-2">
