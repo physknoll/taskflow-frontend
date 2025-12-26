@@ -140,5 +140,28 @@ export const usersService = {
     const response = await api.get<ApiResponse<IUserMinimal[]>>(`/users/list/minimal?${params.toString()}`);
     return response.data.data;
   },
+
+  // Upload avatar image
+  async uploadAvatar(userId: string, file: Blob): Promise<{ avatarUrl: string }> {
+    const formData = new FormData();
+    formData.append('avatar', file, 'avatar.jpg');
+
+    const response = await api.post<ApiResponse<{ avatarUrl: string }>>(
+      `/users/${userId}/avatar`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data.data;
+  },
+
+  // Delete avatar
+  async deleteAvatar(userId: string): Promise<{ message: string }> {
+    const response = await api.delete<ApiResponse<{ message: string }>>(`/users/${userId}/avatar`);
+    return response.data.data;
+  },
 };
 

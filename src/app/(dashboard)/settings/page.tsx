@@ -10,7 +10,9 @@ import { Select } from '@/components/ui/Select';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
+import { AvatarUploadModal } from '@/components/ui/AvatarUploadModal';
 import { useAuthStore } from '@/stores/authStore';
+import { usersService } from '@/services/users.service';
 import { useUIStore } from '@/stores/uiStore';
 import { authService } from '@/services/auth.service';
 import { useMutation } from '@tanstack/react-query';
@@ -44,6 +46,7 @@ import {
   Loader2,
   CalendarDays,
   RefreshCw,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -159,6 +162,7 @@ export default function SettingsPage() {
 
 function ProfileSettings() {
   const { user, updateUser } = useAuthStore();
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
 
   const profileMutation = useMutation({
     mutationFn: (data: Partial<ProfileForm>) => authService.updateProfile(data),
@@ -168,6 +172,28 @@ function ProfileSettings() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to update profile');
+    },
+  });
+
+  const avatarUploadMutation = useMutation({
+    mutationFn: (file: Blob) => usersService.uploadAvatar(user!._id, file),
+    onSuccess: (data) => {
+      updateUser({ ...user!, avatar: data.avatarUrl });
+      toast.success('Profile photo updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to upload photo');
+    },
+  });
+
+  const avatarDeleteMutation = useMutation({
+    mutationFn: () => usersService.deleteAvatar(user!._id),
+    onSuccess: () => {
+      updateUser({ ...user!, avatar: undefined });
+      toast.success('Profile photo removed');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to remove photo');
     },
   });
 
@@ -201,14 +227,21 @@ function ProfileSettings() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Avatar & Role */}
           <div className="flex items-center gap-6">
-            <div className="relative">
+            <button
+              type="button"
+              onClick={() => setAvatarModalOpen(true)}
+              className="relative group focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-full"
+            >
               <Avatar
                 firstName={user?.firstName}
                 lastName={user?.lastName}
                 src={user?.avatar}
                 size="xl"
               />
-            </div>
+              <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <ImageIcon className="h-6 w-6 text-white" />
+              </div>
+            </button>
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <h3 className="text-lg font-semibold text-surface-900 dark:text-white">
@@ -232,7 +265,7 @@ function ProfileSettings() {
                 {user?.email}
               </p>
               <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={() => setAvatarModalOpen(true)}>
                   Change Avatar
                 </Button>
                 <span className="text-xs text-surface-400 dark:text-surface-500">
@@ -241,6 +274,21 @@ function ProfileSettings() {
               </div>
             </div>
           </div>
+
+          {/* Avatar Upload Modal */}
+          <AvatarUploadModal
+            isOpen={avatarModalOpen}
+            onClose={() => setAvatarModalOpen(false)}
+            onUpload={async (file) => {
+              await avatarUploadMutation.mutateAsync(file);
+            }}
+            onDelete={user?.avatar ? async () => {
+              await avatarDeleteMutation.mutateAsync();
+            } : undefined}
+            currentAvatar={user?.avatar}
+            isUploading={avatarUploadMutation.isPending}
+            isDeleting={avatarDeleteMutation.isPending}
+          />
 
           <div className="grid grid-cols-2 gap-4">
             <Input
@@ -1191,5 +1239,6 @@ function SecuritySettings() {
     </div>
   );
 }
+
 
 

@@ -9,6 +9,8 @@ export type { SelectOption, SelectProps } from './Select';
 
 export { Modal, ConfirmModal } from './Modal';
 
+export { AvatarUploadModal } from './AvatarUploadModal';
+
 export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './Card';
 
 export { Badge, badgeVariants } from './Badge';
