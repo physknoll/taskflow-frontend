@@ -225,10 +225,13 @@ export function useCalendar(options: UseCalendarOptions = {}) {
 
   const { start, end } = getDateRange();
 
-  // Track if this is initial load
-  const isInitialLoad = useRef(true);
+  // Track synced ranges to avoid duplicate syncs
+  const syncedRangesRef = useRef<Set<string>>(new Set());
   const previousRangeRef = useRef<string | null>(null);
   const currentRangeKey = `${start.toISOString()}-${end.toISOString()}`;
+  
+  // Determine if this range needs syncing (hasn't been synced yet)
+  const shouldSyncThisRange = options.syncGoogleOnLoad !== false && !syncedRangesRef.current.has(currentRangeKey);
 
   // Build query filters
   const queryFilters: CalendarFilters = useMemo(() => {
@@ -262,10 +265,8 @@ export function useCalendar(options: UseCalendarOptions = {}) {
     return baseFilters;
   }, [start, end, filters, options.projectId, options.clientId]);
 
-  // Determine if we should sync on this request
-  const shouldSyncOnLoad = options.syncGoogleOnLoad !== false && isInitialLoad.current;
-
   // Fetch aggregated calendar data
+  // Always sync with Google if this range hasn't been synced yet
   const {
     data: aggregatedData,
     isLoading,
@@ -273,69 +274,31 @@ export function useCalendar(options: UseCalendarOptions = {}) {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['calendar', 'aggregated', queryFilters, shouldSyncOnLoad],
+    queryKey: ['calendar', 'aggregated', queryFilters],
     queryFn: async () => {
-      // On initial load, sync with Google if enabled
-      const syncGoogle = shouldSyncOnLoad;
-      if (syncGoogle) {
-        isInitialLoad.current = false;
+      // Check if we should sync this range
+      const needsSync = options.syncGoogleOnLoad !== false && !syncedRangesRef.current.has(currentRangeKey);
+      
+      // Fetch with or without Google sync
+      const data = await calendarService.getAggregatedData(queryFilters, needsSync);
+      
+      // Mark this range as synced
+      if (needsSync) {
+        syncedRangesRef.current.add(currentRangeKey);
       }
-      return calendarService.getAggregatedData(queryFilters, syncGoogle);
+      
+      return data;
     },
     enabled: options.enabled !== false,
     staleTime: 30000, // 30 seconds
   });
 
-  // Sync Google Calendar when navigating to a new date range
+  // Track range changes for logging (sync is handled in queryFn)
   useEffect(() => {
-    // Skip if sync on navigate is disabled
-    if (options.syncGoogleOnNavigate === false) return;
-
-    // Skip if range hasn't changed
-    if (previousRangeRef.current === currentRangeKey) return;
-
-    // Skip if this is the initial load (handled by queryFn)
-    if (previousRangeRef.current === null) {
+    if (previousRangeRef.current !== currentRangeKey) {
       previousRangeRef.current = currentRangeKey;
-      return;
     }
-
-    // Check if this range was recently synced
-    if (isRangeSynced(start, end)) {
-      previousRangeRef.current = currentRangeKey;
-      return;
-    }
-
-    // Trigger sync for the new range
-    const syncNewRange = async () => {
-      try {
-        setIsSyncingGoogle(true);
-        setSyncError(null);
-        await calendarService.syncGoogleRange(start.toISOString(), end.toISOString());
-        addSyncedRange(start, end);
-        // Refetch calendar data after sync
-        queryClient.invalidateQueries({ queryKey: ['calendar'] });
-      } catch (err) {
-        console.error('Failed to sync Google Calendar range:', err);
-        setSyncError(err instanceof Error ? err.message : 'Sync failed');
-      } finally {
-        setIsSyncingGoogle(false);
-      }
-    };
-
-    previousRangeRef.current = currentRangeKey;
-    syncNewRange();
-  }, [
-    currentRangeKey,
-    start,
-    end,
-    options.syncGoogleOnNavigate,
-    isRangeSynced,
-    setIsSyncingGoogle,
-    setSyncError,
-    addSyncedRange,
-    queryClient,
-  ]);
+  }, [currentRangeKey]);
 
   // Normalize and filter items
   const items = useMemo(() => {
@@ -419,8 +382,9 @@ export function useCalendar(options: UseCalendarOptions = {}) {
     try {
       setIsSyncingGoogle(true);
       setSyncError(null);
-      await calendarService.syncGoogleRange(start.toISOString(), end.toISOString());
-      addSyncedRange(start, end);
+      // Clear this range from synced set to force re-sync
+      syncedRangesRef.current.delete(currentRangeKey);
+      // Refetch will trigger sync because we cleared the synced range
       await refetch();
     } catch (err) {
       console.error('Failed to sync Google Calendar:', err);
@@ -428,7 +392,7 @@ export function useCalendar(options: UseCalendarOptions = {}) {
     } finally {
       setIsSyncingGoogle(false);
     }
-  }, [start, end, refetch, setIsSyncingGoogle, setSyncError, addSyncedRange]);
+  }, [currentRangeKey, refetch, setIsSyncingGoogle, setSyncError]);
 
   return {
     // Data
