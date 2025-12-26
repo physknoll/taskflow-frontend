@@ -16,6 +16,7 @@ export { sopAgentService } from './sopAgent.service';
 export { aipmService } from './aipm.service';
 export { conversationsService } from './conversations.service';
 export { integrationsService } from './integrations.service';
+export { calendarService } from './calendar.service';
 export {
   kbSourcesService,
   useKBSources,

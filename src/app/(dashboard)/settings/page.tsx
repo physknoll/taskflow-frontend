@@ -18,6 +18,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { useGoogleChatIntegration } from '@/hooks/useGoogleChatIntegration';
+import { useGoogleCalendar } from '@/hooks/useCalendar';
 import type { GoogleChatPreferences } from '@/services/integrations.service';
 import {
   User,
@@ -40,6 +41,8 @@ import {
   X,
   ExternalLink,
   Loader2,
+  CalendarDays,
+  RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -482,6 +485,20 @@ function IntegrationsSettings() {
     isUpdatingPreferences,
   } = useGoogleChatIntegration();
 
+  const {
+    connectionStatus: googleCalendarStatus,
+    isConnected: isGoogleCalendarConnected,
+    isLoadingStatus: isGoogleCalendarLoading,
+    calendars: googleCalendars,
+    connect: connectGoogleCalendar,
+    updateSettings: updateGoogleCalendarSettings,
+    sync: syncGoogleCalendar,
+    disconnect: disconnectGoogleCalendar,
+    isConnecting: isGoogleCalendarConnecting,
+    isSyncing: isGoogleCalendarSyncing,
+    isDisconnecting: isGoogleCalendarDisconnecting,
+  } = useGoogleCalendar();
+
   // Handle preference toggle
   const handlePreferenceToggle = (key: keyof GoogleChatPreferences) => {
     if (!status?.preferences) return;
@@ -501,8 +518,216 @@ function IntegrationsSettings() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-surface-500 dark:text-surface-400 mb-6">
-            Connect TaskFlow AI with external services to receive notifications and updates.
+            Connect TaskFlow AI with external services to sync calendars and receive notifications.
           </p>
+
+          {/* Google Calendar Integration Card */}
+          <div className="border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden mb-6">
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-700">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                  <CalendarDays className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-surface-900 dark:text-white">
+                    Google Calendar
+                  </h3>
+                  <p className="text-sm text-surface-500 dark:text-surface-400">
+                    Two-way sync with your Google Calendar
+                  </p>
+                </div>
+              </div>
+
+              {/* Status Badge */}
+              {isGoogleCalendarLoading ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-100 dark:bg-surface-800 rounded-full">
+                  <Loader2 className="h-4 w-4 animate-spin text-surface-500" />
+                  <span className="text-sm text-surface-500">Loading...</span>
+                </div>
+              ) : isGoogleCalendarConnected ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-400">
+                    Connected
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-100 dark:bg-surface-800 rounded-full">
+                  <div className="w-2 h-2 rounded-full bg-surface-400" />
+                  <span className="text-sm text-surface-600 dark:text-surface-400">
+                    Not Connected
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Content */}
+            <div className="p-5">
+              {!isGoogleCalendarConnected ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-surface-600 dark:text-surface-400">
+                    Connect your Google Calendar to sync events, deadlines, and meetings between TaskFlow and Google.
+                  </p>
+                  <ul className="space-y-2 text-sm text-surface-600 dark:text-surface-400">
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-500" />
+                      Two-way sync: Changes sync in both directions
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-500" />
+                      See your Google events in TaskFlow calendar
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="h-4 w-4 text-green-500" />
+                      Push TaskFlow meetings to Google Calendar
+                    </li>
+                  </ul>
+                  <Button
+                    onClick={() => connectGoogleCalendar()}
+                    isLoading={isGoogleCalendarConnecting}
+                    className="mt-4"
+                  >
+                    <CalendarDays className="h-4 w-4 mr-2" />
+                    Connect Google Calendar
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  {/* Connection Info */}
+                  <div className="flex items-center justify-between p-4 bg-surface-50 dark:bg-surface-800/50 rounded-lg mb-6">
+                    <div>
+                      <p className="text-sm text-surface-500 dark:text-surface-400">
+                        Connected Account
+                      </p>
+                      <p className="font-medium text-surface-900 dark:text-white">
+                        {googleCalendarStatus?.googleEmail}
+                      </p>
+                      {googleCalendarStatus?.lastSyncAt && (
+                        <p className="text-xs text-surface-400 dark:text-surface-500 mt-1">
+                          Last synced {new Date(googleCalendarStatus.lastSyncAt).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          })}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => syncGoogleCalendar()}
+                        isLoading={isGoogleCalendarSyncing}
+                      >
+                        <RefreshCw className={cn('h-4 w-4 mr-2', isGoogleCalendarSyncing && 'animate-spin')} />
+                        Sync Now
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => disconnectGoogleCalendar()}
+                        isLoading={isGoogleCalendarDisconnecting}
+                        className="border-red-300 text-red-600 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/30"
+                      >
+                        <X className="h-4 w-4 mr-2" />
+                        Disconnect
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Sync Direction */}
+                  <div className="mb-6">
+                    <h4 className="font-medium text-surface-900 dark:text-white mb-3">
+                      Sync Direction
+                    </h4>
+                    <div className="flex gap-3">
+                      {[
+                        { value: 'two_way', label: 'Two-way sync' },
+                        { value: 'one_way_to_google', label: 'TaskFlow → Google only' },
+                        { value: 'one_way_from_google', label: 'Google → TaskFlow only' },
+                      ].map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => updateGoogleCalendarSettings({
+                            syncEnabled: true,
+                            syncDirection: option.value as any,
+                            calendarsToSync: googleCalendarStatus?.calendarsToSync?.map(c => ({
+                              calendarId: c.calendarId,
+                              syncEnabled: c.syncEnabled,
+                            })) || [],
+                          })}
+                          className={cn(
+                            'px-4 py-2 rounded-lg border text-sm font-medium transition-colors',
+                            googleCalendarStatus?.syncDirection === option.value
+                              ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
+                              : 'border-surface-200 dark:border-surface-700 hover:bg-surface-50 dark:hover:bg-surface-800'
+                          )}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Calendars to sync */}
+                  {googleCalendars && googleCalendars.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-surface-900 dark:text-white mb-3">
+                        Calendars to Sync
+                      </h4>
+                      <div className="space-y-2">
+                        {googleCalendars.map((calendar) => (
+                          <div
+                            key={calendar.calendarId}
+                            className="flex items-center justify-between p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className="w-3 h-3 rounded-full"
+                                style={{ backgroundColor: calendar.color || '#4285F4' }}
+                              />
+                              <span className="text-sm text-surface-700 dark:text-surface-300">
+                                {calendar.calendarName}
+                                {calendar.isPrimary && (
+                                  <span className="ml-2 text-xs text-surface-500">(Primary)</span>
+                                )}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => {
+                                const updated = googleCalendars.map(c => ({
+                                  calendarId: c.calendarId,
+                                  syncEnabled: c.calendarId === calendar.calendarId ? !c.syncEnabled : c.syncEnabled,
+                                }));
+                                updateGoogleCalendarSettings({
+                                  syncEnabled: true,
+                                  syncDirection: googleCalendarStatus?.syncDirection || 'two_way',
+                                  calendarsToSync: updated,
+                                });
+                              }}
+                              className={cn(
+                                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                                calendar.syncEnabled ? 'bg-primary-600' : 'bg-surface-300 dark:bg-surface-600'
+                              )}
+                            >
+                              <span
+                                className={cn(
+                                  'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                                  calendar.syncEnabled ? 'translate-x-6' : 'translate-x-1'
+                                )}
+                              />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
 
           {/* Google Chat Integration Card */}
           <div className="border border-surface-200 dark:border-surface-700 rounded-xl overflow-hidden">

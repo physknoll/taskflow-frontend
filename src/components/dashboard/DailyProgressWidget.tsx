@@ -261,3 +261,5 @@ export function DailyProgressWidget({ onLogClick, className }: DailyProgressWidg
 
 export default DailyProgressWidget;
 
+
+

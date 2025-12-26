@@ -24,7 +24,9 @@ import {
   X,
   SlidersHorizontal,
   FolderKanban,
+  CalendarDays,
 } from 'lucide-react';
+import { CalendarContainer } from '@/components/calendar';
 
 // Helper to check if project is populated
 function isPopulatedProject(project: any): project is ITicketProject {
@@ -109,6 +111,7 @@ export default function TicketsPage() {
                 ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
                 : 'text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800'
             }`}
+            title="Board view"
           >
             <LayoutGrid className="h-4 w-4" />
           </button>
@@ -119,8 +122,20 @@ export default function TicketsPage() {
                 ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
                 : 'text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800'
             }`}
+            title="List view"
           >
             <List className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setTicketViewMode('calendar')}
+            className={`p-2 rounded ${
+              ticketViewMode === 'calendar'
+                ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300'
+                : 'text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800'
+            }`}
+            title="Calendar view"
+          >
+            <CalendarDays className="h-4 w-4" />
           </button>
         </div>
       </div>
@@ -191,15 +206,25 @@ export default function TicketsPage() {
         </div>
       )}
 
-      {/* Ticket Board or List */}
+      {/* Ticket Board, List, or Calendar */}
       {ticketViewMode === 'board' ? (
         <TicketBoard
           tickets={tickets}
           isLoading={isLoading}
           onStatusChange={handleStatusChange}
         />
-      ) : (
+      ) : ticketViewMode === 'list' ? (
         <TicketListView tickets={tickets} isLoading={isLoading} />
+      ) : (
+        <div className="h-[600px]">
+          <CalendarContainer
+            scope="tickets"
+            clientId={filters.client}
+            projectId={filters.project}
+            showHeader={true}
+            showFilters={true}
+          />
+        </div>
       )}
 
       {/* Create Ticket Modal */}

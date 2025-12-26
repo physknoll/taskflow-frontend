@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 type Theme = 'light' | 'dark' | 'system';
-type TicketViewMode = 'board' | 'list';
+type TicketViewMode = 'board' | 'list' | 'calendar';
 
 interface UIState {
   // Sidebar

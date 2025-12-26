@@ -1136,3 +1136,8 @@ export interface KnowledgeChatResponse {
   };
 }
 
+// ============================================
+// Calendar Types
+// ============================================
+export * from './calendar';
+

@@ -30,7 +30,7 @@ interface ProjectState {
   selectedClient: IClient | null;
 
   // View mode
-  viewMode: 'board' | 'list';
+  viewMode: 'board' | 'list' | 'calendar';
 
   // Actions
   setSelectedProject: (project: IProject | null) => void;
@@ -45,7 +45,7 @@ interface ProjectState {
   setFilters: (filters: Partial<ProjectFilters>) => void;
   resetFilters: () => void;
   setSelectedClient: (client: IClient | null) => void;
-  setViewMode: (mode: 'board' | 'list') => void;
+  setViewMode: (mode: 'board' | 'list' | 'calendar') => void;
 }
 
 const defaultFilters: ProjectFilters = {
@@ -118,6 +118,8 @@ export const useProjectStore = create<ProjectState>((set) => ({
 
   setViewMode: (mode) => set({ viewMode: mode }),
 }));
+
+
 
 
 

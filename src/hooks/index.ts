@@ -69,3 +69,6 @@ export { useGoogleChatIntegration, googleChatKeys } from './useGoogleChatIntegra
 // Knowledge Base hooks
 export { useKBUpload } from './useKBUpload';
 
+// Calendar hooks
+export { useCalendar, useGoogleCalendar, EVENT_TYPE_COLORS } from './useCalendar';
+

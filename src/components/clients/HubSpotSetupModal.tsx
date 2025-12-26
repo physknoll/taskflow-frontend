@@ -284,7 +284,7 @@ export function HubSpotSetupModal({
               <div className="bg-surface-50 dark:bg-surface-800/50 rounded-xl p-6 space-y-4">
                 <p className="text-[var(--text-secondary)] text-sm">
                   Scroll down to the <strong>Custom HTML</strong> section and find the field labeled{' '}
-                  <strong>"Knowledge base article page header HTML"</strong>.
+                  <strong>&quot;Knowledge base article page header HTML&quot;</strong>.
                 </p>
 
                 {/* Code Snippet Box */}
@@ -321,8 +321,8 @@ export function HubSpotSetupModal({
                     </p>
                     <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">
                       Make sure to paste this into the{' '}
-                      <strong>"Knowledge base article page header HTML"</strong> field,{' '}
-                      <strong>NOT</strong> the general "Knowledge base pages header HTML" field.
+                      <strong>&quot;Knowledge base article page header HTML&quot;</strong> field,{' '}
+                      <strong>NOT</strong> the general &quot;Knowledge base pages header HTML&quot; field.
                     </p>
                   </div>
                 </div>
@@ -377,8 +377,8 @@ export function HubSpotSetupModal({
                             Setup Complete!
                           </p>
                           <p className="text-sm text-green-700 dark:text-green-400 mt-1">
-                            We've verified that your HubSpot Knowledge Base is correctly configured.
-                            We'll now automatically detect when your articles are updated.
+                            We&apos;ve verified that your HubSpot Knowledge Base is correctly configured.
+                            We&apos;ll now automatically detect when your articles are updated.
                           </p>
                         </div>
                       </div>
@@ -401,7 +401,7 @@ export function HubSpotSetupModal({
                             <ul className="text-sm text-red-700 dark:text-red-400 mt-2 space-y-1 list-disc list-inside">
                               <li>
                                 Pasted the code into the correct field (
-                                <strong>"Knowledge base article page header HTML"</strong>)
+                                <strong>&quot;Knowledge base article page header HTML&quot;</strong>)
                               </li>
                               <li>Clicked <strong>Save</strong> after adding the code</li>
                               <li>Waited a few minutes for HubSpot to update</li>
@@ -515,4 +515,6 @@ export function HubSpotSetupModal({
     </Modal>
   );
 }
+
+
 

@@ -19,7 +19,9 @@ import {
   Search,
   Settings,
   FolderKanban,
+  CalendarDays,
 } from 'lucide-react';
+import { CalendarContainer } from '@/components/calendar';
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -140,6 +142,7 @@ export default function ProjectsPage() {
                     ? 'bg-white dark:bg-surface-700 shadow-sm'
                     : 'text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'
                 }`}
+                title="Board view"
               >
                 <LayoutGrid className="w-4 h-4" />
               </button>
@@ -150,8 +153,20 @@ export default function ProjectsPage() {
                     ? 'bg-white dark:bg-surface-700 shadow-sm'
                     : 'text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'
                 }`}
+                title="List view"
               >
                 <List className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('calendar')}
+                className={`p-2 rounded ${
+                  viewMode === 'calendar'
+                    ? 'bg-white dark:bg-surface-700 shadow-sm'
+                    : 'text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'
+                }`}
+                title="Calendar view"
+              >
+                <CalendarDays className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -169,12 +184,22 @@ export default function ProjectsPage() {
             onProjectClick={handleProjectClick}
             onProjectEdit={handleProjectEdit}
           />
-        ) : (
+        ) : viewMode === 'list' ? (
           <ProjectListView
             projects={projects}
             isLoading={isListLoading}
             onProjectClick={handleProjectClick}
           />
+        ) : (
+          <div className="h-full">
+            <CalendarContainer
+              scope="project"
+              clientId={filters.client || undefined}
+              showHeader={true}
+              showFilters={true}
+              className="h-full"
+            />
+          </div>
         )}
       </div>
 
