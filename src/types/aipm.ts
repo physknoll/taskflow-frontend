@@ -44,6 +44,7 @@ export interface IDeepWorkHours {
 export interface IDailyDigestConfig {
   enabled: boolean;
   time: string;
+  timezone?: string;
   includeOverdueTickets: boolean;
   includeBlockers: boolean;
   includeBacklogCount: boolean;
@@ -56,6 +57,7 @@ export interface IWeeklyRetroConfig {
   enabled: boolean;
   dayOfWeek: DayOfWeek;
   time: string;
+  timezone?: string;
   includeVelocityTrends: boolean;
   includeSentimentTrends: boolean;
   includeTopPerformers: boolean;

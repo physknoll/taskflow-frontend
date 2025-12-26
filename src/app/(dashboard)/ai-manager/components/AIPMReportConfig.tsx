@@ -16,7 +16,19 @@ import {
   Users,
   Target,
   Lightbulb,
+  Globe,
 } from 'lucide-react';
+
+const TIMEZONES = [
+  { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+  { value: 'America/Denver', label: 'Mountain Time (MT)' },
+  { value: 'America/Chicago', label: 'Central Time (CT)' },
+  { value: 'America/New_York', label: 'Eastern Time (ET)' },
+  { value: 'Europe/London', label: 'London (GMT/BST)' },
+  { value: 'Europe/Paris', label: 'Central European (CET)' },
+  { value: 'Asia/Tokyo', label: 'Japan (JST)' },
+  { value: 'Australia/Sydney', label: 'Sydney (AEST)' },
+];
 
 const DAYS_OF_WEEK = [
   { value: '0', label: 'Sunday' },
@@ -106,11 +118,11 @@ export default function AIPMReportConfig({
 
           {dailyDigest.enabled && (
             <>
-              {/* Time */}
-              <div className="flex items-center gap-4">
-                <Clock className="h-5 w-5 text-surface-400" />
-                <div className="flex-1">
-                  <label className="text-sm font-medium text-surface-700 dark:text-surface-300">
+              {/* Time & Timezone */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-surface-700 dark:text-surface-300 flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
                     Send at
                   </label>
                   <input
@@ -120,7 +132,21 @@ export default function AIPMReportConfig({
                       reporting: { dailyDigest: { time: e.target.value } },
                     })}
                     disabled={disabled}
-                    className="mt-1 w-full px-3 py-2 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800"
+                    className="w-full px-3 py-2 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-surface-700 dark:text-surface-300 flex items-center gap-2">
+                    <Globe className="h-4 w-4" />
+                    Timezone
+                  </label>
+                  <Select
+                    options={TIMEZONES}
+                    value={dailyDigest.timezone || config.checkinSchedule?.timezone || 'America/Los_Angeles'}
+                    onChange={(v) => updateConfig({
+                      reporting: { dailyDigest: { timezone: v } },
+                    })}
+                    disabled={disabled}
                   />
                 </div>
               </div>
@@ -204,10 +230,11 @@ export default function AIPMReportConfig({
 
           {weeklyRetrospective.enabled && (
             <>
-              {/* Day & Time */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-surface-700 dark:text-surface-300">
+              {/* Day, Time & Timezone */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-surface-700 dark:text-surface-300 flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
                     Day
                   </label>
                   <Select
@@ -217,8 +244,9 @@ export default function AIPMReportConfig({
                     disabled={disabled}
                   />
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-surface-700 dark:text-surface-300">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-surface-700 dark:text-surface-300 flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
                     Time
                   </label>
                   <input
@@ -228,7 +256,21 @@ export default function AIPMReportConfig({
                       reporting: { weeklyRetrospective: { time: e.target.value } },
                     })}
                     disabled={disabled}
-                    className="mt-1 w-full px-3 py-2 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800"
+                    className="w-full px-3 py-2 rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-surface-700 dark:text-surface-300 flex items-center gap-2">
+                    <Globe className="h-4 w-4" />
+                    Timezone
+                  </label>
+                  <Select
+                    options={TIMEZONES}
+                    value={weeklyRetrospective.timezone || config.checkinSchedule?.timezone || 'America/Los_Angeles'}
+                    onChange={(v) => updateConfig({
+                      reporting: { weeklyRetrospective: { timezone: v } },
+                    })}
+                    disabled={disabled}
                   />
                 </div>
               </div>
