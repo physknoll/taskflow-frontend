@@ -13,6 +13,13 @@ import {
   CreateWorkflowColumnDto,
 } from '@/types';
 
+// Lightweight project option for dropdowns
+export interface ProjectOption {
+  _id: string;
+  name: string;
+  projectNumber: string;
+}
+
 // ============================================
 // Projects Service
 // ============================================
@@ -31,6 +38,15 @@ export const projectsService = {
 
     const response = await api.get<PaginatedResponse<IProject>>(`/projects?${params.toString()}`);
     return response.data;
+  },
+
+  /**
+   * Get lightweight project options for dropdowns
+   * Returns up to 500 non-archived projects, filtered by user role
+   */
+  async getProjectOptions(): Promise<ProjectOption[]> {
+    const response = await api.get<ApiResponse<ProjectOption[]>>('/projects/options');
+    return response.data.data;
   },
 
   /**

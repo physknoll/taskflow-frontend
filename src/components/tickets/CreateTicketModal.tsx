@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/Badge';
 import { ColorPicker } from '@/components/ui/ColorPicker';
 import { useTickets } from '@/hooks/useTickets';
 import { useClients } from '@/hooks/useClients';
+import { useProjectOptions } from '@/hooks/useProjects';
 import { useAI } from '@/hooks/useAI';
 import { TICKET_TYPES, TICKET_PRIORITIES } from '@/lib/constants';
 import { Sparkles, Loader2, CheckCircle, Clock, X } from 'lucide-react';
@@ -37,6 +38,7 @@ interface CreateTicketModalProps {
 export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTicketModalProps) {
   const { createTicket, isCreating } = useTickets();
   const { clients, isLoading: clientsLoading } = useClients();
+  const { projectOptions, isLoading: projectsLoading } = useProjectOptions();
   const { generateTicketContent, isGeneratingTicket } = useAI();
 
   const [aiGenerated, setAiGenerated] = useState<any>(null);
@@ -44,6 +46,7 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined);
+  const [selectedProject, setSelectedProject] = useState<string | null>(null);
 
   const {
     register,
@@ -116,6 +119,7 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
     try {
       await createTicket({
         ...data,
+        project: selectedProject,
         tags,
         color: selectedColor,
         generateAIContent: !!aiGenerated,
@@ -132,6 +136,7 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
     setSelectedTasks([]);
     setTags([]);
     setSelectedColor(undefined);
+    setSelectedProject(null);
     onClose();
   };
 
@@ -161,6 +166,22 @@ export function CreateTicketModal({ isOpen, onClose, defaultClientId }: CreateTi
             error={errors.type?.message}
           />
         </div>
+
+        {/* Project Selection */}
+        <Select
+          label="Project (Optional)"
+          options={[
+            { value: '', label: 'No Project (Standalone)' },
+            ...projectOptions.map((p) => ({ 
+              value: p._id, 
+              label: `${p.projectNumber} - ${p.name}` 
+            })),
+          ]}
+          value={selectedProject || ''}
+          onChange={(val) => setSelectedProject(val || null)}
+          disabled={projectsLoading}
+          placeholder="Select a project"
+        />
 
         {/* Title */}
         <Input

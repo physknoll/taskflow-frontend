@@ -15,7 +15,6 @@ import {
   Building2,
   CheckSquare,
   BarChart3,
-  MessageSquare,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -29,14 +28,13 @@ import {
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard, permission: null },
-  { name: 'Projects', href: '/projects', icon: FolderKanban, permission: null },
   { name: 'Calendar', href: '/calendar', icon: CalendarDays, permission: null },
+  { name: 'Projects', href: '/projects', icon: FolderKanban, permission: null },
   { name: 'Tickets', href: '/tickets', icon: Ticket, permission: null },
-  { name: 'Clients', href: '/clients', icon: Building2, permission: 'clients.view' },
   { name: 'Review Queue', href: '/review', icon: CheckSquare, permission: 'reviews.conduct', badge: true },
   { name: 'Team', href: '/team', icon: Users, permission: 'users.view' },
+  { name: 'Clients', href: '/clients', icon: Building2, permission: 'clients.view' },
   { name: 'Analytics', href: '/analytics', icon: BarChart3, permission: 'analytics.view_all' },
-  { name: 'AI Assistant', href: '/ai-assistant', icon: MessageSquare, permission: 'ai.use_chat' },
   { name: 'AI Manager', href: '/ai-manager', icon: Bot, permission: 'aipm.view' },
   { name: 'Settings', href: '/settings', icon: Settings, permission: null },
 ];

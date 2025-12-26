@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useTicket, useTickets } from '@/hooks/useTickets';
 import { useClients } from '@/hooks/useClients';
+import { useProjectOptions } from '@/hooks/useProjects';
 import { useResources } from '@/hooks/useResources';
 import { useAuthStore } from '@/stores/authStore';
 import { ITicketTask, ITicket } from '@/types';
@@ -56,6 +57,7 @@ import {
   Plus,
   Loader2,
   Paperclip,
+  FolderKanban,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -66,6 +68,7 @@ interface EditFormData {
   priority: string;
   dueDate: string;
   client: string;
+  project: string | null;
   tags: string[];
   color?: string;
 }
@@ -79,6 +82,7 @@ export default function TicketDetailPage() {
   const { ticket, isLoading, error, addComment, isAddingComment } = useTicket(ticketId);
   const { updateTicketStatus, updateTask, addTask, deleteTask, updateTicket, deleteTicket, isUpdating, isAddingTask, isDeletingTask } = useTickets();
   const { clients } = useClients();
+  const { projectOptions, isLoading: projectsLoading } = useProjectOptions();
   
   // Get clientId for resources
   const clientId = ticket ? (typeof ticket.client === 'object' && ticket.client !== null ? ticket.client._id : ticket.client) : '';
@@ -111,6 +115,7 @@ export default function TicketDetailPage() {
     priority: '',
     dueDate: '',
     client: '',
+    project: null,
     tags: [],
     color: undefined,
   });
@@ -133,6 +138,14 @@ export default function TicketDetailPage() {
   // Initialize edit form when ticket loads
   useEffect(() => {
     if (ticket) {
+      // Get project ID from ticket (handle populated or ID reference)
+      let projectId: string | null = null;
+      if (ticket.project) {
+        projectId = typeof ticket.project === 'object' && ticket.project !== null 
+          ? ticket.project._id 
+          : ticket.project;
+      }
+      
       setEditForm({
         title: ticket.title || '',
         description: ticket.description || '',
@@ -140,6 +153,7 @@ export default function TicketDetailPage() {
         priority: ticket.priority || 'medium',
         dueDate: ticket.dueDate ? new Date(ticket.dueDate).toISOString().split('T')[0] : '',
         client: typeof ticket.client === 'object' && ticket.client !== null ? ticket.client._id : ticket.client || '',
+        project: projectId,
         tags: ticket.tags || [],
         color: ticket.color,
       });
@@ -164,13 +178,14 @@ export default function TicketDetailPage() {
 
   const handleEditSave = async () => {
     try {
-      const updateData: Partial<ITicket> & { assignedTo?: string[] } = {
+      const updateData: Partial<ITicket> & { assignedTo?: string[]; project?: string | null } = {
         title: editForm.title,
         description: editForm.description,
         type: editForm.type as ITicket['type'],
         priority: editForm.priority as ITicket['priority'],
         dueDate: editForm.dueDate ? new Date(editForm.dueDate) : undefined,
         client: editForm.client,
+        project: editForm.project,
         tags: editForm.tags,
         color: editForm.color,
       };
@@ -363,6 +378,21 @@ export default function TicketDetailPage() {
                 />
               </div>
 
+              {/* Project Selection */}
+              <Select
+                label="Project (Optional)"
+                options={[
+                  { value: '', label: 'No Project (Standalone)' },
+                  ...projectOptions.map((p) => ({ 
+                    value: p._id, 
+                    label: `${p.projectNumber} - ${p.name}` 
+                  })),
+                ]}
+                value={editForm.project || ''}
+                onChange={(val) => setEditForm({ ...editForm, project: val || null })}
+                disabled={projectsLoading}
+              />
+
               {/* Assigned Users */}
               {userCanAssign ? (
                 <UserTagInput
@@ -533,6 +563,20 @@ export default function TicketDetailPage() {
                   <div className="flex items-center gap-1.5">
                     <Building className="h-4 w-4" />
                     <span>{ticket.client.name}</span>
+                  </div>
+                )}
+                {ticket.project && typeof ticket.project === 'object' && 'name' in ticket.project && (
+                  <div className="flex items-center gap-1.5">
+                    <FolderKanban className="h-4 w-4" />
+                    <span
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium"
+                      style={{ 
+                        backgroundColor: `${(ticket.project as any).color}20`,
+                        color: (ticket.project as any).color 
+                      }}
+                    >
+                      {(ticket.project as any).projectNumber} - {(ticket.project as any).name}
+                    </span>
                   </div>
                 )}
                 {ticket.dueDate && (

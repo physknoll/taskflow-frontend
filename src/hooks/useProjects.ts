@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { projectsService, workflowColumnsService } from '@/services/projects.service';
+import { projectsService, workflowColumnsService, ProjectOption } from '@/services/projects.service';
 import {
   IProject,
   CreateProjectDto,
@@ -12,6 +12,28 @@ import {
   ProjectStats,
 } from '@/types';
 import toast from 'react-hot-toast';
+
+// ============================================
+// Project Options Hook (for dropdowns)
+// ============================================
+
+export function useProjectOptions() {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['project-options'],
+    queryFn: () => projectsService.getProjectOptions(),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  return {
+    projectOptions: data || [],
+    isLoading,
+    error,
+    refetch,
+  };
+}
+
+// Re-export the ProjectOption type for convenience
+export type { ProjectOption };
 
 // ============================================
 // Projects List Hook
