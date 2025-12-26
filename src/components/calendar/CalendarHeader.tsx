@@ -82,7 +82,7 @@ export function CalendarHeader({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-b border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-b border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 overflow-x-auto flex-shrink-0">
       {/* Left side - Navigation */}
       <div className="flex items-center gap-3">
         {/* Today button */}
@@ -115,7 +115,7 @@ export function CalendarHeader({
       </div>
 
       {/* Right side - View toggle & actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-shrink-0">
         {/* View Toggle */}
         <div className="flex items-center gap-1 p-1 bg-surface-100 dark:bg-surface-800 rounded-lg">
           {viewOptions.map((option) => (
@@ -186,7 +186,7 @@ export function CalendarHeader({
 
         {/* Create Event button */}
         {showCreateButton && (
-          <Button onClick={handleCreateEvent} className="flex items-center gap-2">
+          <Button onClick={handleCreateEvent} className="flex items-center gap-2 whitespace-nowrap flex-shrink-0">
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">New Event</span>
           </Button>
