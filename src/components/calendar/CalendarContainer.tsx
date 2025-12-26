@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useMemo } from 'react';
-import { useCalendar } from '@/hooks/useCalendar';
+import { useCalendar, useGoogleCalendar } from '@/hooks/useCalendar';
 import { useCalendarStore } from '@/stores/calendarStore';
 import { CalendarHeader } from './CalendarHeader';
 import { FilterPanel } from './FilterPanel';
@@ -38,13 +38,19 @@ export function CalendarContainer({
     isFilterPanelOpen,
     openEventModal,
     setSelectedDate,
+    isSyncingGoogle,
   } = useCalendarStore();
 
-  const { items, isLoading, rescheduleEvent, refetch } = useCalendar({
+  const { items, isLoading, rescheduleEvent, refetch, forceSync } = useCalendar({
     projectId,
     clientId,
     scope,
+    syncGoogleOnLoad: true,
+    syncGoogleOnNavigate: true,
   });
+
+  // Google Calendar connection status
+  const { isConnected: isGoogleConnected } = useGoogleCalendar();
 
   // Count active filters
   const activeFiltersCount = useMemo(() => {
@@ -130,6 +136,9 @@ export function CalendarContainer({
         <CalendarHeader
           activeFiltersCount={activeFiltersCount}
           onCreateEvent={() => openEventModal()}
+          isSyncing={isSyncingGoogle || isLoading}
+          isGoogleConnected={isGoogleConnected}
+          onSync={forceSync}
         />
       )}
 

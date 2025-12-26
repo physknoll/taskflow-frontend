@@ -15,18 +15,28 @@ import {
   Filter,
   Plus,
   X,
+  RefreshCw,
+  Cloud,
+  CloudOff,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CalendarHeaderProps {
   onCreateEvent?: () => void;
   showCreateButton?: boolean;
   activeFiltersCount?: number;
+  isSyncing?: boolean;
+  isGoogleConnected?: boolean;
+  onSync?: () => void;
 }
 
 export function CalendarHeader({
   onCreateEvent,
   showCreateButton = true,
   activeFiltersCount = 0,
+  isSyncing = false,
+  isGoogleConnected = false,
+  onSync,
 }: CalendarHeaderProps) {
   const {
     selectedDate,
@@ -125,14 +135,45 @@ export function CalendarHeader({
           ))}
         </div>
 
+        {/* Google Sync status & button */}
+        {isGoogleConnected && (
+          <button
+            onClick={onSync}
+            disabled={isSyncing}
+            className={cn(
+              'flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors',
+              isSyncing
+                ? 'bg-blue-50 border-blue-200 text-blue-600 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400'
+                : 'border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-400 hover:bg-surface-50 dark:hover:bg-surface-800'
+            )}
+            title={isSyncing ? 'Syncing with Google Calendar...' : 'Sync with Google Calendar'}
+          >
+            <RefreshCw className={cn('h-4 w-4', isSyncing && 'animate-spin')} />
+            <span className="hidden sm:inline text-sm font-medium">
+              {isSyncing ? 'Syncing...' : 'Sync'}
+            </span>
+          </button>
+        )}
+
+        {/* Google connection indicator (when not connected) */}
+        {!isGoogleConnected && (
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-surface-400 dark:text-surface-500"
+            title="Google Calendar not connected"
+          >
+            <CloudOff className="h-4 w-4" />
+          </div>
+        )}
+
         {/* Filter button */}
         <button
           onClick={toggleFilterPanel}
-          className={`relative flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors ${
+          className={cn(
+            'relative flex items-center gap-2 px-3 py-2 rounded-lg border transition-colors',
             isFilterPanelOpen
               ? 'bg-primary-50 border-primary-200 text-primary-700 dark:bg-primary-900/20 dark:border-primary-800 dark:text-primary-300'
               : 'border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-400 hover:bg-surface-50 dark:hover:bg-surface-800'
-          }`}
+          )}
         >
           <Filter className="h-4 w-4" />
           <span className="hidden sm:inline text-sm font-medium">Filters</span>

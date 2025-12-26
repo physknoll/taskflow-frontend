@@ -32,6 +32,13 @@ const defaultFilters: CalendarFilterState = {
   showExternal: true,
 };
 
+// Track synced date ranges to avoid duplicate syncs
+interface SyncedRange {
+  start: string;
+  end: string;
+  syncedAt: number;
+}
+
 interface CalendarState {
   // View state
   selectedDate: Date;
@@ -52,6 +59,11 @@ interface CalendarState {
   // Loading state (managed by hooks, but tracked here for UI)
   isLoading: boolean;
 
+  // Google Calendar sync state
+  isSyncingGoogle: boolean;
+  syncedRanges: SyncedRange[];
+  lastSyncError: string | null;
+
   // Actions
   setSelectedDate: (date: Date) => void;
   setViewType: (view: CalendarViewType) => void;
@@ -71,9 +83,19 @@ interface CalendarState {
   // Loading
   setIsLoading: (loading: boolean) => void;
 
+  // Google sync actions
+  setIsSyncingGoogle: (syncing: boolean) => void;
+  addSyncedRange: (start: Date, end: Date) => void;
+  isRangeSynced: (start: Date, end: Date) => boolean;
+  setSyncError: (error: string | null) => void;
+  clearSyncedRanges: () => void;
+
   // Helper to get date range for current view
   getDateRange: () => { start: Date; end: Date };
 }
+
+// Cache duration for synced ranges (5 minutes)
+const SYNC_CACHE_DURATION = 5 * 60 * 1000;
 
 export const useCalendarStore = create<CalendarState>()(
   persist(
@@ -88,6 +110,9 @@ export const useCalendarStore = create<CalendarState>()(
       createEventSlot: null,
       isFilterPanelOpen: false,
       isLoading: false,
+      isSyncingGoogle: false,
+      syncedRanges: [],
+      lastSyncError: null,
 
       // Set selected date
       setSelectedDate: (date: Date) => set({ selectedDate: date }),
@@ -185,6 +210,45 @@ export const useCalendarStore = create<CalendarState>()(
 
       // Set loading state
       setIsLoading: (loading: boolean) => set({ isLoading: loading }),
+
+      // Set Google syncing state
+      setIsSyncingGoogle: (syncing: boolean) => set({ isSyncingGoogle: syncing }),
+
+      // Add a synced range to cache
+      addSyncedRange: (start: Date, end: Date) => {
+        const newRange: SyncedRange = {
+          start: start.toISOString(),
+          end: end.toISOString(),
+          syncedAt: Date.now(),
+        };
+        set((state) => ({
+          syncedRanges: [...state.syncedRanges, newRange],
+          lastSyncError: null,
+        }));
+      },
+
+      // Check if a range was recently synced
+      isRangeSynced: (start: Date, end: Date) => {
+        const { syncedRanges } = get();
+        const now = Date.now();
+        const startStr = start.toISOString();
+        const endStr = end.toISOString();
+
+        return syncedRanges.some((range) => {
+          // Check if range is still fresh
+          if (now - range.syncedAt > SYNC_CACHE_DURATION) {
+            return false;
+          }
+          // Check if the requested range is covered by a synced range
+          return range.start <= startStr && range.end >= endStr;
+        });
+      },
+
+      // Set sync error
+      setSyncError: (error: string | null) => set({ lastSyncError: error }),
+
+      // Clear all synced ranges (force refresh)
+      clearSyncedRanges: () => set({ syncedRanges: [] }),
 
       // Get date range for current view
       getDateRange: () => {

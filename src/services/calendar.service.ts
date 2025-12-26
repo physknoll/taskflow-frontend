@@ -51,9 +51,17 @@ export const calendarService = {
   /**
    * Get aggregated calendar data including events, tickets, projects, and milestones
    * This is the recommended endpoint for calendar views
+   * @param filters - Calendar filters
+   * @param syncGoogle - If true, fetches fresh data from Google before returning
    */
-  async getAggregatedData(filters: CalendarFilters): Promise<AggregatedCalendarData> {
+  async getAggregatedData(
+    filters: CalendarFilters,
+    syncGoogle: boolean = false
+  ): Promise<AggregatedCalendarData> {
     const params = buildQueryParams(filters);
+    if (syncGoogle) {
+      params.append('syncGoogle', 'true');
+    }
     const response = await api.get<ApiResponse<AggregatedCalendarData>>(
       `/calendar/aggregated?${params.toString()}`
     );
@@ -253,6 +261,20 @@ export const calendarService = {
    */
   async triggerGoogleSync(): Promise<GoogleSyncResult> {
     const response = await api.post<ApiResponse<GoogleSyncResult>>('/calendar/google/sync');
+    return response.data.data;
+  },
+
+  /**
+   * Sync Google Calendar events for a specific date range
+   * Use when user navigates to a new month/week to get fresh data
+   * @param startDate - Start of the date range (ISO8601)
+   * @param endDate - End of the date range (ISO8601)
+   */
+  async syncGoogleRange(startDate: string, endDate: string): Promise<CalendarEvent[]> {
+    const response = await api.post<ApiResponse<CalendarEvent[]>>(
+      '/calendar/google/sync-range',
+      { startDate, endDate }
+    );
     return response.data.data;
   },
 

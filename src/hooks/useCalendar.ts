@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { calendarService } from '@/services/calendar.service';
@@ -202,6 +202,10 @@ interface UseCalendarOptions {
   clientId?: string;
   scope?: 'all' | 'tickets' | 'project';
   enabled?: boolean;
+  /** Sync with Google Calendar on initial load */
+  syncGoogleOnLoad?: boolean;
+  /** Sync with Google Calendar when navigating to new date ranges */
+  syncGoogleOnNavigate?: boolean;
 }
 
 export function useCalendar(options: UseCalendarOptions = {}) {
@@ -212,9 +216,19 @@ export function useCalendar(options: UseCalendarOptions = {}) {
     filters,
     getDateRange,
     setIsLoading,
+    isSyncingGoogle,
+    setIsSyncingGoogle,
+    addSyncedRange,
+    isRangeSynced,
+    setSyncError,
   } = useCalendarStore();
 
   const { start, end } = getDateRange();
+
+  // Track if this is initial load
+  const isInitialLoad = useRef(true);
+  const previousRangeRef = useRef<string | null>(null);
+  const currentRangeKey = `${start.toISOString()}-${end.toISOString()}`;
 
   // Build query filters
   const queryFilters: CalendarFilters = useMemo(() => {
@@ -248,6 +262,9 @@ export function useCalendar(options: UseCalendarOptions = {}) {
     return baseFilters;
   }, [start, end, filters, options.projectId, options.clientId]);
 
+  // Determine if we should sync on this request
+  const shouldSyncOnLoad = options.syncGoogleOnLoad !== false && isInitialLoad.current;
+
   // Fetch aggregated calendar data
   const {
     data: aggregatedData,
@@ -256,11 +273,69 @@ export function useCalendar(options: UseCalendarOptions = {}) {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['calendar', 'aggregated', queryFilters],
-    queryFn: () => calendarService.getAggregatedData(queryFilters),
+    queryKey: ['calendar', 'aggregated', queryFilters, shouldSyncOnLoad],
+    queryFn: async () => {
+      // On initial load, sync with Google if enabled
+      const syncGoogle = shouldSyncOnLoad;
+      if (syncGoogle) {
+        isInitialLoad.current = false;
+      }
+      return calendarService.getAggregatedData(queryFilters, syncGoogle);
+    },
     enabled: options.enabled !== false,
     staleTime: 30000, // 30 seconds
   });
+
+  // Sync Google Calendar when navigating to a new date range
+  useEffect(() => {
+    // Skip if sync on navigate is disabled
+    if (options.syncGoogleOnNavigate === false) return;
+
+    // Skip if range hasn't changed
+    if (previousRangeRef.current === currentRangeKey) return;
+
+    // Skip if this is the initial load (handled by queryFn)
+    if (previousRangeRef.current === null) {
+      previousRangeRef.current = currentRangeKey;
+      return;
+    }
+
+    // Check if this range was recently synced
+    if (isRangeSynced(start, end)) {
+      previousRangeRef.current = currentRangeKey;
+      return;
+    }
+
+    // Trigger sync for the new range
+    const syncNewRange = async () => {
+      try {
+        setIsSyncingGoogle(true);
+        setSyncError(null);
+        await calendarService.syncGoogleRange(start.toISOString(), end.toISOString());
+        addSyncedRange(start, end);
+        // Refetch calendar data after sync
+        queryClient.invalidateQueries({ queryKey: ['calendar'] });
+      } catch (err) {
+        console.error('Failed to sync Google Calendar range:', err);
+        setSyncError(err instanceof Error ? err.message : 'Sync failed');
+      } finally {
+        setIsSyncingGoogle(false);
+      }
+    };
+
+    previousRangeRef.current = currentRangeKey;
+    syncNewRange();
+  }, [
+    currentRangeKey,
+    start,
+    end,
+    options.syncGoogleOnNavigate,
+    isRangeSynced,
+    setIsSyncingGoogle,
+    setSyncError,
+    addSyncedRange,
+    queryClient,
+  ]);
 
   // Normalize and filter items
   const items = useMemo(() => {
@@ -339,6 +414,22 @@ export function useCalendar(options: UseCalendarOptions = {}) {
     [updateEventMutation]
   );
 
+  // Force sync function for manual refresh
+  const forceSync = useCallback(async () => {
+    try {
+      setIsSyncingGoogle(true);
+      setSyncError(null);
+      await calendarService.syncGoogleRange(start.toISOString(), end.toISOString());
+      addSyncedRange(start, end);
+      await refetch();
+    } catch (err) {
+      console.error('Failed to sync Google Calendar:', err);
+      setSyncError(err instanceof Error ? err.message : 'Sync failed');
+    } finally {
+      setIsSyncingGoogle(false);
+    }
+  }, [start, end, refetch, setIsSyncingGoogle, setSyncError, addSyncedRange]);
+
   return {
     // Data
     items,
@@ -350,9 +441,11 @@ export function useCalendar(options: UseCalendarOptions = {}) {
     error,
     selectedDate,
     viewType,
+    isSyncingGoogle,
 
     // Actions
     refetch,
+    forceSync,
     createEvent: createEventMutation.mutateAsync,
     updateEvent: updateEventMutation.mutateAsync,
     deleteEvent: deleteEventMutation.mutateAsync,
@@ -411,12 +504,21 @@ export function useGoogleCalendar() {
     },
   });
 
-  // Sync mutation
+  // Sync mutation (full sync)
   const syncMutation = useMutation({
     mutationFn: () => calendarService.triggerGoogleSync(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['calendar'] });
       queryClient.invalidateQueries({ queryKey: ['google-calendar', 'status'] });
+    },
+  });
+
+  // Sync range mutation (for specific date ranges)
+  const syncRangeMutation = useMutation({
+    mutationFn: ({ startDate, endDate }: { startDate: string; endDate: string }) =>
+      calendarService.syncGoogleRange(startDate, endDate),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar'] });
     },
   });
 
@@ -443,13 +545,15 @@ export function useGoogleCalendar() {
     connect: connectMutation.mutate,
     updateSettings: updateSettingsMutation.mutateAsync,
     sync: syncMutation.mutate,
+    syncRange: syncRangeMutation.mutateAsync,
     disconnect: disconnectMutation.mutate,
     refetchStatus,
 
     // Mutation states
     isConnecting: connectMutation.isPending,
     isUpdatingSettings: updateSettingsMutation.isPending,
-    isSyncing: syncMutation.isPending,
+    isSyncing: syncMutation.isPending || syncRangeMutation.isPending,
+    isSyncingRange: syncRangeMutation.isPending,
     isDisconnecting: disconnectMutation.isPending,
     syncResult: syncMutation.data,
   };
