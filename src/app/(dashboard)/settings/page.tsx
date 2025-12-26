@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -76,10 +77,19 @@ const passwordSchema = z.object({
 type ProfileForm = z.infer<typeof profileSchema>;
 type PasswordForm = z.infer<typeof passwordSchema>;
 
-export default function SettingsPage() {
+function SettingsContent() {
   const { user, updateUser } = useAuthStore();
   const { theme, setTheme } = useUIStore();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState('profile');
+
+  // Handle tab from URL parameter
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['profile', 'notifications', 'appearance', 'security', 'integrations'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
@@ -132,6 +142,18 @@ export default function SettingsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="w-6 h-6 border-2 border-surface-300 dark:border-surface-600 border-t-primary-500 rounded-full animate-spin" />
+      </div>
+    }>
+      <SettingsContent />
+    </Suspense>
   );
 }
 
