@@ -66,20 +66,6 @@ export function Header() {
   const { setSidebarOpen, openModal, theme, setTheme } = useUIStore();
   const { notifications, unreadCount, markAsRead, markAllAsRead, dismiss } = useNotifications();
   const [searchOpen, setSearchOpen] = useState(false);
-  const [dismissingIds, setDismissingIds] = useState<Set<string>>(new Set());
-
-  const handleDismiss = async (notificationId: string) => {
-    setDismissingIds(prev => new Set(prev).add(notificationId));
-    // Wait for animation to complete before actually dismissing
-    setTimeout(() => {
-      dismiss(notificationId);
-      setDismissingIds(prev => {
-        const next = new Set(prev);
-        next.delete(notificationId);
-        return next;
-      });
-    }, 200);
-  };
 
   // Get current page title
   const getPageTitle = () => {
@@ -200,9 +186,7 @@ export function Header() {
               </div>
             ) : (
               <AnimatePresence mode="popLayout">
-                {notifications.slice(0, 5)
-                  .filter(n => !dismissingIds.has(n._id))
-                  .map((notification) => {
+                {notifications.slice(0, 5).map((notification) => {
                     const Icon = notificationIcons[notification.type] || notificationIcons.default;
                     return (
                       <motion.div
@@ -264,7 +248,7 @@ export function Header() {
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                handleDismiss(notification._id);
+                                dismiss(notification._id);
                               }}
                               className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] flex-shrink-0 transition-colors"
                               title="Dismiss notification"

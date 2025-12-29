@@ -4,6 +4,12 @@ import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationsService } from '@/services/notifications.service';
 import { useNotificationStore } from '@/stores/notificationStore';
+import { INotification } from '@/types';
+
+interface NotificationsData {
+  data: INotification[];
+  unreadCount: number;
+}
 
 export function useNotifications() {
   const queryClient = useQueryClient();
@@ -45,9 +51,36 @@ export function useNotifications() {
   const dismissMutation = useMutation({
     mutationFn: (notificationId: string) => notificationsService.dismiss(notificationId),
     onMutate: async (notificationId) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['notifications'] });
+      
+      // Snapshot the previous value
+      const previousData = queryClient.getQueryData<NotificationsData>(['notifications']);
+      
+      // Optimistically update the cache
+      queryClient.setQueryData<NotificationsData>(['notifications'], (old) => {
+        if (!old) return old;
+        const notification = old.data.find(n => n._id === notificationId);
+        const wasUnread = notification && !notification.isRead;
+        return {
+          data: old.data.filter(n => n._id !== notificationId),
+          unreadCount: wasUnread ? Math.max(0, old.unreadCount - 1) : old.unreadCount,
+        };
+      });
+      
+      // Also update the store
       removeNotification(notificationId);
+      
+      // Return context with previous data for rollback
+      return { previousData };
     },
-    onSuccess: () => {
+    onError: (_err, _notificationId, context) => {
+      // Rollback on error
+      if (context?.previousData) {
+        queryClient.setQueryData(['notifications'], context.previousData);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
