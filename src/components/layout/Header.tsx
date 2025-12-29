@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import { useUIStore } from '@/stores/uiStore';
 import { useNotificationStore } from '@/stores/notificationStore';
@@ -65,6 +66,20 @@ export function Header() {
   const { setSidebarOpen, openModal, theme, setTheme } = useUIStore();
   const { notifications, unreadCount, markAsRead, markAllAsRead, dismiss } = useNotifications();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [dismissingIds, setDismissingIds] = useState<Set<string>>(new Set());
+
+  const handleDismiss = async (notificationId: string) => {
+    setDismissingIds(prev => new Set(prev).add(notificationId));
+    // Wait for animation to complete before actually dismissing
+    setTimeout(() => {
+      dismiss(notificationId);
+      setDismissingIds(prev => {
+        const next = new Set(prev);
+        next.delete(notificationId);
+        return next;
+      });
+    }, 200);
+  };
 
   // Get current page title
   const getPageTitle = () => {
@@ -184,65 +199,84 @@ export function Header() {
                 <p className="text-sm">No notifications yet</p>
               </div>
             ) : (
-              notifications.slice(0, 5).map((notification) => {
-                const Icon = notificationIcons[notification.type] || notificationIcons.default;
-                return (
-                  <Link
-                    key={notification._id}
-                    href={normalizeActionUrl(notification.actionUrl)}
-                    onClick={() => !notification.isRead && markAsRead(notification._id)}
-                    className={cn(
-                      'block px-4 py-3 hover:bg-[var(--bg-tertiary)] transition-colors',
-                      !notification.isRead && 'bg-primary-50 dark:bg-primary-950/50'
-                    )}
-                  >
-                    <div className="flex gap-3">
-                      <div
-                        className={cn(
-                          'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-                          notification.isRead
-                            ? 'bg-[var(--bg-tertiary)] text-[var(--text-muted)]'
-                            : 'bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400'
-                        )}
+              <AnimatePresence mode="popLayout">
+                {notifications.slice(0, 5)
+                  .filter(n => !dismissingIds.has(n._id))
+                  .map((notification) => {
+                    const Icon = notificationIcons[notification.type] || notificationIcons.default;
+                    return (
+                      <motion.div
+                        key={notification._id}
+                        layout
+                        initial={{ opacity: 1, x: 0, height: 'auto' }}
+                        exit={{ 
+                          opacity: 0, 
+                          x: 50, 
+                          height: 0,
+                          marginTop: 0,
+                          marginBottom: 0,
+                          paddingTop: 0,
+                          paddingBottom: 0,
+                        }}
+                        transition={{ duration: 0.2, ease: 'easeOut' }}
                       >
-                        <Icon className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p
+                        <Link
+                          href={normalizeActionUrl(notification.actionUrl)}
+                          onClick={() => !notification.isRead && markAsRead(notification._id)}
                           className={cn(
-                            'text-sm',
-                            notification.isRead
-                              ? 'text-[var(--text-secondary)]'
-                              : 'text-[var(--text-primary)] font-medium'
+                            'block px-4 py-3 hover:bg-[var(--bg-tertiary)] transition-colors',
+                            !notification.isRead && 'bg-primary-50 dark:bg-primary-950/50'
                           )}
                         >
-                          {notification.title}
-                        </p>
-                        <p className="text-xs text-[var(--text-muted)] truncate">
-                          {notification.message}
-                        </p>
-                        <p className="text-xs text-[var(--text-muted)] mt-1">
-                          {formatRelativeTime(notification.createdAt)}
-                        </p>
-                      </div>
-                      {!notification.isRead && (
-                        <div className="w-2 h-2 rounded-full bg-primary-500 flex-shrink-0 mt-2" />
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          dismiss(notification._id);
-                        }}
-                        className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] flex-shrink-0 transition-colors"
-                        title="Dismiss notification"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </Link>
-                );
-              })
+                          <div className="flex gap-3">
+                            <div
+                              className={cn(
+                                'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
+                                notification.isRead
+                                  ? 'bg-[var(--bg-tertiary)] text-[var(--text-muted)]'
+                                  : 'bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400'
+                              )}
+                            >
+                              <Icon className="h-4 w-4" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p
+                                className={cn(
+                                  'text-sm',
+                                  notification.isRead
+                                    ? 'text-[var(--text-secondary)]'
+                                    : 'text-[var(--text-primary)] font-medium'
+                                )}
+                              >
+                                {notification.title}
+                              </p>
+                              <p className="text-xs text-[var(--text-muted)] truncate">
+                                {notification.message}
+                              </p>
+                              <p className="text-xs text-[var(--text-muted)] mt-1">
+                                {formatRelativeTime(notification.createdAt)}
+                              </p>
+                            </div>
+                            {!notification.isRead && (
+                              <div className="w-2 h-2 rounded-full bg-primary-500 flex-shrink-0 mt-2" />
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleDismiss(notification._id);
+                              }}
+                              className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] flex-shrink-0 transition-colors"
+                              title="Dismiss notification"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </Link>
+                      </motion.div>
+                    );
+                  })}
+              </AnimatePresence>
             )}
           </div>
           {notifications.length > 0 && (
