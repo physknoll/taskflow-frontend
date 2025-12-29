@@ -23,6 +23,7 @@ import {
   MessageCircle,
   AlertTriangle,
   Bot,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -62,7 +63,7 @@ const normalizeActionUrl = (url: string | undefined): string => {
 export function Header() {
   const pathname = usePathname();
   const { setSidebarOpen, openModal, theme, setTheme } = useUIStore();
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, dismiss } = useNotifications();
   const [searchOpen, setSearchOpen] = useState(false);
 
   // Get current page title
@@ -227,6 +228,17 @@ export function Header() {
                       {!notification.isRead && (
                         <div className="w-2 h-2 rounded-full bg-primary-500 flex-shrink-0 mt-2" />
                       )}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          dismiss(notification._id);
+                        }}
+                        className="p-1 rounded hover:bg-[var(--bg-secondary)] text-[var(--text-muted)] hover:text-[var(--text-primary)] flex-shrink-0 transition-colors"
+                        title="Dismiss notification"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </div>
                   </Link>
                 );

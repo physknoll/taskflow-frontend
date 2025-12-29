@@ -7,7 +7,7 @@ import { useNotificationStore } from '@/stores/notificationStore';
 
 export function useNotifications() {
   const queryClient = useQueryClient();
-  const { setNotifications, markAsRead: storeMarkAsRead, markAllAsRead: storeMarkAllAsRead } = useNotificationStore();
+  const { setNotifications, markAsRead: storeMarkAsRead, markAllAsRead: storeMarkAllAsRead, removeNotification } = useNotificationStore();
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['notifications'],
@@ -44,6 +44,9 @@ export function useNotifications() {
 
   const dismissMutation = useMutation({
     mutationFn: (notificationId: string) => notificationsService.dismiss(notificationId),
+    onMutate: async (notificationId) => {
+      removeNotification(notificationId);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
