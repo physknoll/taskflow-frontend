@@ -7,6 +7,7 @@ export { useNotifications } from './useNotifications';
 export { useAICheckin, useAICheckinModal } from './useAICheckin';
 export { useProjects, useProjectsBoard, useProject, useWorkflowColumns } from './useProjects';
 export { useProjectAgent } from './useProjectAgent';
+export { useTicketAgent } from './useTicketAgent';
 export { useGuidelines, useGuideline } from './useGuidelines';
 export { useSOPAgent } from './useSOPAgent';
 export {

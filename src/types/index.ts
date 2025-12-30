@@ -1137,6 +1137,11 @@ export interface KnowledgeChatResponse {
 }
 
 // ============================================
+// Ticket Agent Types (AI Ticket Creation)
+// ============================================
+export * from './ticketAgent';
+
+// ============================================
 // Calendar Types
 // ============================================
 export * from './calendar';
