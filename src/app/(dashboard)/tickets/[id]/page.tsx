@@ -87,7 +87,7 @@ export default function TicketDetailPage() {
   // Get clientId for resources
   const clientId = ticket ? (typeof ticket.client === 'object' && ticket.client !== null ? ticket.client._id : ticket.client) : '';
   
-  // Resources hook
+  // Resources hook - use resources from ticket response to avoid redundant API call
   const {
     resources,
     isLoading: isLoadingResources,
@@ -99,7 +99,10 @@ export default function TicketDetailPage() {
     isAddingLink,
     isAddingGit,
     isDeleting: isDeletingResource,
-  } = useResources('Ticket', ticketId, { enabled: !!ticketId && !!clientId });
+  } = useResources('Ticket', ticketId, { 
+    enabled: !!ticketId && !!clientId,
+    initialData: ticket?.resources, // Use resources already in ticket response
+  });
   
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);

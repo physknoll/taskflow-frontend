@@ -37,6 +37,12 @@ export const resourceKeys = {
 
 interface UseResourcesOptions {
   enabled?: boolean;
+  /**
+   * When provided, skip the fetch query and use this data instead.
+   * Useful when resources are already embedded in the parent entity (e.g., ticket.resources).
+   * Mutations will still work and invalidate the parent entity's query.
+   */
+  initialData?: IResource[];
 }
 
 export function useResources(
@@ -46,17 +52,24 @@ export function useResources(
 ) {
   const queryClient = useQueryClient();
 
-  // Fetch resources for entity
+  // Skip fetch if initialData is provided (resources already embedded in parent response)
+  const shouldFetch = options.initialData === undefined;
+
+  // Fetch resources for entity (skipped when initialData is provided)
   const {
-    data: resources = [],
-    isLoading,
+    data: fetchedResources = [],
+    isLoading: isFetching,
     error,
     refetch,
   } = useQuery({
     queryKey: resourceKeys.entity(entityType, entityId),
     queryFn: () => resourcesService.getResourcesForEntity(entityType, entityId),
-    enabled: options.enabled !== false && !!entityId,
+    enabled: shouldFetch && options.enabled !== false && !!entityId,
   });
+
+  // Use initialData if provided, otherwise use fetched data
+  const resources = options.initialData ?? fetchedResources;
+  const isLoading = shouldFetch ? isFetching : false;
 
   // Upload files mutation
   const uploadMutation = useMutation({
