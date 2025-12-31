@@ -43,6 +43,7 @@ export interface UseDocumentEditorReturn {
   saveStatus: SaveStatus;
   hasUnsavedChanges: boolean;
   lastSavedAt: Date | null;
+  isInitialized: boolean;
   
   // Actions
   setTitle: (title: string) => void;
@@ -71,6 +72,7 @@ export function useDocumentEditor({
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   // Track original values to detect changes
   const originalTitle = useRef('');
@@ -96,8 +98,15 @@ export function useDocumentEditor({
       originalContent.current = document.content || '';
       setHasUnsavedChanges(false);
       setSaveStatus('idle');
+      // Mark as initialized after a short delay to let the editor settle
+      setTimeout(() => setIsInitialized(true), 100);
     }
   }, [document]);
+
+  // Reset initialization state when document changes
+  useEffect(() => {
+    setIsInitialized(false);
+  }, [documentId]);
 
   // Save mutation
   const saveMutation = useMutation({
@@ -145,6 +154,10 @@ export function useDocumentEditor({
   // Set title with change tracking
   const setTitle = useCallback((newTitle: string) => {
     setTitleState(newTitle);
+    
+    // Don't track changes until initialized
+    if (!isInitialized) return;
+    
     const changed = newTitle !== originalTitle.current || content !== originalContent.current;
     setHasUnsavedChanges(changed);
     
@@ -154,11 +167,15 @@ export function useDocumentEditor({
         debouncedSave(newTitle, content);
       }
     }
-  }, [content, autoSave, debouncedSave]);
+  }, [content, autoSave, debouncedSave, isInitialized]);
 
   // Set content with change tracking
   const setContent = useCallback((newContent: string) => {
     setContentState(newContent);
+    
+    // Don't track changes until initialized
+    if (!isInitialized) return;
+    
     const changed = title !== originalTitle.current || newContent !== originalContent.current;
     setHasUnsavedChanges(changed);
     
@@ -168,7 +185,7 @@ export function useDocumentEditor({
         debouncedSave(title, newContent);
       }
     }
-  }, [title, autoSave, debouncedSave]);
+  }, [title, autoSave, debouncedSave, isInitialized]);
 
   // Manual save function
   const save = useCallback(async () => {
@@ -199,6 +216,7 @@ export function useDocumentEditor({
     saveStatus,
     hasUnsavedChanges,
     lastSavedAt,
+    isInitialized,
     setTitle,
     setContent,
     save,

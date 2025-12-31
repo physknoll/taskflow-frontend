@@ -5,7 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Typography from '@tiptap/extension-typography';
 import Link from '@tiptap/extension-link';
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 import TurndownService from 'turndown';
 
 // Initialize Turndown for HTML to Markdown conversion
@@ -118,6 +118,10 @@ export function MarkdownEditor({
   editable = true,
   className = '',
 }: MarkdownEditorProps) {
+  // Track if we should ignore onChange calls (during initialization)
+  const isInitializing = useRef(true);
+  const lastSetContent = useRef(initialContent);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -160,6 +164,9 @@ export function MarkdownEditor({
       },
     },
     onUpdate: ({ editor }) => {
+      // Don't trigger onChange during initialization
+      if (isInitializing.current) return;
+      
       if (onChange) {
         const html = editor.getHTML();
         const markdown = htmlToMarkdown(html);
@@ -167,6 +174,16 @@ export function MarkdownEditor({
       }
     },
   });
+
+  // Mark initialization complete after a short delay
+  useEffect(() => {
+    if (editor) {
+      const timer = setTimeout(() => {
+        isInitializing.current = false;
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [editor]);
 
   // Notify when editor is ready
   useEffect(() => {
@@ -177,10 +194,17 @@ export function MarkdownEditor({
 
   // Update content when initialContent changes externally
   useEffect(() => {
-    if (editor && initialContent !== undefined) {
+    if (editor && initialContent !== undefined && initialContent !== lastSetContent.current) {
       const currentMarkdown = htmlToMarkdown(editor.getHTML());
       if (currentMarkdown !== initialContent) {
+        // Temporarily mark as initializing to prevent onChange
+        isInitializing.current = true;
         editor.commands.setContent(markdownToHtml(initialContent));
+        lastSetContent.current = initialContent;
+        // Re-enable onChange after content is set
+        setTimeout(() => {
+          isInitializing.current = false;
+        }, 100);
       }
     }
   }, [editor, initialContent]);
@@ -194,7 +218,7 @@ export function MarkdownEditor({
   return (
     <EditorContent
       editor={editor}
-      className="rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-4 overflow-y-auto"
+      className="h-full rounded-lg rounded-t-none border border-t-0 border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-4 overflow-y-auto"
     />
   );
 }

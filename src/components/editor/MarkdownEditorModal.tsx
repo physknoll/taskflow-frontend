@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Editor } from '@tiptap/react';
 import { MarkdownEditor } from './MarkdownEditor';
 import { EditorToolbar } from './EditorToolbar';
@@ -81,6 +82,12 @@ export function MarkdownEditorModal({
 }: MarkdownEditorModalProps) {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure we only render portal on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const {
     document: documentData,
@@ -91,6 +98,7 @@ export function MarkdownEditorModal({
     saveStatus,
     hasUnsavedChanges,
     lastSavedAt,
+    isInitialized,
     setTitle,
     setContent,
     save,
@@ -151,21 +159,33 @@ export function MarkdownEditorModal({
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
-      window.document.body.style.overflow = 'hidden';
+      const originalOverflow = document.body.style.overflow;
+      const originalPaddingRight = document.body.style.paddingRight;
+      
+      // Get scrollbar width
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        document.body.style.paddingRight = originalPaddingRight;
+      };
     }
-    return () => {
-      window.document.body.style.overflow = 'unset';
-    };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
+  const modalContent = (
     <>
-      {/* Modal Overlay */}
-      <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-surface-900">
+      {/* Full Screen Modal */}
+      <div 
+        className="fixed top-0 left-0 right-0 bottom-0 z-[9999] flex flex-col bg-white dark:bg-surface-900"
+        style={{ height: '100vh', width: '100vw' }}
+      >
         {/* Header */}
-        <header className="flex items-center justify-between gap-4 px-6 py-4 border-b border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900">
+        <header className="flex-shrink-0 flex items-center justify-between gap-4 px-6 py-4 border-b border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/50">
@@ -222,28 +242,30 @@ export function MarkdownEditorModal({
           </div>
         </header>
 
-        {/* Editor Container */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Editor Container - takes remaining height */}
+        <div className="flex-1 min-h-0 overflow-hidden">
           {isLoading ? (
-            <div className="flex-1 flex items-center justify-center">
+            <div className="h-full flex items-center justify-center">
               <div className="text-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary-500 mx-auto mb-4" />
                 <p className="text-surface-500">Loading document...</p>
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full">
+            <div className="h-full flex flex-col max-w-5xl mx-auto w-full px-6">
               {/* Toolbar */}
-              <EditorToolbar editor={editor} className="mx-6 mt-4 rounded-t-lg" />
+              <div className="flex-shrink-0 mt-4">
+                <EditorToolbar editor={editor} className="rounded-t-lg" />
+              </div>
 
-              {/* Editor */}
-              <div className="flex-1 mx-6 mb-6 overflow-y-auto">
+              {/* Editor - scrollable area */}
+              <div className="flex-1 min-h-0 overflow-y-auto mb-6">
                 <MarkdownEditor
                   initialContent={content}
                   onChange={setContent}
                   onEditorReady={handleEditorReady}
                   placeholder="Start writing your document..."
-                  className="min-h-full"
+                  className="h-full"
                 />
               </div>
             </div>
@@ -253,7 +275,7 @@ export function MarkdownEditorModal({
 
       {/* Close Confirmation Modal */}
       {showCloseConfirm && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+        <div className="fixed top-0 left-0 right-0 bottom-0 z-[10000] flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setShowCloseConfirm(false)}
@@ -287,4 +309,7 @@ export function MarkdownEditorModal({
       )}
     </>
   );
+
+  // Use portal to render at document body level
+  return createPortal(modalContent, document.body);
 }
