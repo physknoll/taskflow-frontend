@@ -7,6 +7,7 @@ import { clientsService, KnowledgeBaseDocument, KNOWLEDGE_BASE_CATEGORIES, SUGGE
 import { useKBCategories } from '@/hooks/useClients';
 import { ticketsService } from '@/services/tickets.service';
 import { BulkUploadModal, KBSourcesList } from '@/components/clients';
+import { MarkdownEditorModal } from '@/components/editor';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
@@ -688,6 +689,9 @@ function DocumentsTab({ clientId }: { clientId: string }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteProgress, setDeleteProgress] = useState({ current: 0, total: 0 });
 
+  // Editor state
+  const [editingDocId, setEditingDocId] = useState<string | null>(null);
+
   // Fetch dynamic categories from backend
   const { data: backendCategories = [], isLoading: isCategoriesLoading } = useKBCategories(clientId);
 
@@ -1110,18 +1114,33 @@ function DocumentsTab({ clientId }: { clientId: string }) {
                       </div>
                     )}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      if (confirm('Delete this document?')) {
-                        deleteMutation.mutate(doc._id);
-                      }
-                    }}
-                    disabled={isDeleting}
-                  >
-                    <Trash2 className="h-4 w-4 text-surface-400 hover:text-red-500" />
-                  </Button>
+                  <div className="flex items-center gap-1">
+                    {/* Edit button - only for markdown/text/html documents */}
+                    {doc.contentType !== 'file' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingDocId(doc._id)}
+                        disabled={isDeleting}
+                        title="Edit document"
+                      >
+                        <Edit2 className="h-4 w-4 text-surface-400 hover:text-primary-500" />
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (confirm('Delete this document?')) {
+                          deleteMutation.mutate(doc._id);
+                        }
+                      }}
+                      disabled={isDeleting}
+                      title="Delete document"
+                    >
+                      <Trash2 className="h-4 w-4 text-surface-400 hover:text-red-500" />
+                    </Button>
+                  </div>
                 </div>
               );
             })}
@@ -1459,6 +1478,16 @@ function DocumentsTab({ clientId }: { clientId: string }) {
               queryClient.invalidateQueries({ queryKey: ['client', clientId] });
             }}
           />
+
+          {/* Markdown Editor Modal */}
+          {editingDocId && (
+            <MarkdownEditorModal
+              isOpen={!!editingDocId}
+              onClose={() => setEditingDocId(null)}
+              clientId={clientId}
+              documentId={editingDocId}
+            />
+          )}
         </>
       )}
     </div>

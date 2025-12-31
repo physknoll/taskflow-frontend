@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { ConfirmModal } from '@/components/ui/Modal';
+import { MarkdownEditorModal } from '@/components/editor';
 import {
   FileText,
   Plus,
@@ -42,6 +43,7 @@ export function SOPPanel({
 
   const [deleteTarget, setDeleteTarget] = useState<SOP | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingSOPId, setEditingSOPId] = useState<string | null>(null);
 
   // Filter SOPs by search query
   const filteredSOPs = sops.filter((sop) =>
@@ -189,12 +191,17 @@ export function SOPPanel({
                 </div>
 
                 {/* Actions */}
-                {!compact && onEdit && (
+                {!compact && (
                   <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onEdit(sop);
+                        // Use internal editor if no external handler provided
+                        if (onEdit) {
+                          onEdit(sop);
+                        } else {
+                          setEditingSOPId(sop._id);
+                        }
                       }}
                       className="p-1 rounded hover:bg-surface-100 dark:hover:bg-surface-600 text-surface-500 hover:text-surface-700 dark:hover:text-surface-300"
                       title="Edit SOP"
@@ -243,6 +250,17 @@ export function SOPPanel({
         variant="danger"
         isLoading={isDeleting}
       />
+
+      {/* Markdown Editor Modal */}
+      {clientId && editingSOPId && (
+        <MarkdownEditorModal
+          isOpen={!!editingSOPId}
+          onClose={() => setEditingSOPId(null)}
+          clientId={clientId}
+          documentId={editingSOPId}
+          isSOP
+        />
+      )}
     </div>
   );
 }
