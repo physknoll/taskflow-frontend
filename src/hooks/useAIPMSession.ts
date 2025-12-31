@@ -216,12 +216,12 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
           const toolsUsedThisTurn = [...currentTurnToolsRef.current];
           currentTurnToolsRef.current = []; // Reset for next turn
           
-          // Clear tool indicator when message received
-          setToolIndicator({
+          // DEBUG: Preserve recentTools for debugging visibility instead of clearing
+          setToolIndicator((prev) => ({
             isThinking: false,
             currentTool: null,
-            recentTools: [],
-          });
+            recentTools: prev.recentTools, // Keep tools visible for debugging
+          }));
           
           // Only add if not already present (avoids duplicate from HTTP response)
           setMessages((prev) => {
@@ -274,16 +274,17 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
             recentTools: [...prev.recentTools, data.toolName].slice(-3), // Keep last 3
           }));
           
+          // DEBUG: Disabled timeout to keep tool pills visible for debugging
           // Clear recent tools after 3 seconds (UI indicator only, tools are persisted separately)
-          if (recentToolsTimeoutRef.current) {
-            clearTimeout(recentToolsTimeoutRef.current);
-          }
-          recentToolsTimeoutRef.current = setTimeout(() => {
-            setToolIndicator((prev) => ({
-              ...prev,
-              recentTools: [],
-            }));
-          }, 3000);
+          // if (recentToolsTimeoutRef.current) {
+          //   clearTimeout(recentToolsTimeoutRef.current);
+          // }
+          // recentToolsTimeoutRef.current = setTimeout(() => {
+          //   setToolIndicator((prev) => ({
+          //     ...prev,
+          //     recentTools: [],
+          //   }));
+          // }, 3000);
         }
       }
     );
