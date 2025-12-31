@@ -11,11 +11,14 @@ import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
 import { ColorPicker } from '@/components/ui/ColorPicker';
 import { AITicketChat } from './AITicketChat';
+import { SOPPanel } from '@/components/shared/SOPPanel';
+import { SOPChat } from '@/components/projects/SOPChat';
 import { useTickets } from '@/hooks/useTickets';
 import { useClients } from '@/hooks/useClients';
 import { useProjectOptions } from '@/hooks/useProjects';
 import { useAI } from '@/hooks/useAI';
-import { CreatedTicketInfo } from '@/types';
+import { useAuthStore } from '@/stores/authStore';
+import { CreatedTicketInfo, SOP } from '@/types';
 import { TICKET_TYPES, TICKET_PRIORITIES } from '@/lib/constants';
 import {
   Sparkles,
@@ -40,8 +43,9 @@ const createTicketSchema = z.object({
 type CreateTicketForm = z.infer<typeof createTicketSchema>;
 
 type TabType = 'ai' | 'manual';
+type ChatMode = 'ticket' | 'sop';
 
-interface CreateProjectModalProps {
+interface CreateTicketModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultClientId?: string;
@@ -53,14 +57,25 @@ export function CreateTicketModal({
   onClose,
   defaultClientId,
   defaultProjectId,
-}: CreateProjectModalProps) {
+}: CreateTicketModalProps) {
   const { createTicket, isCreating } = useTickets();
   const { clients, isLoading: clientsLoading } = useClients();
   const { projectOptions, isLoading: projectsLoading } = useProjectOptions();
   const { generateTicketContent, isGeneratingTicket } = useAI();
+  const { user } = useAuthStore();
 
   // Tab state - default to AI
   const [activeTab, setActiveTab] = useState<TabType>('ai');
+  
+  // Chat mode state - ticket creation or SOP creation
+  const [chatMode, setChatMode] = useState<ChatMode>('ticket');
+  
+  // SOP state
+  const [selectedSOPId, setSelectedSOPId] = useState<string | null>(null);
+  const [editingSOP, setEditingSOP] = useState<SOP | null>(null);
+
+  // Get client ID for SOP fetching - use first assigned client or default
+  const clientIdForSOPs = defaultClientId || user?.assignedClients?.[0] || clients[0]?._id;
 
   // Manual form state
   const [aiGenerated, setAiGenerated] = useState<any>(null);
@@ -91,10 +106,12 @@ export function CreateTicketModal({
   const watchedDescription = watch('description');
   const watchedType = watch('type');
 
-  // Reset tab when modal opens/closes
+  // Reset tab and chat mode when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       setActiveTab('ai');
+      setChatMode('ticket');
+      setSelectedSOPId(null);
     }
   }, [isOpen]);
 
@@ -180,52 +197,101 @@ export function CreateTicketModal({
     setSelectedColor(undefined);
     setSelectedProject(defaultProjectId || null);
     setActiveTab('ai');
+    setChatMode('ticket');
+    setSelectedSOPId(null);
+    setEditingSOP(null);
     onClose();
+  };
+
+  // SOP creation handlers
+  const handleSOPCreated = (guidelineId: string, guidelineName: string) => {
+    // SOP created - switch back to ticket mode and optionally select the new SOP
+    setChatMode('ticket');
+    setSelectedSOPId(guidelineId);
+  };
+
+  const handleCreateNewSOP = () => {
+    setChatMode('sop');
+  };
+
+  const handleCancelSOPChat = () => {
+    setChatMode('ticket');
   };
 
   const canGenerateAI = Boolean(watchedClient && watchedTitle && watchedDescription && watchedType);
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Create New Ticket" size="xl">
-      {/* Tab Switcher */}
-      <div className="flex gap-2 mb-6">
+    <Modal 
+      isOpen={isOpen} 
+      onClose={handleClose} 
+      title="Create New Ticket" 
+      size="full"
+      className="!max-w-5xl"
+      disableContentScroll={activeTab === 'ai'}
+    >
+      {/* Tab Selector */}
+      <div className="flex gap-2 mb-4 p-1 bg-surface-100 dark:bg-surface-700 rounded-lg flex-shrink-0">
         <button
           type="button"
           onClick={() => setActiveTab('ai')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${
             activeTab === 'ai'
-              ? 'bg-surface-100 dark:bg-surface-700 text-surface-900 dark:text-white border-2 border-primary-500'
-              : 'bg-surface-50 dark:bg-surface-800 text-surface-600 dark:text-surface-400 border-2 border-transparent hover:border-surface-300 dark:hover:border-surface-600'
+              ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-sm'
+              : 'text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
           }`}
         >
           <Bot className="w-4 h-4" />
-          AI Chat
-          <Badge variant="primary" size="sm" className="ml-1">
+          <span>AI Chat</span>
+          <Badge variant="secondary" className="text-xs bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300">
             Recommended
           </Badge>
         </button>
         <button
           type="button"
           onClick={() => setActiveTab('manual')}
-          className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-sm font-medium transition-all ${
             activeTab === 'manual'
-              ? 'bg-surface-100 dark:bg-surface-700 text-surface-900 dark:text-white border-2 border-primary-500'
-              : 'bg-surface-50 dark:bg-surface-800 text-surface-600 dark:text-surface-400 border-2 border-transparent hover:border-surface-300 dark:hover:border-surface-600'
+              ? 'bg-white dark:bg-surface-800 text-surface-900 dark:text-white shadow-sm'
+              : 'text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
           }`}
         >
           <FileText className="w-4 h-4" />
-          Manual Form
+          <span>Manual Form</span>
         </button>
       </div>
 
-      {/* AI Chat Tab */}
+      {/* AI Chat Tab - Two Column Layout with SOP Sidebar */}
       {activeTab === 'ai' && (
-        <div style={{ height: 'calc(70vh - 120px)' }}>
-          <AITicketChat
-            onTicketCreated={handleAITicketCreated}
-            onCancel={handleClose}
-            defaultProjectId={defaultProjectId}
-          />
+        <div className="flex gap-6" style={{ height: 'calc(70vh - 120px)' }}>
+          {/* Left Column - Chat Interface */}
+          <div className="flex-1 min-w-0 flex flex-col">
+            {chatMode === 'ticket' ? (
+              <AITicketChat
+                onTicketCreated={handleAITicketCreated}
+                onCancel={handleClose}
+                defaultProjectId={defaultProjectId}
+                selectedSOPId={selectedSOPId}
+              />
+            ) : (
+              <SOPChat
+                onSOPCreated={handleSOPCreated}
+                onCancel={handleCancelSOPChat}
+              />
+            )}
+          </div>
+
+          {/* Right Column - SOP Panel */}
+          {chatMode === 'ticket' && (
+            <div className="w-64 flex-shrink-0 border-l border-surface-200 dark:border-surface-700 pl-6 flex flex-col">
+              <SOPPanel
+                clientId={clientIdForSOPs}
+                selectedSOPId={selectedSOPId}
+                onSelectSOP={setSelectedSOPId}
+                onCreateNew={handleCreateNewSOP}
+                onEdit={setEditingSOP}
+              />
+            </div>
+          )}
         </div>
       )}
 

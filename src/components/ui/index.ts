@@ -38,4 +38,3 @@ export { LinkifiedText } from './LinkifiedText';
 export { TagInput } from './TagInput';
 
 export { ColorPicker, PRESET_COLORS } from './ColorPicker';
-

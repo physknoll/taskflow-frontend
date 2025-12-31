@@ -34,12 +34,22 @@ export interface CreatedTicketInfo {
   title: string;
 }
 
+/**
+ * Attached SOP reference in session response
+ */
+export interface AttachedSOP {
+  id: string;
+  title: string;
+}
+
 // API Response Types
 
 export interface TicketAgentStartResponse {
   sessionId: string;
   response: string;
   draft?: TicketDraftFromAgent;
+  /** SOP that was explicitly attached when starting the session */
+  attachedSOP?: AttachedSOP;
 }
 
 export interface TicketAgentMessageResponse {

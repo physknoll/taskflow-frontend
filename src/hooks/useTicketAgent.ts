@@ -144,9 +144,12 @@ export function useTicketAgent() {
   });
 
   // Start a new session
-  const startSession = useCallback(async (projectId?: string) => {
+  const startSession = useCallback(async (projectId?: string, sopId?: string) => {
     setState(initialState);
-    await startMutation.mutateAsync(projectId ? { projectId } : undefined);
+    const options: { projectId?: string; sopId?: string } = {};
+    if (projectId) options.projectId = projectId;
+    if (sopId) options.sopId = sopId;
+    await startMutation.mutateAsync(Object.keys(options).length > 0 ? options : undefined);
   }, [startMutation]);
 
   // Send a message (non-streaming)

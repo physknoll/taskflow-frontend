@@ -27,9 +27,11 @@ interface AITicketChatProps {
   onTicketCreated: (ticket: CreatedTicketInfo) => void;
   onCancel: () => void;
   defaultProjectId?: string;
+  /** SOP ID to attach to the session for enriched ticket creation */
+  selectedSOPId?: string | null;
 }
 
-export function AITicketChat({ onTicketCreated, onCancel, defaultProjectId }: AITicketChatProps) {
+export function AITicketChat({ onTicketCreated, onCancel, defaultProjectId, selectedSOPId }: AITicketChatProps) {
   const {
     messages,
     draft,
@@ -58,14 +60,14 @@ export function AITicketChat({ onTicketCreated, onCancel, defaultProjectId }: AI
     }
   }, [createdTicket, onTicketCreated]);
 
-  // Start session on mount
+  // Start session on mount or when SOP changes
   useEffect(() => {
-    startSession(defaultProjectId);
+    startSession(defaultProjectId, selectedSOPId || undefined);
     return () => {
       resetSession();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultProjectId]);
+  }, [defaultProjectId, selectedSOPId]);
 
   // Auto-scroll to latest message (only when in chat mode)
   useEffect(() => {

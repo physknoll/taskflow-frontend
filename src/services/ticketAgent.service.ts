@@ -11,6 +11,8 @@ import {
 
 export interface StartTicketSessionOptions {
   projectId?: string;
+  /** Explicitly attach an SOP to bypass automatic search */
+  sopId?: string;
 }
 
 export const ticketAgentService = {

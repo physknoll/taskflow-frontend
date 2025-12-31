@@ -13,6 +13,7 @@ export { projectsService, workflowColumnsService } from './projects.service';
 export { projectAgentService } from './projectAgent.service';
 export { guidelinesService } from './guidelines.service';
 export { sopAgentService } from './sopAgent.service';
+export { sopsService } from './sops.service';
 export { aipmService } from './aipm.service';
 export { conversationsService } from './conversations.service';
 export { integrationsService } from './integrations.service';

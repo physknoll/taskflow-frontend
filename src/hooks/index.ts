@@ -70,6 +70,9 @@ export { useGoogleChatIntegration, googleChatKeys } from './useGoogleChatIntegra
 // Knowledge Base hooks
 export { useKBUpload } from './useKBUpload';
 
+// SOP hooks (Knowledge Base SOPs)
+export { useSOPs, useSOP } from './useSOPs';
+
 // Calendar hooks
 export { useCalendar, useGoogleCalendar, EVENT_TYPE_COLORS } from './useCalendar';
 
