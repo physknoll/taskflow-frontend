@@ -8,6 +8,7 @@ import type {
   IDashboardMessage,
   ChatMode,
   IAIPMDashboardMessagePayload,
+  IDashboardInitOptions,
   IDashboardInitResponse,
 } from '@/types/aipm';
 import type { ResumeConversationResponse } from '@/types';
@@ -51,7 +52,7 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
 
   // Initialize/resume dashboard session
   const initMutation = useMutation({
-    mutationFn: aipmService.initiateDashboardSession,
+    mutationFn: (options?: IDashboardInitOptions) => aipmService.initiateDashboardSession(options),
     onSuccess: (data) => {
       sessionIdRef.current = data.sessionId;
       setInitData(data);
@@ -302,14 +303,14 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
   useEffect(() => {
     if (options.autoInitialize && !hasInitializedRef.current && !initMutation.isPending) {
       hasInitializedRef.current = true;
-      initMutation.mutate();
+      initMutation.mutate(undefined);
     }
   }, [options.autoInitialize, initMutation]);
 
   // Initialize session manually
-  const initializeSession = useCallback(async () => {
+  const initializeSession = useCallback(async (options?: IDashboardInitOptions) => {
     if (!initMutation.isPending) {
-      return initMutation.mutateAsync();
+      return initMutation.mutateAsync(options);
     }
     return null;
   }, [initMutation]);
@@ -333,7 +334,7 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
       
       // Initialize session if not already
       if (!sessionId && !initMutation.isPending) {
-        const initData = await initMutation.mutateAsync();
+        const initData = await initMutation.mutateAsync(undefined);
         sessionId = initData.sessionId;
       }
       
@@ -388,7 +389,7 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
       setKbConversationId(null);
       // Re-initialize AIPM session if needed
       if (!sessionIdRef.current) {
-        initMutation.mutate();
+        initMutation.mutate(undefined);
       } else if (initData?.greeting) {
         // Restore the greeting message
         const greetingMessage: IDashboardMessage = {
@@ -421,8 +422,8 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
 
   // Load a conversation from an already-fetched resume result
   // This is used when ConversationHistory has already called the resume API
-  const loadConversation = useCallback((result: ResumeConversationResponse) => {
-    const { conversation: fullConversation, langGraphThreadId } = result;
+  const loadConversation = useCallback(async (result: ResumeConversationResponse) => {
+    const { conversation: fullConversation } = result;
     
     // Determine the mode based on conversation type
     const conversationType = fullConversation.type;
@@ -433,33 +434,89 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
       // TODO: Could extract clientId from conversation metadata if needed
       setSelectedClientId(null);
       setKbConversationId(fullConversation.conversationId);
+      
+      // Load all messages into the chat UI
+      if (fullConversation.messages && fullConversation.messages.length > 0) {
+        const loadedMessages: IDashboardMessage[] = fullConversation.messages
+          .filter(m => m != null && (m.role === 'user' || m.role === 'assistant'))
+          .map((m, index) => ({
+            id: m._id || `msg-${index}-${Date.now()}`,
+            role: m.role === 'user' ? 'user' : 'aipm',
+            content: m.content,
+            timestamp: m.timestamp || new Date().toISOString(),
+          }));
+        setMessages(loadedMessages);
+      }
     } else {
       // Default to AIPM mode for dashboard_chat and other types
       setContextMode('aipm');
       setSelectedClientId(null);
       setKbConversationId(null);
+      
+      // CRITICAL: Call /init with resumeConversationId to properly set up the backend session
+      // This ensures the LangGraph agent has the correct thread context
+      try {
+        const initResponse = await initMutation.mutateAsync({
+          resumeConversationId: fullConversation.conversationId,
+        });
+        
+        // sessionIdRef is set by the mutation onSuccess handler
+        // Now load all messages into the chat UI
+        if (fullConversation.messages && fullConversation.messages.length > 0) {
+          const loadedMessages: IDashboardMessage[] = fullConversation.messages
+            .filter(m => m != null && (m.role === 'user' || m.role === 'assistant'))
+            .map((m, index) => ({
+              id: m._id || `msg-${index}-${Date.now()}`,
+              role: m.role === 'user' ? 'user' : 'aipm',
+              content: m.content,
+              timestamp: m.timestamp || new Date().toISOString(),
+            }));
+          setMessages(loadedMessages);
+        }
+      } catch (error) {
+        console.error('Failed to resume conversation:', error);
+        // Fall back to just loading messages locally
+        if (fullConversation.messages && fullConversation.messages.length > 0) {
+          const loadedMessages: IDashboardMessage[] = fullConversation.messages
+            .filter(m => m != null && (m.role === 'user' || m.role === 'assistant'))
+            .map((m, index) => ({
+              id: m._id || `msg-${index}-${Date.now()}`,
+              role: m.role === 'user' ? 'user' : 'aipm',
+              content: m.content,
+              timestamp: m.timestamp || new Date().toISOString(),
+            }));
+          setMessages(loadedMessages);
+        }
+      }
     }
+  }, [initMutation]);
+
+  // Start a new chat - clears any existing session and creates a fresh one
+  const startNewChat = useCallback(async () => {
+    // Clear current messages
+    setMessages([]);
     
-    // CRITICAL: Store the langGraphThreadId as the sessionId for continuing the conversation
-    if (langGraphThreadId) {
-      sessionIdRef.current = langGraphThreadId;
-    }
+    // Switch to AIPM mode
+    setContextMode('aipm');
+    setSelectedClientId(null);
+    setKbConversationId(null);
     
-    // Load all messages into the chat UI
-    if (fullConversation.messages && fullConversation.messages.length > 0) {
-      const loadedMessages: IDashboardMessage[] = fullConversation.messages
-        .filter(m => m != null && (m.role === 'user' || m.role === 'assistant'))
-        .map((m, index) => ({
-          id: m._id || `msg-${index}-${Date.now()}`,
-          role: m.role === 'user' ? 'user' : 'aipm',
-          content: m.content,
-          timestamp: m.timestamp || new Date().toISOString(),
-          // Note: Citations from knowledge base conversations are not transferred here
-          // They would need to be stored in conversation metadata if needed
-        }));
-      setMessages(loadedMessages);
+    // Clear tool indicator state
+    setToolIndicator({
+      isThinking: false,
+      currentTool: null,
+      recentTools: [],
+    });
+    
+    // Call /init with forceNew to create a fresh session
+    try {
+      await initMutation.mutateAsync({ forceNew: true });
+      // sessionIdRef is set by the mutation onSuccess handler
+      // greeting message is also set by the mutation
+    } catch (error) {
+      console.error('Failed to start new chat:', error);
     }
-  }, []);
+  }, [initMutation]);
 
   return {
     // State
@@ -486,6 +543,7 @@ export function useAIPMSession(options: UseAIPMSessionOptions = { autoInitialize
     selectClient,
     clearMessages,
     loadConversation,
+    startNewChat,
   };
 }
 

@@ -9,6 +9,7 @@ import {
   SessionFilters,
   ReportFilters,
   IIntervention,
+  IDashboardInitOptions,
   IDashboardInitResponse,
   IDashboardMessageResponse,
   IExecuteActionResponse,
@@ -174,9 +175,14 @@ export const aipmService = {
   /**
    * Initialize or resume a dashboard session
    * Creates a new session or returns existing active session with proactive greeting
+   * @param options.resumeConversationId - Pass to resume a specific conversation
+   * @param options.forceNew - Pass true to force create a fresh session
    */
-  async initiateDashboardSession(): Promise<IDashboardInitResponse> {
-    const response = await api.post<ApiResponse<IDashboardInitResponse>>('/aipm/dashboard/init');
+  async initiateDashboardSession(options?: IDashboardInitOptions): Promise<IDashboardInitResponse> {
+    const response = await api.post<ApiResponse<IDashboardInitResponse>>(
+      '/aipm/dashboard/init',
+      options || {}
+    );
     return response.data.data;
   },
 

@@ -440,6 +440,12 @@ export interface IDashboardSession {
   createdAt: string;
 }
 
+// Options for /api/v1/aipm/dashboard/init
+export interface IDashboardInitOptions {
+  resumeConversationId?: string;  // Resume a specific conversation
+  forceNew?: boolean;             // Force create a new session
+}
+
 // Response from /api/v1/aipm/dashboard/init
 export interface IDashboardInitResponse {
   sessionId: string;
