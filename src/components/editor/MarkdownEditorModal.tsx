@@ -83,6 +83,7 @@ export function MarkdownEditorModal({
   const [editor, setEditor] = useState<Editor | null>(null);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isRawMode, setIsRawMode] = useState(false);
 
   // Ensure we only render portal on client
   useEffect(() => {
@@ -255,18 +256,33 @@ export function MarkdownEditorModal({
             <div className="h-full flex flex-col max-w-5xl mx-auto w-full px-6">
               {/* Toolbar */}
               <div className="flex-shrink-0 mt-4">
-                <EditorToolbar editor={editor} className="rounded-t-lg" />
+                <EditorToolbar 
+                  editor={editor} 
+                  className="rounded-t-lg" 
+                  isRawMode={isRawMode}
+                  onToggleRawMode={() => setIsRawMode(!isRawMode)}
+                />
               </div>
 
               {/* Editor - scrollable area */}
               <div className="flex-1 min-h-0 overflow-y-auto mb-6">
-                <MarkdownEditor
-                  initialContent={content}
-                  onChange={setContent}
-                  onEditorReady={handleEditorReady}
-                  placeholder="Start writing your document..."
-                  className="h-full"
-                />
+                {isRawMode ? (
+                  <textarea
+                    value={content}
+                    onChange={(e) => setContent(e.target.value)}
+                    placeholder="Enter raw markdown..."
+                    className="w-full h-full p-4 font-mono text-sm rounded-lg rounded-t-none border border-t-0 border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 text-surface-900 dark:text-white placeholder:text-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                    spellCheck={false}
+                  />
+                ) : (
+                  <MarkdownEditor
+                    initialContent={content}
+                    onChange={setContent}
+                    onEditorReady={handleEditorReady}
+                    placeholder="Start writing your document..."
+                    className="h-full"
+                  />
+                )}
               </div>
             </div>
           )}

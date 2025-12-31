@@ -19,11 +19,17 @@ import {
   Undo,
   Redo,
   Code2,
+  FileCode,
+  Eye,
 } from 'lucide-react';
 
 interface EditorToolbarProps {
   editor: Editor | null;
   className?: string;
+  /** Whether raw markdown mode is active */
+  isRawMode?: boolean;
+  /** Callback when raw mode is toggled */
+  onToggleRawMode?: () => void;
 }
 
 interface ToolbarButtonProps {
@@ -66,7 +72,7 @@ function ToolbarDivider() {
   );
 }
 
-export function EditorToolbar({ editor, className }: EditorToolbarProps) {
+export function EditorToolbar({ editor, className, isRawMode = false, onToggleRawMode }: EditorToolbarProps) {
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
 
@@ -89,6 +95,31 @@ export function EditorToolbar({ editor, className }: EditorToolbarProps) {
     setLinkUrl(previousUrl);
     setShowLinkInput(true);
   }, [editor]);
+
+  // Show minimal toolbar in raw mode
+  if (isRawMode) {
+    return (
+      <div
+        className={cn(
+          'flex items-center gap-0.5 p-2 border-b border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 rounded-t-lg',
+          className
+        )}
+      >
+        <div className="flex-1 text-sm text-surface-500 dark:text-surface-400 px-2">
+          Raw Markdown Mode
+        </div>
+        {onToggleRawMode && (
+          <ToolbarButton
+            onClick={onToggleRawMode}
+            isActive={false}
+            title="Switch to Rich Editor"
+          >
+            <Eye className="h-4 w-4" />
+          </ToolbarButton>
+        )}
+      </div>
+    );
+  }
 
   if (!editor) {
     return null;
@@ -258,6 +289,22 @@ export function EditorToolbar({ editor, className }: EditorToolbarProps) {
       )}
 
       <div className="flex-1" />
+
+      {/* Raw Mode Toggle */}
+      {onToggleRawMode && (
+        <>
+          <ToolbarDivider />
+          <ToolbarButton
+            onClick={onToggleRawMode}
+            isActive={false}
+            title="View Raw Markdown"
+          >
+            <FileCode className="h-4 w-4" />
+          </ToolbarButton>
+        </>
+      )}
+
+      <ToolbarDivider />
 
       {/* Undo/Redo */}
       <ToolbarButton
