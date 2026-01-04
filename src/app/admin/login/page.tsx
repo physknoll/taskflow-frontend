@@ -57,9 +57,9 @@ export default function AdminLoginPage() {
 
   const handleGoogleLogin = () => {
     // Redirect to backend OAuth endpoint
-    // ADMIN_API_URL is relative (/api/v1/admin), so we need the full backend URL for OAuth redirect
+    // NEXT_PUBLIC_API_URL already includes /api/v1, so just append /admin/auth/google
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || '';
-    window.location.href = `${backendUrl}/api/v1/admin/auth/google`;
+    window.location.href = `${backendUrl}/admin/auth/google`;
   };
 
   return (
