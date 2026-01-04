@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
@@ -10,7 +10,8 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Modal, ConfirmModal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
-import { useAdminOrganization, useFlagOrganization, useDeleteOrganization } from '@/hooks/admin/useAdminOrganizations';
+import { Toggle } from '@/components/ui/Toggle';
+import { useAdminOrganization, useFlagOrganization, useDeleteOrganization, useOrganizationFeatures, useUpdateLinkedInFeature } from '@/hooks/admin/useAdminOrganizations';
 import { SUBSCRIPTION_STATUS_COLORS, SUBSCRIPTION_PLANS, ORG_ROLE_COLORS, ACCOUNT_STATUS_COLORS } from '@/lib/admin-constants';
 import { hasAdminPermission, isSuperAdmin } from '@/lib/admin-permissions';
 import { useAdminAuthStore } from '@/stores/adminAuthStore';
@@ -30,6 +31,7 @@ import {
   CreditCard,
   Globe,
   AlertTriangle,
+  Linkedin,
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -42,10 +44,50 @@ export default function OrganizationDetailPage() {
   const orgId = params.id as string;
 
   const { data: org, isLoading, error } = useAdminOrganization(orgId);
+  const { data: featuresData, isLoading: featuresLoading } = useOrganizationFeatures(orgId);
   const flagMutation = useFlagOrganization();
   const deleteMutation = useDeleteOrganization();
+  const linkedInMutation = useUpdateLinkedInFeature();
 
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [linkedInMaxProfiles, setLinkedInMaxProfiles] = useState<number>(50);
+  const [linkedInMaxScrapers, setLinkedInMaxScrapers] = useState<number>(5);
+
+  // Sync local state with fetched features data
+  useEffect(() => {
+    if (featuresData?.features?.linkedInMonitoring) {
+      const linkedIn = featuresData.features.linkedInMonitoring;
+      if (linkedIn.maxProfiles) setLinkedInMaxProfiles(linkedIn.maxProfiles);
+      if (linkedIn.maxScrapers) setLinkedInMaxScrapers(linkedIn.maxScrapers);
+    }
+  }, [featuresData]);
+
+  const linkedInFeature = featuresData?.features?.linkedInMonitoring;
+
+  const handleLinkedInToggle = (enabled: boolean) => {
+    linkedInMutation.mutate({
+      id: orgId,
+      data: {
+        enabled,
+        maxProfiles: linkedInMaxProfiles,
+        maxScrapers: linkedInMaxScrapers,
+      },
+    });
+  };
+
+  const handleLinkedInLimitsUpdate = () => {
+    if (linkedInFeature?.enabled) {
+      linkedInMutation.mutate({
+        id: orgId,
+        data: {
+          enabled: true,
+          maxProfiles: linkedInMaxProfiles,
+          maxScrapers: linkedInMaxScrapers,
+        },
+      });
+    }
+  };
+
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [flagReason, setFlagReason] = useState('');
@@ -293,6 +335,72 @@ export default function OrganizationDetailPage() {
                   {org.stats.projectCount}
                 </span>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Feature Flags Card */}
+          <Card className="lg:col-span-3">
+            <CardHeader>
+              <CardTitle>Feature Flags</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* LinkedIn Monitoring Toggle */}
+              <div className="flex items-center justify-between p-4 bg-surface-50 dark:bg-surface-800 rounded-lg">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <Linkedin className="w-5 h-5 text-blue-600" />
+                    <h4 className="font-medium text-surface-900 dark:text-white">LinkedIn Monitoring</h4>
+                  </div>
+                  <p className="text-sm text-surface-500 mt-1">
+                    Allow this organization to monitor LinkedIn profiles and competitors
+                  </p>
+                  {linkedInFeature?.enabled && linkedInFeature?.enabledAt && (
+                    <p className="text-xs text-surface-400 mt-1">
+                      Enabled on {format(new Date(linkedInFeature.enabledAt), 'MMMM d, yyyy')}
+                    </p>
+                  )}
+                </div>
+                
+                <Toggle
+                  checked={linkedInFeature?.enabled ?? false}
+                  onChange={handleLinkedInToggle}
+                  disabled={linkedInMutation.isPending || featuresLoading}
+                />
+              </div>
+              
+              {/* Settings (shown when enabled) */}
+              {linkedInFeature?.enabled && (
+                <div className="ml-4 pl-4 border-l-2 border-blue-200 dark:border-blue-800 space-y-4">
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-medium text-surface-700 dark:text-surface-300 w-32">
+                      Max Profiles:
+                    </label>
+                    <input
+                      type="number"
+                      value={linkedInMaxProfiles}
+                      onChange={(e) => setLinkedInMaxProfiles(parseInt(e.target.value) || 50)}
+                      onBlur={handleLinkedInLimitsUpdate}
+                      className="w-24 px-3 py-1.5 border border-surface-300 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-800 text-surface-900 dark:text-white text-sm"
+                      min={1}
+                      max={500}
+                    />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <label className="text-sm font-medium text-surface-700 dark:text-surface-300 w-32">
+                      Max Scrapers:
+                    </label>
+                    <input
+                      type="number"
+                      value={linkedInMaxScrapers}
+                      onChange={(e) => setLinkedInMaxScrapers(parseInt(e.target.value) || 5)}
+                      onBlur={handleLinkedInLimitsUpdate}
+                      className="w-24 px-3 py-1.5 border border-surface-300 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-800 text-surface-900 dark:text-white text-sm"
+                      min={1}
+                      max={20}
+                    />
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

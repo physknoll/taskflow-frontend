@@ -2,10 +2,11 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminOrganizationsService } from '@/services/admin/organizations.service';
-import { AdminOrganizationParams } from '@/types/admin';
+import { AdminOrganizationParams, IUpdateLinkedInFeatureDto } from '@/types/admin';
 import toast from 'react-hot-toast';
 
 const ORGANIZATIONS_KEY = 'admin-organizations';
+const ORGANIZATION_FEATURES_KEY = 'admin-organization-features';
 
 export function useAdminOrganizations(params?: AdminOrganizationParams) {
   return useQuery({
@@ -67,6 +68,33 @@ export function useDeleteOrganization() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to delete organization');
+    },
+  });
+}
+
+export function useOrganizationFeatures(id: string) {
+  return useQuery({
+    queryKey: [ORGANIZATION_FEATURES_KEY, id],
+    queryFn: () => adminOrganizationsService.getFeatures(id),
+    enabled: !!id,
+  });
+}
+
+export function useUpdateLinkedInFeature() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: IUpdateLinkedInFeatureDto }) =>
+      adminOrganizationsService.updateLinkedIn(id, data),
+    onSuccess: (_, { id, data }) => {
+      queryClient.invalidateQueries({ queryKey: [ORGANIZATION_FEATURES_KEY, id] });
+      queryClient.invalidateQueries({ queryKey: [ORGANIZATIONS_KEY, id] });
+      toast.success(
+        data.enabled ? 'LinkedIn monitoring enabled' : 'LinkedIn monitoring disabled'
+      );
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update LinkedIn settings');
     },
   });
 }

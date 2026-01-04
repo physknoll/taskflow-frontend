@@ -78,6 +78,7 @@ export interface IAdminOrganizationDetail extends IAdminOrganization {
   recentActivity?: {
     tickets: any[];
   };
+  features?: IOrganizationFeatures;
 }
 
 export interface IAdminOrganizationUser {
@@ -90,6 +91,40 @@ export interface IAdminOrganizationUser {
   accountStatus: 'active' | 'suspended' | 'pending_deletion';
   lastLogin?: string;
   createdAt: string;
+}
+
+// ============================================
+// Feature Types
+// ============================================
+
+export interface ILinkedInFeature {
+  enabled: boolean;
+  enabledAt?: string;
+  enabledBy?: string;
+  maxProfiles?: number;
+  maxScrapers?: number;
+}
+
+export interface IOrganizationFeatures {
+  linkedInMonitoring?: ILinkedInFeature;
+}
+
+export interface IOrganizationFeaturesResponse {
+  organizationId: string;
+  organizationName: string;
+  features: IOrganizationFeatures;
+}
+
+export interface IUpdateLinkedInFeatureDto {
+  enabled: boolean;
+  maxProfiles?: number;
+  maxScrapers?: number;
+}
+
+export interface IUpdateLinkedInFeatureResponse {
+  organizationId: string;
+  organizationName: string;
+  linkedInMonitoring: ILinkedInFeature;
 }
 
 // ============================================
@@ -111,6 +146,7 @@ export interface IAdminUserListItem {
     _id: string;
     name: string;
     slug: string;
+    features?: IOrganizationFeatures;
   };
   lastLogin?: string;
   createdAt: string;

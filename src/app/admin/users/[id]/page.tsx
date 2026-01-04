@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { useAdminUser, useSuspendUser, useUnsuspendUser, useImpersonateUser, useDeleteUser } from '@/hooks/admin/useAdminUsers';
+import { useOrganizationFeatures } from '@/hooks/admin/useAdminOrganizations';
 import { ACCOUNT_STATUS_COLORS, ORG_ROLE_COLORS, PLATFORM_ROLES } from '@/lib/admin-constants';
 import { hasAdminPermission, isSuperAdmin } from '@/lib/admin-permissions';
 import { useAdminAuthStore } from '@/stores/adminAuthStore';
@@ -33,6 +34,8 @@ import {
   Activity,
   Bot,
   ExternalLink,
+  Linkedin,
+  ArrowRight,
 } from 'lucide-react';
 import { format, formatDistanceToNow, subDays, startOfDay, eachDayOfInterval } from 'date-fns';
 import {
@@ -96,10 +99,13 @@ export default function UserDetailPage() {
   const userId = params.id as string;
 
   const { data: user, isLoading, error } = useAdminUser(userId);
+  const { data: orgFeatures } = useOrganizationFeatures(user?.organization?._id || '');
   const suspendMutation = useSuspendUser();
   const unsuspendMutation = useUnsuspendUser();
   const impersonateMutation = useImpersonateUser();
   const deleteMutation = useDeleteUser();
+  
+  const linkedInEnabled = orgFeatures?.features?.linkedInMonitoring?.enabled ?? false;
 
   const [activeTab, setActiveTab] = useState<TabType>('profile');
   const [showSuspendModal, setShowSuspendModal] = useState(false);
@@ -285,6 +291,46 @@ export default function UserDetailPage() {
               View Organization
             </Button>
           </div>
+        </Card>
+      )}
+
+      {/* Feature Access */}
+      {user.organization && (
+        <Card padding="sm">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Feature Access</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between p-3 bg-surface-50 dark:bg-surface-800 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Linkedin className="w-5 h-5 text-blue-600" />
+                <div>
+                  <span className="font-medium text-surface-900 dark:text-white">LinkedIn Monitoring</span>
+                  <p className="text-xs text-surface-500">
+                    via {user.organization.name}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                {/* Status Badge */}
+                {linkedInEnabled ? (
+                  <Badge variant="success">Enabled</Badge>
+                ) : (
+                  <Badge variant="default">Not Enabled</Badge>
+                )}
+                
+                {/* Link to Organization Settings */}
+                <Link 
+                  href={`/admin/organizations/${user.organization._id}`}
+                  className="text-sm text-blue-600 hover:underline flex items-center gap-1"
+                >
+                  {linkedInEnabled ? 'View Settings' : 'Enable for Org'}
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          </CardContent>
         </Card>
       )}
 

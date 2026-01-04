@@ -5,6 +5,9 @@ import {
   IAdminOrganization,
   IAdminOrganizationDetail,
   AdminOrganizationParams,
+  IOrganizationFeaturesResponse,
+  IUpdateLinkedInFeatureDto,
+  IUpdateLinkedInFeatureResponse,
 } from '@/types/admin';
 
 export const adminOrganizationsService = {
@@ -50,6 +53,30 @@ export const adminOrganizationsService = {
     await adminApi.delete(`/organizations/${id}`, {
       data: { confirmName },
     });
+  },
+
+  /**
+   * Get organization features
+   */
+  async getFeatures(id: string): Promise<IOrganizationFeaturesResponse> {
+    const response = await adminApi.get<AdminApiResponse<IOrganizationFeaturesResponse>>(
+      `/organizations/${id}/features`
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Update LinkedIn monitoring feature
+   */
+  async updateLinkedIn(
+    id: string,
+    data: IUpdateLinkedInFeatureDto
+  ): Promise<IUpdateLinkedInFeatureResponse> {
+    const response = await adminApi.post<AdminApiResponse<IUpdateLinkedInFeatureResponse>>(
+      `/organizations/${id}/features/linkedin`,
+      data
+    );
+    return response.data.data;
   },
 };
 
