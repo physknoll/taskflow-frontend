@@ -16,6 +16,7 @@ import {
   UpdateLinkedInScraperSettingsDto,
   UpdateLinkedInPostActionDto,
   LinkedInActionStatus,
+  LinkedInCSVUploadResponse,
 } from '@/types';
 import toast from 'react-hot-toast';
 
@@ -264,6 +265,49 @@ export function useLinkedInProfile(id: string) {
     queryFn: () => linkedinService.getProfile(id),
     enabled: !!id,
   });
+}
+
+export function useLinkedInCSVUpload() {
+  const queryClient = useQueryClient();
+
+  const uploadMutation = useMutation({
+    mutationFn: (file: File) => linkedinService.uploadCSV(file),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: linkedinKeys.all });
+      if (result.skipped > 0) {
+        toast.success(`Imported ${result.created} profiles. ${result.skipped} skipped.`);
+      } else {
+        toast.success(`Imported ${result.created} profiles`);
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to upload CSV');
+    },
+  });
+
+  const downloadTemplate = async () => {
+    try {
+      const blob = await linkedinService.downloadCSVTemplate();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'linkedin-profiles-template.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to download template');
+    }
+  };
+
+  return {
+    uploadCSV: uploadMutation.mutateAsync,
+    isUploading: uploadMutation.isPending,
+    uploadResult: uploadMutation.data,
+    resetUpload: uploadMutation.reset,
+    downloadTemplate,
+  };
 }
 
 // ============================================

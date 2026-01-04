@@ -327,6 +327,19 @@ export interface LinkedInTriggerScrapeResponse {
   status: string;
 }
 
+export interface LinkedInCSVSkippedRow {
+  row: number;
+  url: string;
+  reason: string;
+}
+
+export interface LinkedInCSVUploadResponse {
+  created: number;
+  skipped: number;
+  createdProfiles: LinkedInProfile[];
+  skippedRows: LinkedInCSVSkippedRow[];
+}
+
 // Organization Feature Flag
 export interface LinkedInFeatureConfig {
   enabled: boolean;

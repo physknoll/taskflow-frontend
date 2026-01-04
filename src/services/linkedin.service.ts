@@ -10,6 +10,7 @@ import {
   LinkedInConnectionCode,
   LinkedInScrapersResponse,
   LinkedInTriggerScrapeResponse,
+  LinkedInCSVUploadResponse,
   LinkedInProfileFilters,
   LinkedInPostFilters,
   LinkedInSessionFilters,
@@ -147,6 +148,30 @@ export const linkedinService = {
   async triggerScrape(profileId: string): Promise<LinkedInTriggerScrapeResponse> {
     const response = await api.post<ApiResponse<LinkedInTriggerScrapeResponse>>(
       `${BASE_URL}/profiles/${profileId}/scrape`
+    );
+    return response.data.data;
+  },
+
+  // CSV Import
+  async downloadCSVTemplate(): Promise<Blob> {
+    const response = await api.get(`${BASE_URL}/profiles/csv-template`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  async uploadCSV(file: File): Promise<LinkedInCSVUploadResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post<ApiResponse<LinkedInCSVUploadResponse>>(
+      `${BASE_URL}/profiles/upload-csv`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
     );
     return response.data.data;
   },

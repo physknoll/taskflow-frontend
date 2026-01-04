@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLinkedInProfiles } from '@/hooks/useLinkedIn';
 import { useClients } from '@/hooks/useClients';
-import { ProfileCard, AddProfileModal } from '@/components/linkedin';
+import { ProfileCard, AddProfileModal, CSVUploadModal } from '@/components/linkedin';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
@@ -18,6 +18,7 @@ import {
   RefreshCw,
   Filter,
   X,
+  Upload,
 } from 'lucide-react';
 
 const profileTypeOptions: { value: LinkedInProfileType | ''; label: string }[] = [
@@ -40,6 +41,7 @@ export default function LinkedInProfilesPage() {
   const [clientId, setClientId] = useState(searchParams.get('clientId') || '');
   const [monitoringEnabled, setMonitoringEnabled] = useState<boolean | undefined>(undefined);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showCSVUploadModal, setShowCSVUploadModal] = useState(false);
   const [editProfile, setEditProfile] = useState<LinkedInProfile | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<LinkedInProfile | null>(null);
   const [scrapingProfileId, setScrapingProfileId] = useState<string | null>(null);
@@ -116,10 +118,16 @@ export default function LinkedInProfilesPage() {
             Refresh
           </Button>
           {canManage && (
-            <Button onClick={() => setShowAddModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Profile
-            </Button>
+            <>
+              <Button variant="outline" onClick={() => setShowCSVUploadModal(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Bulk Import
+              </Button>
+              <Button onClick={() => setShowAddModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Profile
+              </Button>
+            </>
           )}
         </div>
       </div>
@@ -248,6 +256,13 @@ export default function LinkedInProfilesPage() {
         onClose={() => setShowAddModal(false)}
         onSubmit={handleAddProfile}
         isSubmitting={isAdding}
+      />
+
+      {/* CSV Upload Modal */}
+      <CSVUploadModal
+        isOpen={showCSVUploadModal}
+        onClose={() => setShowCSVUploadModal(false)}
+        onSuccess={() => refetch()}
       />
 
       {/* Edit Profile Modal */}
