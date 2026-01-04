@@ -64,10 +64,11 @@ export function Sidebar() {
     if (item.permission && !hasPermission(user?.role, item.permission)) {
       return false;
     }
+    // TODO: Re-enable feature flag check for production
     // Check feature flag for LinkedIn
-    if (item.featureFlag === 'linkedInMonitoring' && !isLinkedInEnabled) {
-      return false;
-    }
+    // if (item.featureFlag === 'linkedInMonitoring' && !isLinkedInEnabled) {
+    //   return false;
+    // }
     return true;
   });
 
