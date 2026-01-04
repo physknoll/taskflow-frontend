@@ -17,16 +17,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Initialize auth (will fetch user if token exists)
   useAdminAuth();
 
-  // Check if we're on the login page
+  // Check if we're on a public auth page (login, callback, error)
   const isLoginPage = pathname === '/admin/login';
+  const isAuthCallbackPage = pathname === '/admin/auth/callback';
+  const isAuthErrorPage = pathname === '/admin/auth/error';
+  const isPublicAuthPage = isLoginPage || isAuthCallbackPage || isAuthErrorPage;
 
   useEffect(() => {
     // Only redirect after hydration is complete
-    if (_hasHydrated && !isLoading && !isAuthenticated && !isLoginPage) {
+    // Don't redirect if on public auth pages (login, callback, error)
+    if (_hasHydrated && !isLoading && !isAuthenticated && !isPublicAuthPage) {
       // Redirect to admin login if not authenticated
       router.push('/admin/login');
     }
-  }, [isAuthenticated, isLoading, isLoginPage, router, _hasHydrated]);
+  }, [isAuthenticated, isLoading, isPublicAuthPage, router, _hasHydrated]);
 
   // Wait for hydration before showing anything
   if (!_hasHydrated) {
@@ -40,8 +44,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // For login page, render without layout
-  if (isLoginPage) {
+  // For public auth pages (login, callback, error), render without layout
+  if (isPublicAuthPage) {
     return <>{children}</>;
   }
 
