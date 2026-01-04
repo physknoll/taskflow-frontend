@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -24,9 +25,20 @@ import {
   FolderKanban,
   Bot,
   CalendarDays,
+  Linkedin,
 } from 'lucide-react';
+import { useLinkedInFeature } from '@/hooks/useOrganization';
 
-const navigation = [
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  permission: string | null;
+  badge?: boolean;
+  featureFlag?: string;
+}
+
+const navigation: NavItem[] = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard, permission: null },
   { name: 'Calendar', href: '/calendar', icon: CalendarDays, permission: null },
   { name: 'Projects', href: '/projects', icon: FolderKanban, permission: null },
@@ -36,6 +48,7 @@ const navigation = [
   { name: 'Clients', href: '/clients', icon: Building2, permission: 'clients.view' },
   { name: 'Analytics', href: '/analytics', icon: BarChart3, permission: 'analytics.view_all' },
   { name: 'AI Manager', href: '/ai-manager', icon: Bot, permission: 'aipm.view' },
+  { name: 'LinkedIn', href: '/linkedin', icon: Linkedin, permission: 'linkedin.view', featureFlag: 'linkedInMonitoring' },
   { name: 'Settings', href: '/settings', icon: Settings, permission: null },
 ];
 
@@ -44,10 +57,19 @@ export function Sidebar() {
   const { user, logout } = useAuthStore();
   const { sidebarCollapsed, sidebarOpen, toggleSidebar, setSidebarOpen } = useUIStore();
   const { pendingCount } = useReviews();
+  const { isEnabled: isLinkedInEnabled } = useLinkedInFeature();
 
-  const filteredNav = navigation.filter(
-    (item) => !item.permission || hasPermission(user?.role, item.permission)
-  );
+  const filteredNav = navigation.filter((item) => {
+    // Check permission
+    if (item.permission && !hasPermission(user?.role, item.permission)) {
+      return false;
+    }
+    // Check feature flag for LinkedIn
+    if (item.featureFlag === 'linkedInMonitoring' && !isLinkedInEnabled) {
+      return false;
+    }
+    return true;
+  });
 
   const handleLogout = () => {
     logout();

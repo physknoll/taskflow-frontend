@@ -1,6 +1,7 @@
 import api, { setTokens, clearTokens } from './api';
 import {
   IUser,
+  IOrganization,
   LoginDto,
   RegisterDto,
   ApiResponse,
@@ -45,6 +46,11 @@ export const authService = {
 
   async getCurrentUser(): Promise<IUser> {
     const response = await api.get<ApiResponse<IUser>>('/auth/me');
+    return response.data.data;
+  },
+
+  async getCurrentOrganization(): Promise<IOrganization> {
+    const response = await api.get<ApiResponse<IOrganization>>('/organizations/current');
     return response.data.data;
   },
 

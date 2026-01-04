@@ -57,6 +57,12 @@ const PERMISSIONS: Record<string, string[]> = {
   // System Settings
   'settings.view': ['owner', 'manager'],
   'settings.edit': ['owner'],
+
+  // LinkedIn Monitoring
+  'linkedin.view': ['owner', 'manager', 'employee'],
+  'linkedin.manage_profiles': ['owner', 'manager'],
+  'linkedin.manage_scrapers': ['owner', 'manager'],
+  'linkedin.update_actions': ['owner', 'manager', 'employee'],
 };
 
 export function hasPermission(role: string | undefined, permission: string): boolean {
@@ -136,6 +142,14 @@ export function canAssignUsers(role: string | undefined): boolean {
  * - Only Owner and Manager can delete
  */
 export function canDeleteTicket(role: string | undefined): boolean {
+  return role === 'owner' || role === 'manager';
+}
+
+/**
+ * Check if user can manage LinkedIn profiles and scrapers
+ * - Only Owner and Manager can add/remove profiles and scrapers
+ */
+export function canManageLinkedIn(role: string | undefined): boolean {
   return role === 'owner' || role === 'manager';
 }
 

@@ -718,6 +718,14 @@ export interface IOrganization {
   seatCount: number;
   trialEndsAt?: string;
   billingEmail?: string;
+  features?: {
+    linkedInMonitoring?: {
+      enabled: boolean;
+      enabledAt?: string;
+      maxProfiles?: number;
+      maxScrapers?: number;
+    };
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -1150,4 +1158,9 @@ export * from './calendar';
 // SOP Types (Knowledge Base SOPs)
 // ============================================
 export * from './sop';
+
+// ============================================
+// LinkedIn Monitoring Types
+// ============================================
+export * from './linkedin';
 
