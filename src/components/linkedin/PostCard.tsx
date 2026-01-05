@@ -2,6 +2,7 @@
 
 import { LinkedInPost, LinkedInActionStatus } from '@/types';
 import { linkedinService } from '@/services/linkedin.service';
+import { useAuthStore } from '@/stores/authStore';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -58,10 +59,11 @@ const mediaTypeIcons = {
 export function PostCard({ post, onAction, onViewDetails, onViewScreenshot, compact = false }: PostCardProps) {
   const [showMenu, setShowMenu] = useState(false);
   const [screenshotError, setScreenshotError] = useState(false);
+  const { token } = useAuthStore();
 
   const MediaIcon = post.mediaType ? mediaTypeIcons[post.mediaType] : null;
   const hasScreenshot = !!post.screenshotPath && !screenshotError;
-  const screenshotUrl = post.screenshotPath ? linkedinService.getScreenshotUrl(post._id) : null;
+  const screenshotUrl = post.screenshotPath ? linkedinService.getScreenshotUrl(post._id, token || undefined) : null;
 
   const getProfileInfo = () => {
     if (typeof post.profileId === 'string') {

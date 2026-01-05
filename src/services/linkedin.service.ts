@@ -220,11 +220,13 @@ export const linkedinService = {
     return response.data.data;
   },
 
-  getScreenshotUrl(postId: string): string {
+  getScreenshotUrl(postId: string, token?: string): string {
     // Returns the URL to fetch the screenshot image
     // The API returns the raw image with proper Content-Type header
+    // Token is passed as query param for use in <img> tags
     const baseUrl = api.defaults.baseURL || '';
-    return `${baseUrl}${BASE_URL}/posts/${postId}/screenshot`;
+    const url = `${baseUrl}${BASE_URL}/posts/${postId}/screenshot`;
+    return token ? `${url}?token=${token}` : url;
   },
 
   async updatePostAction(id: string, data: UpdateLinkedInPostActionDto): Promise<LinkedInPost> {

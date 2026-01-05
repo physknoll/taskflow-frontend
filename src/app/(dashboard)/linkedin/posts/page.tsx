@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useLinkedInPosts, useLinkedInProfiles } from '@/hooks/useLinkedIn';
 import { useClients } from '@/hooks/useClients';
 import { linkedinService } from '@/services/linkedin.service';
+import { useAuthStore } from '@/stores/authStore';
 import { PostCard } from '@/components/linkedin';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -47,6 +48,7 @@ const activityTypeOptions: { value: LinkedInActivityType | ''; label: string }[]
 
 export default function LinkedInPostsPage() {
   const searchParams = useSearchParams();
+  const { token } = useAuthStore();
   const { clients } = useClients();
   const { profiles } = useLinkedInProfiles({ limit: 100 });
 
@@ -323,7 +325,7 @@ export default function LinkedInPostsPage() {
                   </h4>
                   <div className="flex items-center gap-2">
                     <a
-                      href={linkedinService.getScreenshotUrl(selectedPost._id)}
+                      href={linkedinService.getScreenshotUrl(selectedPost._id, token || undefined)}
                       download={`linkedin-post-${selectedPost._id}.png`}
                       className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
                     >
@@ -340,7 +342,7 @@ export default function LinkedInPostsPage() {
                   className="relative w-full group rounded-lg overflow-hidden border border-surface-200 dark:border-surface-700 hover:border-primary-400 transition-colors"
                 >
                   <img
-                    src={linkedinService.getScreenshotUrl(selectedPost._id)}
+                    src={linkedinService.getScreenshotUrl(selectedPost._id, token || undefined)}
                     alt="Post screenshot"
                     className="w-full max-h-80 object-contain bg-surface-100 dark:bg-surface-800"
                   />
@@ -461,7 +463,7 @@ export default function LinkedInPostsPage() {
               }`}
             >
               <img
-                src={linkedinService.getScreenshotUrl(screenshotPost._id)}
+                src={linkedinService.getScreenshotUrl(screenshotPost._id, token || undefined)}
                 alt="Post screenshot"
                 className={`${
                   screenshotZoom ? 'w-auto max-w-none' : 'w-full object-contain'
@@ -491,7 +493,7 @@ export default function LinkedInPostsPage() {
                   )}
                 </Button>
                 <a
-                  href={linkedinService.getScreenshotUrl(screenshotPost._id)}
+                  href={linkedinService.getScreenshotUrl(screenshotPost._id, token || undefined)}
                   download={`linkedin-post-${screenshotPost._id}.png`}
                   className="inline-flex"
                 >
