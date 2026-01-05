@@ -1,5 +1,5 @@
 import api from './api';
-import {
+import type {
   LinkedInProfile,
   LinkedInPost,
   LinkedInScraper,
@@ -145,9 +145,10 @@ export const linkedinService = {
     await api.delete(`${BASE_URL}/profiles/${id}`);
   },
 
-  async triggerScrape(profileId: string): Promise<LinkedInTriggerScrapeResponse> {
+  async triggerScrape(profileId: string, scraperId?: string): Promise<LinkedInTriggerScrapeResponse> {
     const response = await api.post<ApiResponse<LinkedInTriggerScrapeResponse>>(
-      `${BASE_URL}/profiles/${profileId}/scrape`
+      `${BASE_URL}/profiles/${profileId}/scrape`,
+      scraperId ? { scraperId } : undefined
     );
     return response.data.data;
   },

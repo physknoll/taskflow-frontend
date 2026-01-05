@@ -1,6 +1,6 @@
 'use client';
 
-import { LinkedInProfile, LinkedInProfileType } from '@/types';
+import { LinkedInProfile, LinkedInProfileType, LinkedInScraper } from '@/types';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -17,6 +17,9 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
+  ChevronDown,
+  Monitor,
+  Star,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useState } from 'react';
@@ -24,11 +27,13 @@ import { useState } from 'react';
 interface ProfileCardProps {
   profile: LinkedInProfile;
   onEdit?: () => void;
-  onScrape?: () => void;
+  onScrape?: (scraperId?: string) => void;
+  onScrapeWithSelection?: () => void;
   onDelete?: () => void;
   onToggleMonitoring?: () => void;
   isScraping?: boolean;
   showActions?: boolean;
+  scrapers?: LinkedInScraper[];
 }
 
 const profileTypeLabels: Record<LinkedInProfileType, string> = {
@@ -49,12 +54,19 @@ export function ProfileCard({
   profile,
   onEdit,
   onScrape,
+  onScrapeWithSelection,
   onDelete,
   onToggleMonitoring,
   isScraping,
   showActions = true,
+  scrapers = [],
 }: ProfileCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [showScrapeMenu, setShowScrapeMenu] = useState(false);
+
+  const onlineScrapers = scrapers.filter((s) => s.isOnlineNow);
+  const preferredScraper = scrapers.find((s) => s._id === profile.preferredScraperId);
+  const hasMultipleScrapers = onlineScrapers.length > 1;
 
   const getStatusIcon = () => {
     switch (profile.lastScrapeStatus) {
@@ -206,16 +218,81 @@ export function ProfileCard({
             </span>
           </div>
           {showActions && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onScrape}
-              disabled={isScraping || !profile.monitoringEnabled}
-              className="flex items-center gap-1"
-            >
-              <RefreshCw className={cn('h-3 w-3', isScraping && 'animate-spin')} />
-              {isScraping ? 'Scraping...' : 'Scrape'}
-            </Button>
+            <div className="relative flex items-center">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onScrape?.()}
+                disabled={isScraping || !profile.monitoringEnabled}
+                className={cn(
+                  'flex items-center gap-1',
+                  hasMultipleScrapers && 'rounded-r-none border-r-0'
+                )}
+              >
+                <RefreshCw className={cn('h-3 w-3', isScraping && 'animate-spin')} />
+                {isScraping ? 'Scraping...' : 'Scrape'}
+              </Button>
+              {hasMultipleScrapers && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowScrapeMenu(!showScrapeMenu)}
+                    disabled={isScraping || !profile.monitoringEnabled}
+                    className="rounded-l-none px-1.5"
+                  >
+                    <ChevronDown className="h-3 w-3" />
+                  </Button>
+                  {showScrapeMenu && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setShowScrapeMenu(false)}
+                      />
+                      <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-surface-800 rounded-lg shadow-lg border border-surface-200 dark:border-surface-700 z-20 py-1">
+                        <div className="px-3 py-2 border-b border-surface-200 dark:border-surface-700">
+                          <p className="text-xs font-medium text-surface-500 uppercase">
+                            Select Scraper
+                          </p>
+                        </div>
+                        {onlineScrapers.map((scraper) => (
+                          <button
+                            key={scraper._id}
+                            onClick={() => {
+                              onScrape?.(scraper._id);
+                              setShowScrapeMenu(false);
+                            }}
+                            className="w-full px-3 py-2 text-left text-sm hover:bg-surface-100 dark:hover:bg-surface-700 flex items-center gap-2"
+                          >
+                            <Monitor className="h-4 w-4 text-surface-500" />
+                            <span className="flex-1 truncate">{scraper.name}</span>
+                            {scraper._id === profile.preferredScraperId && (
+                              <Star className="h-3 w-3 text-warning-500" />
+                            )}
+                            <div className="w-2 h-2 rounded-full bg-success-500" />
+                          </button>
+                        ))}
+                        {onScrapeWithSelection && (
+                          <>
+                            <hr className="my-1 border-surface-200 dark:border-surface-700" />
+                            <button
+                              onClick={() => {
+                                onScrapeWithSelection();
+                                setShowScrapeMenu(false);
+                              }}
+                              className="w-full px-3 py-2 text-left text-sm text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 flex items-center gap-2"
+                            >
+                              <Monitor className="h-4 w-4" />
+                              More options...
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
           )}
         </div>
 

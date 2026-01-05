@@ -7,3 +7,4 @@ export { SessionCard } from './SessionCard';
 export { ConnectionCodeModal } from './ConnectionCodeModal';
 export { AddProfileModal } from './AddProfileModal';
 export { CSVUploadModal } from './CSVUploadModal';
+export { ScraperSelectModal } from './ScraperSelectModal';

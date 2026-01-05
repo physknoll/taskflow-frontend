@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useLinkedInProfiles } from '@/hooks/useLinkedIn';
+import { useLinkedInProfiles, useLinkedInScrapers } from '@/hooks/useLinkedIn';
 import { useClients } from '@/hooks/useClients';
-import { ProfileCard, ProfilesTable, AddProfileModal, CSVUploadModal } from '@/components/linkedin';
+import { ProfileCard, ProfilesTable, AddProfileModal, CSVUploadModal, ScraperSelectModal } from '@/components/linkedin';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
@@ -21,6 +21,8 @@ import {
   Upload,
   LayoutGrid,
   List,
+  Monitor,
+  Star,
 } from 'lucide-react';
 
 const profileTypeOptions: { value: LinkedInProfileType | ''; label: string }[] = [
@@ -35,6 +37,7 @@ export default function LinkedInProfilesPage() {
   const searchParams = useSearchParams();
   const { user } = useAuthStore();
   const { clients } = useClients();
+  const { scrapers } = useLinkedInScrapers();
   
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [profileType, setProfileType] = useState<LinkedInProfileType | ''>(
@@ -48,6 +51,7 @@ export default function LinkedInProfilesPage() {
   const [confirmDelete, setConfirmDelete] = useState<LinkedInProfile | null>(null);
   const [scrapingProfileId, setScrapingProfileId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [scraperSelectProfile, setScraperSelectProfile] = useState<LinkedInProfile | null>(null);
 
   const {
     profiles,
@@ -79,13 +83,19 @@ export default function LinkedInProfilesPage() {
     await updateProfile(profile._id, { monitoringEnabled: !profile.monitoringEnabled });
   };
 
-  const handleTriggerScrape = async (profile: LinkedInProfile) => {
+  const handleTriggerScrape = async (profile: LinkedInProfile, scraperId?: string) => {
     setScrapingProfileId(profile._id);
     try {
-      await triggerScrape(profile._id);
+      await triggerScrape(profile._id, scraperId);
     } finally {
       setScrapingProfileId(null);
     }
+  };
+
+  const handleScraperSelect = async (scraperId?: string) => {
+    if (!scraperSelectProfile) return;
+    await handleTriggerScrape(scraperSelectProfile, scraperId);
+    setScraperSelectProfile(null);
   };
 
   const handleDelete = async () => {
@@ -268,11 +278,13 @@ export default function LinkedInProfilesPage() {
               key={profile._id}
               profile={profile}
               onEdit={() => setEditProfile(profile)}
-              onScrape={() => handleTriggerScrape(profile)}
+              onScrape={(scraperId) => handleTriggerScrape(profile, scraperId)}
+              onScrapeWithSelection={() => setScraperSelectProfile(profile)}
               onDelete={() => setConfirmDelete(profile)}
               onToggleMonitoring={() => handleToggleMonitoring(profile)}
               isScraping={scrapingProfileId === profile._id}
               showActions={canManage}
+              scrapers={scrapers}
             />
           ))}
         </div>
@@ -281,10 +293,12 @@ export default function LinkedInProfilesPage() {
           profiles={profiles}
           onEdit={setEditProfile}
           onScrape={handleTriggerScrape}
+          onScrapeWithSelection={setScraperSelectProfile}
           onDelete={setConfirmDelete}
           onToggleMonitoring={handleToggleMonitoring}
           scrapingProfileId={scrapingProfileId}
           showActions={canManage}
+          scrapers={scrapers}
         />
       )}
 
@@ -310,6 +324,16 @@ export default function LinkedInProfilesPage() {
         isOpen={showCSVUploadModal}
         onClose={() => setShowCSVUploadModal(false)}
         onSuccess={() => refetch()}
+      />
+
+      {/* Scraper Selection Modal */}
+      <ScraperSelectModal
+        isOpen={!!scraperSelectProfile}
+        onClose={() => setScraperSelectProfile(null)}
+        onSelect={handleScraperSelect}
+        scrapers={scrapers}
+        profile={scraperSelectProfile}
+        isLoading={!!scrapingProfileId}
       />
 
       {/* Edit Profile Modal */}
@@ -385,6 +409,34 @@ export default function LinkedInProfilesPage() {
                 <option value={1440}>Daily</option>
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                <div className="flex items-center gap-2">
+                  <Monitor className="h-4 w-4" />
+                  Preferred Scraper
+                </div>
+              </label>
+              <select
+                value={editProfile.preferredScraperId || ''}
+                onChange={(e) =>
+                  setEditProfile({
+                    ...editProfile,
+                    preferredScraperId: e.target.value || undefined,
+                  })
+                }
+                className="w-full px-4 py-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-800"
+              >
+                <option value="">Any available scraper</option>
+                {scrapers.map((scraper) => (
+                  <option key={scraper._id} value={scraper._id}>
+                    {scraper.name} {scraper.isOnlineNow ? '(Online)' : '(Offline)'}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-surface-500">
+                When set, scrapes will prefer this scraper when it&apos;s online
+              </p>
+            </div>
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button variant="outline" onClick={() => setEditProfile(null)}>
                 Cancel
@@ -396,6 +448,7 @@ export default function LinkedInProfilesPage() {
                     headline: editProfile.headline,
                     profileType: editProfile.profileType,
                     intervalMinutes: editProfile.scrapeSchedule.intervalMinutes,
+                    preferredScraperId: editProfile.preferredScraperId || null,
                   });
                   setEditProfile(null);
                 }}

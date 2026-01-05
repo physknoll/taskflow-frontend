@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { LinkedInProfile, LinkedInProfileType } from '@/types';
+import { LinkedInProfile, LinkedInProfileType, LinkedInScraper } from '@/types';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -19,17 +19,21 @@ import {
   ChevronUp,
   ChevronDown,
   MoreHorizontal,
+  Monitor,
+  Star,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface ProfilesTableProps {
   profiles: LinkedInProfile[];
   onEdit?: (profile: LinkedInProfile) => void;
-  onScrape?: (profile: LinkedInProfile) => void;
+  onScrape?: (profile: LinkedInProfile, scraperId?: string) => void;
+  onScrapeWithSelection?: (profile: LinkedInProfile) => void;
   onDelete?: (profile: LinkedInProfile) => void;
   onToggleMonitoring?: (profile: LinkedInProfile) => void;
   scrapingProfileId?: string | null;
   showActions?: boolean;
+  scrapers?: LinkedInScraper[];
 }
 
 type SortField = 'displayName' | 'profileType' | 'totalPostsCollected' | 'intervalMinutes' | 'lastScrapedAt' | 'priority' | 'monitoringEnabled';
@@ -65,14 +69,20 @@ export function ProfilesTable({
   profiles,
   onEdit,
   onScrape,
+  onScrapeWithSelection,
   onDelete,
   onToggleMonitoring,
   scrapingProfileId,
   showActions = true,
+  scrapers = [],
 }: ProfilesTableProps) {
   const [sortField, setSortField] = useState<SortField>('displayName');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [scrapeMenuId, setScrapeMenuId] = useState<string | null>(null);
+
+  const onlineScrapers = scrapers.filter((s) => s.isOnlineNow);
+  const hasMultipleScrapers = onlineScrapers.length > 1;
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -317,20 +327,83 @@ export function ProfilesTable({
                 {showActions && (
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => onScrape?.(profile)}
-                        disabled={scrapingProfileId === profile._id || !profile.monitoringEnabled}
-                        className="p-1.5"
-                      >
-                        <RefreshCw
-                          className={cn(
-                            'h-4 w-4',
-                            scrapingProfileId === profile._id && 'animate-spin'
+                      {/* Scrape Button with optional dropdown */}
+                      <div className="relative">
+                        <div className="flex">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => onScrape?.(profile)}
+                            disabled={scrapingProfileId === profile._id || !profile.monitoringEnabled}
+                            className={cn('p-1.5', hasMultipleScrapers && 'rounded-r-none')}
+                          >
+                            <RefreshCw
+                              className={cn(
+                                'h-4 w-4',
+                                scrapingProfileId === profile._id && 'animate-spin'
+                              )}
+                            />
+                          </Button>
+                          {hasMultipleScrapers && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setScrapeMenuId(scrapeMenuId === profile._id ? null : profile._id)}
+                              disabled={scrapingProfileId === profile._id || !profile.monitoringEnabled}
+                              className="p-1 rounded-l-none border-l border-surface-200 dark:border-surface-600"
+                            >
+                              <ChevronDown className="h-3 w-3" />
+                            </Button>
                           )}
-                        />
-                      </Button>
+                        </div>
+                        {scrapeMenuId === profile._id && (
+                          <>
+                            <div
+                              className="fixed inset-0 z-10"
+                              onClick={() => setScrapeMenuId(null)}
+                            />
+                            <div className="absolute right-0 mt-1 w-56 bg-white dark:bg-surface-800 rounded-lg shadow-lg border border-surface-200 dark:border-surface-700 z-20 py-1">
+                              <div className="px-3 py-2 border-b border-surface-200 dark:border-surface-700">
+                                <p className="text-xs font-medium text-surface-500 uppercase">
+                                  Select Scraper
+                                </p>
+                              </div>
+                              {onlineScrapers.map((scraper) => (
+                                <button
+                                  key={scraper._id}
+                                  onClick={() => {
+                                    onScrape?.(profile, scraper._id);
+                                    setScrapeMenuId(null);
+                                  }}
+                                  className="w-full px-3 py-2 text-left text-sm hover:bg-surface-100 dark:hover:bg-surface-700 flex items-center gap-2"
+                                >
+                                  <Monitor className="h-4 w-4 text-surface-500" />
+                                  <span className="flex-1 truncate">{scraper.name}</span>
+                                  {scraper._id === profile.preferredScraperId && (
+                                    <Star className="h-3 w-3 text-warning-500" />
+                                  )}
+                                  <div className="w-2 h-2 rounded-full bg-success-500" />
+                                </button>
+                              ))}
+                              {onScrapeWithSelection && (
+                                <>
+                                  <hr className="my-1 border-surface-200 dark:border-surface-700" />
+                                  <button
+                                    onClick={() => {
+                                      onScrapeWithSelection(profile);
+                                      setScrapeMenuId(null);
+                                    }}
+                                    className="w-full px-3 py-2 text-left text-sm text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 flex items-center gap-2"
+                                  >
+                                    <Monitor className="h-4 w-4" />
+                                    More options...
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </>
+                        )}
+                      </div>
                       <div className="relative">
                         <Button
                           size="sm"

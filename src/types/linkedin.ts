@@ -27,6 +27,7 @@ export interface LinkedInProfile {
     preferredTimes?: string[];
   };
   priority: LinkedInPriority;
+  preferredScraperId?: string;
   lastScrapedAt?: string;
   nextScheduledScrape?: string;
   lastScrapeStatus: LinkedInScrapeStatus;
@@ -298,6 +299,7 @@ export interface UpdateLinkedInProfileDto {
   activityTypes?: ('posts' | 'comments' | 'reposts' | 'articles')[];
   intervalMinutes?: number;
   priority?: LinkedInPriority;
+  preferredScraperId?: string | null;
   tags?: string[];
   notes?: string;
 }
@@ -321,10 +323,17 @@ export interface LinkedInScrapersResponse {
   onlineCount: number;
 }
 
+export interface TriggerScrapeOptions {
+  scraperId?: string;
+}
+
 export interface LinkedInTriggerScrapeResponse {
   commandId: string;
   sessionId: string;
   status: string;
+  scraperId?: string;
+  scraperName?: string;
+  selectionReason?: 'explicit' | 'preferred' | 'fallback';
 }
 
 export interface LinkedInCSVSkippedRow {

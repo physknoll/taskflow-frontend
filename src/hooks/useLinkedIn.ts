@@ -225,14 +225,18 @@ export function useLinkedInProfiles(filters: LinkedInProfileFilters = {}) {
   });
 
   const scrapeMutation = useMutation({
-    mutationFn: (profileId: string) => linkedinService.triggerScrape(profileId),
-    onSuccess: () => {
-      toast.success('Scrape started');
+    mutationFn: ({ profileId, scraperId }: { profileId: string; scraperId?: string }) => 
+      linkedinService.triggerScrape(profileId, scraperId),
+    onSuccess: (result) => {
+      const scraperInfo = result.scraperName ? ` using ${result.scraperName}` : '';
+      toast.success(`Scrape started${scraperInfo}`);
     },
     onError: (error: any) => {
       const code = error.response?.data?.code;
       if (code === 'NO_ONLINE_SCRAPER') {
         toast.error('No scrapers are online. Please check your desktop agents.');
+      } else if (code === 'SCRAPER_OFFLINE') {
+        toast.error('Selected scraper is offline. Please choose another scraper.');
       } else {
         toast.error(error.response?.data?.message || 'Failed to start scrape');
       }
@@ -254,7 +258,8 @@ export function useLinkedInProfiles(filters: LinkedInProfileFilters = {}) {
     isUpdating: updateMutation.isPending,
     deleteProfile: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
-    triggerScrape: scrapeMutation.mutateAsync,
+    triggerScrape: (profileId: string, scraperId?: string) => 
+      scrapeMutation.mutateAsync({ profileId, scraperId }),
     isScraping: scrapeMutation.isPending,
   };
 }
