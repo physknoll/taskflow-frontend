@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLinkedInProfiles } from '@/hooks/useLinkedIn';
 import { useClients } from '@/hooks/useClients';
-import { ProfileCard, AddProfileModal, CSVUploadModal } from '@/components/linkedin';
+import { ProfileCard, ProfilesTable, AddProfileModal, CSVUploadModal } from '@/components/linkedin';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
@@ -19,6 +19,8 @@ import {
   Filter,
   X,
   Upload,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 
 const profileTypeOptions: { value: LinkedInProfileType | ''; label: string }[] = [
@@ -45,6 +47,7 @@ export default function LinkedInProfilesPage() {
   const [editProfile, setEditProfile] = useState<LinkedInProfile | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<LinkedInProfile | null>(null);
   const [scrapingProfileId, setScrapingProfileId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
   const {
     profiles,
@@ -196,16 +199,50 @@ export default function LinkedInProfilesPage() {
               Clear
             </Button>
           )}
+
+          {/* View Toggle */}
+          <div className="flex items-center border border-surface-300 dark:border-surface-600 rounded-lg overflow-hidden ml-auto">
+            <button
+              onClick={() => setViewMode('cards')}
+              className={`p-2 transition-colors ${
+                viewMode === 'cards'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-white dark:bg-surface-800 text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-700'
+              }`}
+              title="Card View"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2 transition-colors ${
+                viewMode === 'table'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-white dark:bg-surface-800 text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-700'
+              }`}
+              title="Table View"
+            >
+              <List className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Profiles Grid */}
+      {/* Profiles Grid/Table */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} variant="rounded" height={280} />
-          ))}
-        </div>
+        viewMode === 'cards' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} variant="rounded" height={280} />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} variant="rounded" height={48} className="mb-2" />
+            ))}
+          </div>
+        )
       ) : profiles.length === 0 ? (
         <div className="text-center py-16 bg-white dark:bg-surface-800 rounded-xl">
           <Users className="h-12 w-12 mx-auto mb-4 text-surface-400" />
@@ -224,7 +261,7 @@ export default function LinkedInProfilesPage() {
             </Button>
           )}
         </div>
-      ) : (
+      ) : viewMode === 'cards' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {profiles.map((profile) => (
             <ProfileCard
@@ -239,6 +276,16 @@ export default function LinkedInProfilesPage() {
             />
           ))}
         </div>
+      ) : (
+        <ProfilesTable
+          profiles={profiles}
+          onEdit={setEditProfile}
+          onScrape={handleTriggerScrape}
+          onDelete={setConfirmDelete}
+          onToggleMonitoring={handleToggleMonitoring}
+          scrapingProfileId={scrapingProfileId}
+          showActions={canManage}
+        />
       )}
 
       {/* Pagination */}
