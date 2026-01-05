@@ -101,6 +101,7 @@ export interface LinkedInPost {
   actionTicketId?: string;
   actionedAt?: string;
   actionedBy?: string;
+  screenshotPath?: string;
   firstSeenAt: string;
   lastScrapedAt: string;
   createdAt: string;

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLinkedInPosts, useLinkedInProfiles } from '@/hooks/useLinkedIn';
 import { useClients } from '@/hooks/useClients';
+import { linkedinService } from '@/services/linkedin.service';
 import { PostCard } from '@/components/linkedin';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -20,6 +21,10 @@ import {
   ThumbsUp,
   MessageCircle,
   Repeat2,
+  Camera,
+  Download,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 
@@ -56,6 +61,8 @@ export default function LinkedInPostsPage() {
   const [clientId, setClientId] = useState(searchParams.get('clientId') || '');
   const [isTrending, setIsTrending] = useState(searchParams.get('isTrending') === 'true');
   const [selectedPost, setSelectedPost] = useState<LinkedInPost | null>(null);
+  const [screenshotPost, setScreenshotPost] = useState<LinkedInPost | null>(null);
+  const [screenshotZoom, setScreenshotZoom] = useState(false);
   const [page, setPage] = useState(1);
 
   const {
@@ -230,6 +237,7 @@ export default function LinkedInPostsPage() {
               post={post}
               onAction={(status) => handleAction(post._id, status)}
               onViewDetails={() => setSelectedPost(post)}
+              onViewScreenshot={() => setScreenshotPost(post)}
             />
           ))}
         </div>
@@ -304,6 +312,46 @@ export default function LinkedInPostsPage() {
                 {selectedPost.content}
               </p>
             </div>
+
+            {/* Screenshot */}
+            {selectedPost.screenshotPath && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-semibold flex items-center gap-2">
+                    <Camera className="h-4 w-4" />
+                    Screenshot
+                  </h4>
+                  <div className="flex items-center gap-2">
+                    <a
+                      href={linkedinService.getScreenshotUrl(selectedPost._id)}
+                      download={`linkedin-post-${selectedPost._id}.png`}
+                      className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download
+                    </a>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setScreenshotPost(selectedPost);
+                    setSelectedPost(null);
+                  }}
+                  className="relative w-full group rounded-lg overflow-hidden border border-surface-200 dark:border-surface-700 hover:border-primary-400 transition-colors"
+                >
+                  <img
+                    src={linkedinService.getScreenshotUrl(selectedPost._id)}
+                    alt="Post screenshot"
+                    className="w-full max-h-80 object-contain bg-surface-100 dark:bg-surface-800"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 dark:bg-surface-800/90 rounded-full p-2">
+                      <ZoomIn className="h-5 w-5 text-surface-700 dark:text-surface-300" />
+                    </div>
+                  </div>
+                </button>
+              </div>
+            )}
 
             {/* Engagement */}
             <div className="flex items-center gap-6 py-4 border-t border-b border-surface-200 dark:border-surface-700">
@@ -389,6 +437,120 @@ export default function LinkedInPostsPage() {
               >
                 Mark as Actioned
               </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Screenshot Viewer Modal */}
+      <Modal
+        isOpen={!!screenshotPost}
+        onClose={() => {
+          setScreenshotPost(null);
+          setScreenshotZoom(false);
+        }}
+        title={`Screenshot: ${screenshotPost?.author.name || 'Post'}`}
+        size="xl"
+      >
+        {screenshotPost && screenshotPost.screenshotPath && (
+          <div className="space-y-4">
+            {/* Image Container */}
+            <div
+              className={`relative bg-surface-100 dark:bg-surface-800 rounded-lg overflow-auto ${
+                screenshotZoom ? 'max-h-[70vh]' : 'max-h-[60vh]'
+              }`}
+            >
+              <img
+                src={linkedinService.getScreenshotUrl(screenshotPost._id)}
+                alt="Post screenshot"
+                className={`${
+                  screenshotZoom ? 'w-auto max-w-none' : 'w-full object-contain'
+                }`}
+                style={screenshotZoom ? { minWidth: '100%' } : undefined}
+              />
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setScreenshotZoom(!screenshotZoom)}
+                >
+                  {screenshotZoom ? (
+                    <>
+                      <ZoomOut className="h-4 w-4 mr-1" />
+                      Fit to View
+                    </>
+                  ) : (
+                    <>
+                      <ZoomIn className="h-4 w-4 mr-1" />
+                      Full Size
+                    </>
+                  )}
+                </Button>
+                <a
+                  href={linkedinService.getScreenshotUrl(screenshotPost._id)}
+                  download={`linkedin-post-${screenshotPost._id}.png`}
+                  className="inline-flex"
+                >
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-1" />
+                    Download
+                  </Button>
+                </a>
+              </div>
+              <div className="flex items-center gap-3">
+                <a
+                  href={screenshotPost.postUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  View on LinkedIn
+                </a>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedPost(screenshotPost);
+                    setScreenshotPost(null);
+                    setScreenshotZoom(false);
+                  }}
+                >
+                  View Post Details
+                </Button>
+              </div>
+            </div>
+
+            {/* Post Info Summary */}
+            <div className="p-3 bg-surface-50 dark:bg-surface-700/50 rounded-lg">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-full bg-surface-200 dark:bg-surface-700 flex items-center justify-center text-sm font-semibold">
+                  {screenshotPost.author.name.charAt(0)}
+                </div>
+                <div>
+                  <p className="font-medium">{screenshotPost.author.name}</p>
+                  <p className="text-xs text-surface-500">
+                    {screenshotPost.linkedinTimestamp} • {screenshotPost.activityType}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 text-sm text-surface-600 dark:text-surface-400">
+                <span className="flex items-center gap-1">
+                  <ThumbsUp className="h-4 w-4" />
+                  {screenshotPost.engagement.reactions.toLocaleString()}
+                </span>
+                <span className="flex items-center gap-1">
+                  <MessageCircle className="h-4 w-4" />
+                  {screenshotPost.engagement.comments.toLocaleString()}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Repeat2 className="h-4 w-4" />
+                  {screenshotPost.engagement.reposts.toLocaleString()}
+                </span>
+              </div>
             </div>
           </div>
         )}

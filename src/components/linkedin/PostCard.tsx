@@ -1,6 +1,7 @@
 'use client';
 
 import { LinkedInPost, LinkedInActionStatus } from '@/types';
+import { linkedinService } from '@/services/linkedin.service';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -21,6 +22,8 @@ import {
   Video,
   FileText,
   BarChart2,
+  Camera,
+  Expand,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useState } from 'react';
@@ -29,6 +32,7 @@ interface PostCardProps {
   post: LinkedInPost;
   onAction?: (status: LinkedInActionStatus) => void;
   onViewDetails?: () => void;
+  onViewScreenshot?: () => void;
   compact?: boolean;
 }
 
@@ -51,10 +55,13 @@ const mediaTypeIcons = {
   none: null,
 };
 
-export function PostCard({ post, onAction, onViewDetails, compact = false }: PostCardProps) {
+export function PostCard({ post, onAction, onViewDetails, onViewScreenshot, compact = false }: PostCardProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const [screenshotError, setScreenshotError] = useState(false);
 
   const MediaIcon = post.mediaType ? mediaTypeIcons[post.mediaType] : null;
+  const hasScreenshot = !!post.screenshotPath && !screenshotError;
+  const screenshotUrl = post.screenshotPath ? linkedinService.getScreenshotUrl(post._id) : null;
 
   const getProfileInfo = () => {
     if (typeof post.profileId === 'string') {
@@ -177,6 +184,40 @@ export function PostCard({ post, onAction, onViewDetails, compact = false }: Pos
             </div>
           )}
         </div>
+
+        {/* Screenshot Thumbnail */}
+        {hasScreenshot && screenshotUrl && !compact && (
+          <div className="mb-4">
+            <button
+              onClick={onViewScreenshot}
+              className="relative w-full group rounded-lg overflow-hidden border border-surface-200 dark:border-surface-700 hover:border-primary-400 dark:hover:border-primary-500 transition-colors"
+            >
+              <img
+                src={screenshotUrl}
+                alt="Post screenshot"
+                className="w-full h-40 object-cover object-top"
+                onError={() => setScreenshotError(true)}
+              />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 dark:bg-surface-800/90 rounded-full p-2">
+                  <Expand className="h-5 w-5 text-surface-700 dark:text-surface-300" />
+                </div>
+              </div>
+              <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                <Camera className="h-3 w-3" />
+                Screenshot
+              </div>
+            </button>
+          </div>
+        )}
+
+        {/* Screenshot indicator for compact mode */}
+        {hasScreenshot && compact && (
+          <div className="mb-3 flex items-center gap-1 text-xs text-surface-500">
+            <Camera className="h-3 w-3" />
+            <span>Has screenshot</span>
+          </div>
+        )}
 
         {/* Engagement Stats */}
         <div className="flex items-center gap-4 py-3 border-t border-surface-200 dark:border-surface-700">

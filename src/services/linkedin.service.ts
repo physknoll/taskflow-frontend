@@ -220,6 +220,13 @@ export const linkedinService = {
     return response.data.data;
   },
 
+  getScreenshotUrl(postId: string): string {
+    // Returns the URL to fetch the screenshot image
+    // The API returns the raw image with proper Content-Type header
+    const baseUrl = api.defaults.baseURL || '';
+    return `${baseUrl}${BASE_URL}/posts/${postId}/screenshot`;
+  },
+
   async updatePostAction(id: string, data: UpdateLinkedInPostActionDto): Promise<LinkedInPost> {
     const response = await api.patch<ApiResponse<LinkedInPost>>(
       `${BASE_URL}/posts/${id}/action`,
