@@ -129,7 +129,7 @@ export interface LinkedInScraper {
   connectedAt?: string;
   disconnectedAt?: string;
   agentVersion?: string;
-  platform?: 'darwin' | 'win32' | 'linux';
+  platform?: 'darwin' | 'win32' | 'linux' | 'chrome' | 'extension' | 'chrome-extension';
   cookiesValid?: boolean;
   cookiesExpireAt?: string;
   linkedInAccountEmail?: string;

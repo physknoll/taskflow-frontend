@@ -9,6 +9,7 @@ import {
   Monitor,
   Laptop,
   Apple,
+  Chrome,
   MoreVertical,
   Trash2,
   Shield,
@@ -28,10 +29,13 @@ interface ScraperCardProps {
   onDelete?: () => void;
 }
 
-const platformIcons = {
+const platformIcons: Record<string, typeof Monitor> = {
   darwin: Apple,
   win32: Monitor,
   linux: Laptop,
+  chrome: Chrome,
+  extension: Chrome,
+  'chrome-extension': Chrome,
 };
 
 const scrapingModeLabels: Record<LinkedInScrapingMode, string> = {
@@ -54,7 +58,8 @@ export function ScraperCard({
 }: ScraperCardProps) {
   const [showMenu, setShowMenu] = useState(false);
 
-  const PlatformIcon = scraper.platform ? platformIcons[scraper.platform] : Monitor;
+  // Get platform icon with fallback to Monitor for unknown platforms
+  const PlatformIcon = (scraper.platform && platformIcons[scraper.platform]) || Monitor;
   const isOnline = scraper.isOnlineNow || scraper.status === 'online';
   const isRevoked = scraper.status === 'revoked';
 
@@ -176,9 +181,11 @@ export function ScraperCard({
           <Badge variant={isOnline ? 'success' : 'secondary'} size="sm">
             {isOnline ? 'Online' : 'Offline'}
           </Badge>
-          <Badge variant={scrapingModeColors[scraper.settings.scrapingMode]} size="sm">
-            {scrapingModeLabels[scraper.settings.scrapingMode]}
-          </Badge>
+          {scraper.settings?.scrapingMode && (
+            <Badge variant={scrapingModeColors[scraper.settings.scrapingMode] || 'primary'} size="sm">
+              {scrapingModeLabels[scraper.settings.scrapingMode] || scraper.settings.scrapingMode}
+            </Badge>
+          )}
           {isRevoked && (
             <Badge variant="danger" size="sm">
               Revoked
@@ -226,23 +233,25 @@ export function ScraperCard({
         </div>
 
         {/* Settings Summary */}
-        <div className="mt-3 pt-3 border-t border-surface-200 dark:border-surface-700">
-          <div className="flex flex-wrap gap-2 text-xs">
-            <span className="px-2 py-1 bg-surface-100 dark:bg-surface-700 rounded">
-              Max {scraper.settings.maxPostsPerScrape} posts
-            </span>
-            {scraper.settings.enableCommentScraping && (
+        {scraper.settings && (
+          <div className="mt-3 pt-3 border-t border-surface-200 dark:border-surface-700">
+            <div className="flex flex-wrap gap-2 text-xs">
               <span className="px-2 py-1 bg-surface-100 dark:bg-surface-700 rounded">
-                Comments
+                Max {scraper.settings.maxPostsPerScrape ?? 20} posts
               </span>
-            )}
-            {scraper.settings.enableScreenshots && (
-              <span className="px-2 py-1 bg-surface-100 dark:bg-surface-700 rounded">
-                Screenshots
-              </span>
-            )}
+              {scraper.settings.enableCommentScraping && (
+                <span className="px-2 py-1 bg-surface-100 dark:bg-surface-700 rounded">
+                  Comments
+                </span>
+              )}
+              {scraper.settings.enableScreenshots && (
+                <span className="px-2 py-1 bg-surface-100 dark:bg-surface-700 rounded">
+                  Screenshots
+                </span>
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );
