@@ -1,15 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useScrapingSchedules, useScrapingQueue } from '@/hooks/useScraping';
 import {
   ScheduleCard,
   ScheduleModal,
-  TargetCard,
-  TargetModal,
   QueueStatusPanel,
 } from '@/components/scraping';
+import { SchedulesTable } from './SchedulesTable';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -25,17 +23,17 @@ import {
   Plus,
   Calendar,
   RefreshCw,
-  ArrowLeft,
   CheckCircle,
   Clock,
   AlertTriangle,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 
-export default function ScrapingSchedulesPage() {
+export function SchedulesTab() {
   const { user } = useAuthStore();
   const {
     schedules,
-    pagination,
     isLoading,
     refetch,
     createSchedule,
@@ -65,6 +63,7 @@ export default function ScrapingSchedulesPage() {
   const [editingSchedule, setEditingSchedule] = useState<ScrapeSchedule | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<ScrapeSchedule | null>(null);
   const [triggeringId, setTriggeringId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table'); // Default to table
 
   const canManage = canManageLinkedIn(user?.role);
 
@@ -94,45 +93,11 @@ export default function ScrapingSchedulesPage() {
     }
   };
 
-  // Calculate stats
   const activeSchedules = schedules.filter((s) => s.enabled).length;
   const totalSchedules = schedules.length;
-  const hasQueuedCommands = (queueStatus?.pending || 0) + (queueStatus?.inProgress || 0) > 0;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/linkedin"
-            className="p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5 text-surface-500" />
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
-              Scraping Schedules
-            </h1>
-            <p className="text-surface-500 dark:text-surface-400">
-              Manage automated multi-platform scraping schedules
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => refetch()}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          {canManage && (
-            <Button onClick={() => setShowScheduleModal(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Schedule
-            </Button>
-          )}
-        </div>
-      </div>
-
       {/* Status Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
@@ -200,13 +165,61 @@ export default function ScrapingSchedulesPage() {
         </Card>
       </div>
 
-      {/* Schedules Grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} variant="rounded" height={220} />
-          ))}
+      {/* Actions Bar */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center border border-surface-300 dark:border-surface-600 rounded-lg overflow-hidden">
+          <button
+            onClick={() => setViewMode('table')}
+            className={`p-2 transition-colors ${
+              viewMode === 'table'
+                ? 'bg-primary-500 text-white'
+                : 'bg-white dark:bg-surface-800 text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-700'
+            }`}
+            title="Table View"
+          >
+            <List className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setViewMode('cards')}
+            className={`p-2 transition-colors ${
+              viewMode === 'cards'
+                ? 'bg-primary-500 text-white'
+                : 'bg-white dark:bg-surface-800 text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-700'
+            }`}
+            title="Card View"
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </button>
         </div>
+        <div className="flex items-center gap-3">
+          <Button variant="outline" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+          {canManage && (
+            <Button onClick={() => setShowScheduleModal(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Schedule
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Schedules Grid/Table */}
+      {isLoading ? (
+        viewMode === 'table' ? (
+          <div className="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} variant="rounded" height={48} className="mb-2" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} variant="rounded" height={220} />
+            ))}
+          </div>
+        )
       ) : schedules.length === 0 ? (
         <Card>
           <CardContent className="py-16">
@@ -216,8 +229,7 @@ export default function ScrapingSchedulesPage() {
                 No schedules yet
               </h3>
               <p className="text-surface-500 dark:text-surface-400 mb-4 max-w-md mx-auto">
-                Create your first scraping schedule to automatically collect data from LinkedIn,
-                Reddit, websites, and more on a recurring basis.
+                Create your first scraping schedule to automatically collect data from multiple platforms on a recurring basis.
               </p>
               {canManage && (
                 <Button onClick={() => setShowScheduleModal(true)}>
@@ -228,6 +240,15 @@ export default function ScrapingSchedulesPage() {
             </div>
           </CardContent>
         </Card>
+      ) : viewMode === 'table' ? (
+        <SchedulesTable
+          schedules={schedules}
+          onEdit={setEditingSchedule}
+          onDelete={setConfirmDelete}
+          onTrigger={handleTriggerSchedule}
+          triggeringId={triggeringId}
+          isTriggering={isTriggering}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {schedules.map((schedule) => (
@@ -237,10 +258,7 @@ export default function ScrapingSchedulesPage() {
               onEdit={() => setEditingSchedule(schedule)}
               onDelete={() => setConfirmDelete(schedule)}
               onTrigger={() => handleTriggerSchedule(schedule._id)}
-              onViewDetails={() => {
-                // TODO: Navigate to schedule detail page or open a drawer
-                setEditingSchedule(schedule);
-              }}
+              onViewDetails={() => setEditingSchedule(schedule)}
               isTriggering={triggeringId === schedule._id && isTriggering}
             />
           ))}

@@ -25,7 +25,7 @@ import {
   FolderKanban,
   Bot,
   CalendarDays,
-  Linkedin,
+  Scan,
 } from 'lucide-react';
 import { useLinkedInFeature } from '@/hooks/useOrganization';
 
@@ -48,7 +48,7 @@ const navigation: NavItem[] = [
   { name: 'Clients', href: '/clients', icon: Building2, permission: 'clients.view' },
   { name: 'Analytics', href: '/analytics', icon: BarChart3, permission: 'analytics.view_all' },
   { name: 'AI Manager', href: '/ai-manager', icon: Bot, permission: 'aipm.view' },
-  { name: 'LinkedIn', href: '/linkedin', icon: Linkedin, permission: 'linkedin.view', featureFlag: 'linkedInMonitoring' },
+  { name: 'Scraper', href: '/scraper', icon: Scan, permission: 'linkedin.view', featureFlag: 'linkedInMonitoring' },
   { name: 'Settings', href: '/settings', icon: Settings, permission: null },
 ];
 

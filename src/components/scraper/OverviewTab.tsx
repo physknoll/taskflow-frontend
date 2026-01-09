@@ -1,110 +1,37 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
 import {
   useLinkedInStats,
   useLinkedInTrendingPosts,
   useLinkedInActionablePosts,
-  useLinkedInScrapers,
   useLinkedInSessions,
 } from '@/hooks/useLinkedIn';
-import { StatsCard, PostCard, SessionCard } from '@/components/linkedin';
+import { PostCard, SessionCard } from '@/components/linkedin';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import {
-  Users,
-  FileText,
-  Monitor,
   TrendingUp,
   Activity,
   ArrowRight,
-  RefreshCw,
   CheckCircle,
   XCircle,
   Clock,
   AlertTriangle,
-  Calendar,
 } from 'lucide-react';
 
-export default function LinkedInDashboardPage() {
-  const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useLinkedInStats();
+interface OverviewTabProps {
+  onNavigate: (tab: string) => void;
+}
+
+export function OverviewTab({ onNavigate }: OverviewTabProps) {
+  const { data: stats, isLoading: statsLoading } = useLinkedInStats();
   const { data: trendingPosts, isLoading: trendingLoading } = useLinkedInTrendingPosts(5);
   const { data: actionablePosts, isLoading: actionableLoading } = useLinkedInActionablePosts(5);
-  const { scrapers, isLoading: scrapersLoading } = useLinkedInScrapers();
   const { sessions, isLoading: sessionsLoading } = useLinkedInSessions({ limit: 5 });
-
-  const [refreshing, setRefreshing] = useState(false);
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await refetchStats();
-    setRefreshing(false);
-  };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
-            LinkedIn Monitoring
-          </h1>
-          <p className="text-surface-500 dark:text-surface-400">
-            Monitor profiles, track posts, and analyze engagement
-          </p>
-        </div>
-        <Button
-          variant="outline"
-          onClick={handleRefresh}
-          disabled={refreshing}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
-      </div>
-
-      {/* Stats Cards */}
-      {statsLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} variant="rounded" height={140} />
-          ))}
-        </div>
-      ) : stats ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatsCard
-            title="Profiles Monitored"
-            value={stats.profiles.total}
-            subtitle={`${stats.profiles.active} active`}
-            icon={Users}
-            variant="default"
-          />
-          <StatsCard
-            title="Posts Collected"
-            value={stats.posts.total.toLocaleString()}
-            subtitle={`${stats.posts.last24Hours} in last 24h`}
-            icon={FileText}
-            variant="success"
-          />
-          <StatsCard
-            title="Scrapers Online"
-            value={`${stats.scrapers.online}/${stats.scrapers.total}`}
-            subtitle={stats.scrapers.withValidCookies + ' with valid cookies'}
-            icon={Monitor}
-            variant={stats.scrapers.online > 0 ? 'success' : 'warning'}
-          />
-          <StatsCard
-            title="Trending Posts"
-            value={stats.posts.trending}
-            subtitle={`${stats.posts.pendingAction} pending action`}
-            icon={TrendingUp}
-            variant={stats.posts.trending > 0 ? 'warning' : 'default'}
-          />
-        </div>
-      ) : null}
-
       {/* Session Success Rate */}
       {stats && (
         <Card>
@@ -113,11 +40,9 @@ export default function LinkedInDashboardPage() {
               <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
                 Scraping Activity (Last 24h)
               </h2>
-              <Link href="/linkedin/sessions">
-                <Button variant="ghost" size="sm">
-                  View All <ArrowRight className="h-4 w-4 ml-1" />
-                </Button>
-              </Link>
+              <Button variant="ghost" size="sm" onClick={() => onNavigate('sessions')}>
+                View All <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="text-center">
@@ -171,11 +96,9 @@ export default function LinkedInDashboardPage() {
                 <TrendingUp className="h-5 w-5 text-warning-500" />
                 Trending Posts
               </h2>
-              <Link href="/linkedin/posts?isTrending=true">
-                <Button variant="ghost" size="sm">
-                  View All <ArrowRight className="h-4 w-4 ml-1" />
-                </Button>
-              </Link>
+              <Button variant="ghost" size="sm" onClick={() => onNavigate('posts')}>
+                View All <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
             </div>
             {trendingLoading ? (
               <div className="space-y-4">
@@ -206,11 +129,9 @@ export default function LinkedInDashboardPage() {
                 <AlertTriangle className="h-5 w-5 text-primary-500" />
                 Needs Action
               </h2>
-              <Link href="/linkedin/posts?actionStatus=new">
-                <Button variant="ghost" size="sm">
-                  View All <ArrowRight className="h-4 w-4 ml-1" />
-                </Button>
-              </Link>
+              <Button variant="ghost" size="sm" onClick={() => onNavigate('posts')}>
+                View All <ArrowRight className="h-4 w-4 ml-1" />
+              </Button>
             </div>
             {actionableLoading ? (
               <div className="space-y-4">
@@ -241,11 +162,9 @@ export default function LinkedInDashboardPage() {
             <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
               Recent Scrape Sessions
             </h2>
-            <Link href="/linkedin/sessions">
-              <Button variant="ghost" size="sm">
-                View All <ArrowRight className="h-4 w-4 ml-1" />
-              </Button>
-            </Link>
+            <Button variant="ghost" size="sm" onClick={() => onNavigate('sessions')}>
+              View All <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
           </div>
           {sessionsLoading ? (
             <div className="space-y-4">
@@ -267,61 +186,6 @@ export default function LinkedInDashboardPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* Quick Links */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Link href="/linkedin/scrapers">
-          <Card hover className="h-full">
-            <CardContent className="p-4 text-center">
-              <Monitor className="h-8 w-8 mx-auto mb-2 text-primary-500" />
-              <p className="font-medium text-surface-900 dark:text-white">Manage Scrapers</p>
-              <p className="text-xs text-surface-500">
-                {scrapersLoading ? '...' : `${scrapers.length} configured`}
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/linkedin/profiles">
-          <Card hover className="h-full">
-            <CardContent className="p-4 text-center">
-              <Users className="h-8 w-8 mx-auto mb-2 text-primary-500" />
-              <p className="font-medium text-surface-900 dark:text-white">Manage Profiles</p>
-              <p className="text-xs text-surface-500">
-                {statsLoading ? '...' : `${stats?.profiles.total || 0} profiles`}
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/linkedin/posts">
-          <Card hover className="h-full">
-            <CardContent className="p-4 text-center">
-              <FileText className="h-8 w-8 mx-auto mb-2 text-primary-500" />
-              <p className="font-medium text-surface-900 dark:text-white">Browse Posts</p>
-              <p className="text-xs text-surface-500">
-                {statsLoading ? '...' : `${stats?.posts.total.toLocaleString() || 0} posts`}
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/linkedin/sessions">
-          <Card hover className="h-full">
-            <CardContent className="p-4 text-center">
-              <Activity className="h-8 w-8 mx-auto mb-2 text-primary-500" />
-              <p className="font-medium text-surface-900 dark:text-white">Session History</p>
-              <p className="text-xs text-surface-500">View all sessions</p>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/linkedin/schedules">
-          <Card hover className="h-full">
-            <CardContent className="p-4 text-center">
-              <Calendar className="h-8 w-8 mx-auto mb-2 text-primary-500" />
-              <p className="font-medium text-surface-900 dark:text-white">Schedules</p>
-              <p className="text-xs text-surface-500">Automated scraping</p>
-            </CardContent>
-          </Card>
-        </Link>
-      </div>
     </div>
   );
 }

@@ -1,12 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { useLinkedInPosts, useLinkedInProfiles } from '@/hooks/useLinkedIn';
-import { useClients } from '@/hooks/useClients';
 import { linkedinService } from '@/services/linkedin.service';
 import { useAuthStore } from '@/stores/authStore';
 import { PostCard } from '@/components/linkedin';
+import { PostsTable } from './PostsTable';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
@@ -15,7 +14,6 @@ import {
   Search,
   FileText,
   RefreshCw,
-  Filter,
   X,
   TrendingUp,
   ExternalLink,
@@ -26,6 +24,8 @@ import {
   Download,
   ZoomIn,
   ZoomOut,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 
@@ -46,26 +46,20 @@ const activityTypeOptions: { value: LinkedInActivityType | ''; label: string }[]
   { value: 'shared', label: 'Shared' },
 ];
 
-export default function LinkedInPostsPage() {
-  const searchParams = useSearchParams();
+export function PostsTab() {
   const { token } = useAuthStore();
-  const { clients } = useClients();
   const { profiles } = useLinkedInProfiles({ limit: 100 });
 
-  const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [actionStatus, setActionStatus] = useState<LinkedInActionStatus | ''>(
-    (searchParams.get('actionStatus') as LinkedInActionStatus) || ''
-  );
-  const [activityType, setActivityType] = useState<LinkedInActivityType | ''>(
-    (searchParams.get('activityType') as LinkedInActivityType) || ''
-  );
-  const [profileId, setProfileId] = useState(searchParams.get('profileId') || '');
-  const [clientId, setClientId] = useState(searchParams.get('clientId') || '');
-  const [isTrending, setIsTrending] = useState(searchParams.get('isTrending') === 'true');
+  const [search, setSearch] = useState('');
+  const [actionStatus, setActionStatus] = useState<LinkedInActionStatus | ''>('');
+  const [activityType, setActivityType] = useState<LinkedInActivityType | ''>('');
+  const [profileId, setProfileId] = useState('');
+  const [isTrending, setIsTrending] = useState(false);
   const [selectedPost, setSelectedPost] = useState<LinkedInPost | null>(null);
   const [screenshotPost, setScreenshotPost] = useState<LinkedInPost | null>(null);
   const [screenshotZoom, setScreenshotZoom] = useState(false);
   const [page, setPage] = useState(1);
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table'); // Default to table
 
   const {
     posts,
@@ -79,7 +73,6 @@ export default function LinkedInPostsPage() {
     actionStatus: actionStatus || undefined,
     activityType: activityType || undefined,
     profileId: profileId || undefined,
-    clientId: clientId || undefined,
     isTrending: isTrending || undefined,
     page,
     limit: 20,
@@ -94,32 +87,14 @@ export default function LinkedInPostsPage() {
     setActionStatus('');
     setActivityType('');
     setProfileId('');
-    setClientId('');
     setIsTrending(false);
     setPage(1);
   };
 
-  const hasFilters =
-    search || actionStatus || activityType || profileId || clientId || isTrending;
+  const hasFilters = search || actionStatus || activityType || profileId || isTrending;
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
-            LinkedIn Posts
-          </h1>
-          <p className="text-surface-500 dark:text-surface-400">
-            {pagination?.total || 0} posts collected
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => refetch()}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
-      </div>
-
       {/* Filters */}
       <div className="bg-white dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700 p-4">
         <div className="flex flex-wrap items-center gap-4">
@@ -209,16 +184,55 @@ export default function LinkedInPostsPage() {
               Clear
             </Button>
           )}
+
+          {/* View Toggle */}
+          <div className="flex items-center border border-surface-300 dark:border-surface-600 rounded-lg overflow-hidden ml-auto">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2 transition-colors ${
+                viewMode === 'table'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-white dark:bg-surface-800 text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-700'
+              }`}
+              title="Table View"
+            >
+              <List className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('cards')}
+              className={`p-2 transition-colors ${
+                viewMode === 'cards'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-white dark:bg-surface-800 text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-700'
+              }`}
+              title="Card View"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+          </div>
+
+          <Button variant="outline" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
       </div>
 
-      {/* Posts Grid */}
+      {/* Posts Grid/Table */}
       {isLoading ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} variant="rounded" height={300} />
-          ))}
-        </div>
+        viewMode === 'table' ? (
+          <div className="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} variant="rounded" height={48} className="mb-2" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} variant="rounded" height={300} />
+            ))}
+          </div>
+        )
       ) : posts.length === 0 ? (
         <div className="text-center py-16 bg-white dark:bg-surface-800 rounded-xl">
           <FileText className="h-12 w-12 mx-auto mb-4 text-surface-400" />
@@ -231,6 +245,13 @@ export default function LinkedInPostsPage() {
               : 'Posts will appear here once your scrapers start collecting data from monitored profiles.'}
           </p>
         </div>
+      ) : viewMode === 'table' ? (
+        <PostsTable
+          posts={posts}
+          onAction={handleAction}
+          onViewDetails={setSelectedPost}
+          onViewScreenshot={setScreenshotPost}
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {posts.map((post) => (
@@ -304,7 +325,7 @@ export default function LinkedInPostsPage() {
                 className="flex items-center gap-1 text-primary-600 hover:text-primary-700"
               >
                 <ExternalLink className="h-4 w-4" />
-                View on LinkedIn
+                View Original
               </a>
             </div>
 
@@ -323,16 +344,14 @@ export default function LinkedInPostsPage() {
                     <Camera className="h-4 w-4" />
                     Screenshot
                   </h4>
-                  <div className="flex items-center gap-2">
-                    <a
-                      href={linkedinService.getScreenshotUrl(selectedPost._id, token || undefined)}
-                      download={`linkedin-post-${selectedPost._id}.png`}
-                      className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
-                    >
-                      <Download className="h-4 w-4" />
-                      Download
-                    </a>
-                  </div>
+                  <a
+                    href={linkedinService.getScreenshotUrl(selectedPost._id, token || undefined)}
+                    download={`post-${selectedPost._id}.png`}
+                    className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download
+                  </a>
                 </div>
                 <button
                   onClick={() => {
@@ -400,31 +419,6 @@ export default function LinkedInPostsPage() {
               </div>
             </div>
 
-            {/* Top Comments */}
-            {selectedPost.topComments && selectedPost.topComments.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-3">Top Comments</h4>
-                <div className="space-y-3">
-                  {selectedPost.topComments.map((comment, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 bg-surface-50 dark:bg-surface-700/50 rounded-lg"
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <p className="font-medium text-sm">{comment.authorName}</p>
-                        <span className="text-xs text-surface-500">
-                          {comment.reactions} reactions
-                        </span>
-                      </div>
-                      <p className="text-sm text-surface-600 dark:text-surface-400">
-                        {comment.content}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Actions */}
             <div className="flex justify-end gap-3 pt-4 border-t">
               <Button variant="outline" onClick={() => setSelectedPost(null)}>
@@ -456,7 +450,6 @@ export default function LinkedInPostsPage() {
       >
         {screenshotPost && screenshotPost.screenshotPath && (
           <div className="space-y-4">
-            {/* Image Container */}
             <div
               className={`relative bg-surface-100 dark:bg-surface-800 rounded-lg overflow-auto ${
                 screenshotZoom ? 'max-h-[70vh]' : 'max-h-[60vh]'
@@ -472,7 +465,6 @@ export default function LinkedInPostsPage() {
               />
             </div>
 
-            {/* Controls */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Button
@@ -494,7 +486,7 @@ export default function LinkedInPostsPage() {
                 </Button>
                 <a
                   href={linkedinService.getScreenshotUrl(screenshotPost._id, token || undefined)}
-                  download={`linkedin-post-${screenshotPost._id}.png`}
+                  download={`post-${screenshotPost._id}.png`}
                   className="inline-flex"
                 >
                   <Button variant="outline" size="sm">
@@ -511,7 +503,7 @@ export default function LinkedInPostsPage() {
                   className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
                 >
                   <ExternalLink className="h-4 w-4" />
-                  View on LinkedIn
+                  View Original
                 </a>
                 <Button
                   variant="outline"
@@ -523,35 +515,6 @@ export default function LinkedInPostsPage() {
                 >
                   View Post Details
                 </Button>
-              </div>
-            </div>
-
-            {/* Post Info Summary */}
-            <div className="p-3 bg-surface-50 dark:bg-surface-700/50 rounded-lg">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-full bg-surface-200 dark:bg-surface-700 flex items-center justify-center text-sm font-semibold">
-                  {screenshotPost.author.name.charAt(0)}
-                </div>
-                <div>
-                  <p className="font-medium">{screenshotPost.author.name}</p>
-                  <p className="text-xs text-surface-500">
-                    {screenshotPost.linkedinTimestamp} • {screenshotPost.activityType}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-4 text-sm text-surface-600 dark:text-surface-400">
-                <span className="flex items-center gap-1">
-                  <ThumbsUp className="h-4 w-4" />
-                  {screenshotPost.engagement.reactions.toLocaleString()}
-                </span>
-                <span className="flex items-center gap-1">
-                  <MessageCircle className="h-4 w-4" />
-                  {screenshotPost.engagement.comments.toLocaleString()}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Repeat2 className="h-4 w-4" />
-                  {screenshotPost.engagement.reposts.toLocaleString()}
-                </span>
               </div>
             </div>
           </div>

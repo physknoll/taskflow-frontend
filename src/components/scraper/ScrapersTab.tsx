@@ -16,7 +16,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 
-export default function LinkedInScrapersPage() {
+export function ScrapersTab() {
   const { user } = useAuthStore();
   const {
     scrapers,
@@ -62,14 +62,6 @@ export default function LinkedInScrapersPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
-            Desktop Scrapers
-          </h1>
-          <p className="text-surface-500 dark:text-surface-400">
-            Manage your LinkedIn scraping agents
-          </p>
-        </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" onClick={() => refetch()}>
             <RefreshCw className="h-4 w-4 mr-2" />
@@ -115,7 +107,7 @@ export default function LinkedInScrapersPage() {
               No scrapers are online
             </p>
             <p className="text-sm text-warning-700 dark:text-warning-400">
-              Make sure at least one desktop agent is running to scrape LinkedIn profiles.
+              Make sure at least one desktop agent is running to scrape profiles.
             </p>
           </div>
         </div>
@@ -135,7 +127,7 @@ export default function LinkedInScrapersPage() {
             No scrapers configured
           </h3>
           <p className="text-surface-500 dark:text-surface-400 mb-4 max-w-md mx-auto">
-            Desktop scrapers run on your team&apos;s computers and connect to LinkedIn to collect posts.
+            Desktop scrapers run on your team&apos;s computers and connect to collect posts.
             Add your first scraper to get started.
           </p>
           {canManage && (
@@ -198,7 +190,7 @@ export default function LinkedInScrapersPage() {
                 <option value="aggressive">Aggressive (Faster, riskier)</option>
               </select>
               <p className="mt-1 text-xs text-surface-500">
-                Conservative mode is recommended for new LinkedIn accounts.
+                Conservative mode is recommended for new accounts.
               </p>
             </div>
 
@@ -284,10 +276,10 @@ export default function LinkedInScrapersPage() {
         size="sm"
       >
         <div className="space-y-4">
-            <p className="text-surface-600 dark:text-surface-400">
-              Are you sure you want to revoke access for <strong>{confirmRevoke?.name}</strong>?
-              The agent will be disconnected and won&apos;t be able to reconnect.
-            </p>
+          <p className="text-surface-600 dark:text-surface-400">
+            Are you sure you want to revoke access for <strong>{confirmRevoke?.name}</strong>?
+            The agent will be disconnected and won&apos;t be able to reconnect.
+          </p>
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setConfirmRevoke(null)}>
               Cancel

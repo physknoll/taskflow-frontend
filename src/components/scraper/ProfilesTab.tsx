@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { useLinkedInProfiles, useLinkedInScrapers } from '@/hooks/useLinkedIn';
 import { useClients } from '@/hooks/useClients';
 import { ProfileCard, ProfilesTable, AddProfileModal, CSVUploadModal, ScraperSelectModal } from '@/components/linkedin';
@@ -16,13 +15,11 @@ import {
   Search,
   Users,
   RefreshCw,
-  Filter,
   X,
   Upload,
   LayoutGrid,
   List,
   Monitor,
-  Star,
 } from 'lucide-react';
 
 const profileTypeOptions: { value: LinkedInProfileType | ''; label: string }[] = [
@@ -33,24 +30,21 @@ const profileTypeOptions: { value: LinkedInProfileType | ''; label: string }[] =
   { value: 'prospect', label: 'Prospect' },
 ];
 
-export default function LinkedInProfilesPage() {
-  const searchParams = useSearchParams();
+export function ProfilesTab() {
   const { user } = useAuthStore();
   const { clients } = useClients();
   const { scrapers } = useLinkedInScrapers();
   
-  const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [profileType, setProfileType] = useState<LinkedInProfileType | ''>(
-    (searchParams.get('profileType') as LinkedInProfileType) || ''
-  );
-  const [clientId, setClientId] = useState(searchParams.get('clientId') || '');
+  const [search, setSearch] = useState('');
+  const [profileType, setProfileType] = useState<LinkedInProfileType | ''>('');
+  const [clientId, setClientId] = useState('');
   const [monitoringEnabled, setMonitoringEnabled] = useState<boolean | undefined>(undefined);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showCSVUploadModal, setShowCSVUploadModal] = useState(false);
   const [editProfile, setEditProfile] = useState<LinkedInProfile | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<LinkedInProfile | null>(null);
   const [scrapingProfileId, setScrapingProfileId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table'); // Default to table
   const [scraperSelectProfile, setScraperSelectProfile] = useState<LinkedInProfile | null>(null);
 
   const {
@@ -115,36 +109,6 @@ export default function LinkedInProfilesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
-            LinkedIn Profiles
-          </h1>
-          <p className="text-surface-500 dark:text-surface-400">
-            {pagination?.total || 0} profiles being monitored
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => refetch()}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          {canManage && (
-            <>
-              <Button variant="outline" onClick={() => setShowCSVUploadModal(true)}>
-                <Upload className="h-4 w-4 mr-2" />
-                Bulk Import
-              </Button>
-              <Button onClick={() => setShowAddModal(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Profile
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-
       {/* Filters */}
       <div className="bg-white dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700 p-4">
         <div className="flex flex-wrap items-center gap-4">
@@ -213,17 +177,6 @@ export default function LinkedInProfilesPage() {
           {/* View Toggle */}
           <div className="flex items-center border border-surface-300 dark:border-surface-600 rounded-lg overflow-hidden ml-auto">
             <button
-              onClick={() => setViewMode('cards')}
-              className={`p-2 transition-colors ${
-                viewMode === 'cards'
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-white dark:bg-surface-800 text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-700'
-              }`}
-              title="Card View"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </button>
-            <button
               onClick={() => setViewMode('table')}
               className={`p-2 transition-colors ${
                 viewMode === 'table'
@@ -234,7 +187,35 @@ export default function LinkedInProfilesPage() {
             >
               <List className="h-4 w-4" />
             </button>
+            <button
+              onClick={() => setViewMode('cards')}
+              className={`p-2 transition-colors ${
+                viewMode === 'cards'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-white dark:bg-surface-800 text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-700'
+              }`}
+              title="Card View"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
           </div>
+
+          <Button variant="outline" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+          {canManage && (
+            <>
+              <Button variant="outline" onClick={() => setShowCSVUploadModal(true)}>
+                <Upload className="h-4 w-4 mr-2" />
+                Bulk Import
+              </Button>
+              <Button onClick={() => setShowAddModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Profile
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -262,7 +243,7 @@ export default function LinkedInProfilesPage() {
           <p className="text-surface-500 dark:text-surface-400 mb-4 max-w-md mx-auto">
             {hasFilters
               ? 'Try adjusting your search or filters.'
-              : 'Add LinkedIn profiles to start monitoring posts and engagement.'}
+              : 'Add profiles to start monitoring posts and engagement.'}
           </p>
           {!hasFilters && canManage && (
             <Button onClick={() => setShowAddModal(true)}>

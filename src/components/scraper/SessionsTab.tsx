@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { useLinkedInSessions, useLinkedInScrapers, useLinkedInProfiles, useLinkedInSessionPosts } from '@/hooks/useLinkedIn';
 import { SessionCard, PostCard } from '@/components/linkedin';
+import { SessionsTable } from './SessionsTable';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
@@ -16,8 +16,10 @@ import {
   XCircle,
   Clock,
   FileText,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 
 const statusOptions: { value: LinkedInSessionStatus | ''; label: string }[] = [
   { value: '', label: 'All Status' },
@@ -45,24 +47,18 @@ const triggerTypeOptions: { value: LinkedInTriggerType | ''; label: string }[] =
   { value: 'retry', label: 'Retry' },
 ];
 
-export default function LinkedInSessionsPage() {
-  const searchParams = useSearchParams();
+export function SessionsTab() {
   const { scrapers } = useLinkedInScrapers();
   const { profiles } = useLinkedInProfiles({ limit: 100 });
 
-  const [status, setStatus] = useState<LinkedInSessionStatus | ''>(
-    (searchParams.get('status') as LinkedInSessionStatus) || ''
-  );
-  const [targetType, setTargetType] = useState<LinkedInTargetType | ''>(
-    (searchParams.get('targetType') as LinkedInTargetType) || ''
-  );
-  const [triggerType, setTriggerType] = useState<LinkedInTriggerType | ''>(
-    (searchParams.get('triggerType') as LinkedInTriggerType) || ''
-  );
-  const [scraperId, setScraperId] = useState(searchParams.get('scraperId') || '');
-  const [profileId, setProfileId] = useState(searchParams.get('profileId') || '');
+  const [status, setStatus] = useState<LinkedInSessionStatus | ''>('');
+  const [targetType, setTargetType] = useState<LinkedInTargetType | ''>('');
+  const [triggerType, setTriggerType] = useState<LinkedInTriggerType | ''>('');
+  const [scraperId, setScraperId] = useState('');
+  const [profileId, setProfileId] = useState('');
   const [selectedSession, setSelectedSession] = useState<LinkedInSession | null>(null);
   const [page, setPage] = useState(1);
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table'); // Default to table
 
   const {
     sessions,
@@ -79,7 +75,6 @@ export default function LinkedInSessionsPage() {
     limit: 20,
   });
 
-  // Fetch session posts when a session is selected
   const { data: sessionPosts, isLoading: postsLoading } = useLinkedInSessionPosts(
     selectedSession?._id || ''
   );
@@ -106,22 +101,6 @@ export default function LinkedInSessionsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
-            Scrape Sessions
-          </h1>
-          <p className="text-surface-500 dark:text-surface-400">
-            {pagination?.total || 0} total sessions
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => refetch()}>
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
-      </div>
-
       {/* Status Summary */}
       <div className="flex items-center gap-6 p-4 bg-surface-50 dark:bg-surface-800 rounded-lg">
         <div className="flex items-center gap-2">
@@ -233,16 +212,55 @@ export default function LinkedInSessionsPage() {
               Clear
             </Button>
           )}
+
+          {/* View Toggle */}
+          <div className="flex items-center border border-surface-300 dark:border-surface-600 rounded-lg overflow-hidden ml-auto">
+            <button
+              onClick={() => setViewMode('table')}
+              className={`p-2 transition-colors ${
+                viewMode === 'table'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-white dark:bg-surface-800 text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-700'
+              }`}
+              title="Table View"
+            >
+              <List className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('cards')}
+              className={`p-2 transition-colors ${
+                viewMode === 'cards'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-white dark:bg-surface-800 text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-700'
+              }`}
+              title="Card View"
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+          </div>
+
+          <Button variant="outline" onClick={() => refetch()}>
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
       </div>
 
       {/* Sessions List */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} variant="rounded" height={200} />
-          ))}
-        </div>
+        viewMode === 'table' ? (
+          <div className="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} variant="rounded" height={48} className="mb-2" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Skeleton key={i} variant="rounded" height={200} />
+            ))}
+          </div>
+        )
       ) : sessions.length === 0 ? (
         <div className="text-center py-16 bg-white dark:bg-surface-800 rounded-xl">
           <Activity className="h-12 w-12 mx-auto mb-4 text-surface-400" />
@@ -255,6 +273,8 @@ export default function LinkedInSessionsPage() {
               : 'Sessions will appear here once your scrapers start running.'}
           </p>
         </div>
+      ) : viewMode === 'table' ? (
+        <SessionsTable sessions={sessions} onViewDetails={setSelectedSession} />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sessions.map((session) => (

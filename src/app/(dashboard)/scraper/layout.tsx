@@ -1,16 +1,15 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import { useLinkedInFeature } from '@/hooks/useOrganization';
-import { Linkedin, Lock } from 'lucide-react';
+import { Lock, Scan } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
-interface LinkedInLayoutProps {
+interface ScraperLayoutProps {
   children: React.ReactNode;
 }
 
-export default function LinkedInLayout({ children }: LinkedInLayoutProps) {
+export default function ScraperLayout({ children }: ScraperLayoutProps) {
   // TODO: Re-enable feature gate for production
   // const router = useRouter();
   // const { isEnabled, isLoading } = useLinkedInFeature();
@@ -36,11 +35,11 @@ export default function LinkedInLayout({ children }: LinkedInLayoutProps) {
   //           <Lock className="h-8 w-8 text-surface-400" />
   //         </div>
   //         <h1 className="text-2xl font-bold text-surface-900 dark:text-white mb-3">
-  //           LinkedIn Monitoring
+  //           Scraper
   //         </h1>
   //         <p className="text-surface-600 dark:text-surface-400 mb-6">
-  //           LinkedIn Monitoring is not enabled for your organization. This feature allows you to
-  //           monitor LinkedIn profiles, track posts, and analyze engagement.
+  //           The Scraper feature is not enabled for your organization. This feature allows you to
+  //           monitor profiles, track posts, and analyze engagement across multiple platforms.
   //         </p>
   //         <div className="flex flex-col sm:flex-row gap-3 justify-center">
   //           <Button variant="outline" onClick={() => router.push('/')}>
