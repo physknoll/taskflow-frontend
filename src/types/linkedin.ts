@@ -607,6 +607,8 @@ export function mapScraperResponse(scraper: LinkedInScraper): LinkedInScraper {
     ...scraper,
     // Map new API fields to legacy field names for component compatibility
     platform: scraper.agentType as any || scraper.platform,
+    // Set isOnlineNow based on status field from new API
+    isOnlineNow: scraper.isOnlineNow ?? (scraper.status === 'online'),
     cookiesValid: scraper.platformCredentials?.linkedin?.cookiesValid ?? scraper.cookiesValid,
     linkedInAccountEmail: scraper.platformCredentials?.linkedin?.accountEmail ?? scraper.linkedInAccountEmail,
     totalPostsScraped: scraper.stats?.totalItemsScraped ?? scraper.totalPostsScraped,
