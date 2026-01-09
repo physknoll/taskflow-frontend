@@ -11,6 +11,9 @@ import type {
   CreateScrapeTargetDto,
   UpdateScrapeTargetDto,
   QueueFilters,
+  TriggerScheduleWithOverridesDto,
+  TriggerSourceScrapeDto,
+  ExecutionScrapeSettings,
 } from '@/types/scraping';
 import toast from 'react-hot-toast';
 
@@ -74,7 +77,8 @@ export function useScrapingSchedules(filters: ScrapeScheduleFilters = {}) {
   });
 
   const triggerMutation = useMutation({
-    mutationFn: (id: string) => scrapingService.triggerSchedule(id),
+    mutationFn: ({ id, overrides }: { id: string; overrides?: TriggerScheduleWithOverridesDto }) => 
+      scrapingService.triggerSchedule(id, overrides),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: scrapingKeys.all });
       if (result.commandsQueued > 0) {
@@ -108,7 +112,8 @@ export function useScrapingSchedules(filters: ScrapeScheduleFilters = {}) {
     isUpdating: updateMutation.isPending,
     deleteSchedule: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
-    triggerSchedule: triggerMutation.mutateAsync,
+    triggerSchedule: (id: string, overrides?: TriggerScheduleWithOverridesDto) =>
+      triggerMutation.mutateAsync({ id, overrides }),
     isTriggering: triggerMutation.isPending,
   };
 }
@@ -172,6 +177,52 @@ export function useScrapingSchedule(id: string) {
     isUpdatingTarget: updateTargetMutation.isPending,
     removeTarget: removeTargetMutation.mutateAsync,
     isRemovingTarget: removeTargetMutation.isPending,
+  };
+}
+
+// ============================================
+// Source Scrape Hook (New Architecture)
+// ============================================
+
+export function useSourceScrape() {
+  const queryClient = useQueryClient();
+
+  const triggerMutation = useMutation({
+    mutationFn: ({ sourceId, overrides }: { sourceId: string; overrides?: TriggerSourceScrapeDto }) =>
+      scrapingService.triggerSourceScrape(sourceId, overrides),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: scrapingKeys.all });
+      toast.success('Scrape started');
+    },
+    onError: (error: any) => {
+      const code = error.response?.data?.code;
+      if (code === 'NO_ONLINE_SCRAPER') {
+        toast.error('No scrapers are online. Command will be queued for retry.');
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to trigger scrape');
+      }
+    },
+  });
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: ({ sourceId, settings }: { sourceId: string; settings: ExecutionScrapeSettings }) =>
+      scrapingService.updateSourceSettings(sourceId, settings),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: scrapingKeys.all });
+      toast.success('Source settings updated');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update settings');
+    },
+  });
+
+  return {
+    triggerScrape: (sourceId: string, overrides?: TriggerSourceScrapeDto) =>
+      triggerMutation.mutateAsync({ sourceId, overrides }),
+    isTriggering: triggerMutation.isPending,
+    updateSettings: (sourceId: string, settings: ExecutionScrapeSettings) =>
+      updateSettingsMutation.mutateAsync({ sourceId, settings }),
+    isUpdatingSettings: updateSettingsMutation.isPending,
   };
 }
 

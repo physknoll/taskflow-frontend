@@ -14,6 +14,7 @@ import {
   AlertCircle,
   Target,
   MoreVertical,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useState } from 'react';
@@ -23,6 +24,8 @@ interface ScheduleCardProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onTrigger?: () => void;
+  /** Trigger with custom settings override */
+  onTriggerWithSettings?: () => void;
   onViewDetails?: () => void;
   isTriggering?: boolean;
 }
@@ -32,6 +35,7 @@ export function ScheduleCard({
   onEdit,
   onDelete,
   onTrigger,
+  onTriggerWithSettings,
   onViewDetails,
   isTriggering,
 }: ScheduleCardProps) {
@@ -132,6 +136,20 @@ export function ScheduleCard({
                     <Play className="h-4 w-4" />
                     Run Now
                   </button>
+                  {onTriggerWithSettings && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowMenu(false);
+                        onTriggerWithSettings();
+                      }}
+                      disabled={isTriggering}
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-surface-50 dark:hover:bg-surface-700 flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <SlidersHorizontal className="h-4 w-4" />
+                      Run with Settings...
+                    </button>
+                  )}
                   <hr className="my-1 border-surface-200 dark:border-surface-700" />
                   <button
                     onClick={(e) => {

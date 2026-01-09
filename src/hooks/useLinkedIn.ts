@@ -94,6 +94,12 @@ export function useLinkedInScrapers() {
     },
   });
 
+  /**
+   * @deprecated Scraper-level settings are deprecated. 
+   * Settings are now configured at the Source level (scrapeSettings) 
+   * or passed as overrides when triggering scrapes.
+   * Use useSourceScrape().updateSettings() from useScraping hook instead.
+   */
   const updateSettingsMutation = useMutation({
     mutationFn: ({ id, settings }: { id: string; settings: UpdateLinkedInScraperSettingsDto }) =>
       linkedinService.updateScraperSettings(id, settings),

@@ -17,7 +17,6 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  Settings,
   Globe,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
@@ -25,6 +24,7 @@ import { useState } from 'react';
 
 interface ScraperCardProps {
   scraper: LinkedInScraper;
+  /** @deprecated Scraper settings are now configured at the Source level */
   onSettings?: () => void;
   onRevoke?: () => void;
   onDelete?: () => void;
@@ -192,16 +192,6 @@ export function ScraperCard({
                 <div className="absolute right-0 mt-1 w-44 bg-white dark:bg-surface-800 rounded-lg shadow-lg border border-surface-200 dark:border-surface-700 z-20 py-1">
                   <button
                     onClick={() => {
-                      onSettings?.();
-                      setShowMenu(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm hover:bg-surface-100 dark:hover:bg-surface-700 flex items-center gap-2"
-                  >
-                    <Settings className="h-4 w-4" />
-                    Settings
-                  </button>
-                  <button
-                    onClick={() => {
                       onRevoke?.();
                       setShowMenu(false);
                     }}
@@ -292,26 +282,10 @@ export function ScraperCard({
           </p>
         </div>
 
-        {/* Settings Summary */}
-        {scraper.settings && (
-          <div className="mt-3 pt-3 border-t border-surface-200 dark:border-surface-700">
-            <div className="flex flex-wrap gap-2 text-xs">
-              <span className="px-2 py-1 bg-surface-100 dark:bg-surface-700 rounded">
-                Max {scraper.settings.maxPostsPerScrape ?? 20} items
-              </span>
-              {scraper.settings.enableCommentScraping && (
-                <span className="px-2 py-1 bg-surface-100 dark:bg-surface-700 rounded">
-                  Comments
-                </span>
-              )}
-              {scraper.settings.enableScreenshots && (
-                <span className="px-2 py-1 bg-surface-100 dark:bg-surface-700 rounded">
-                  Screenshots
-                </span>
-              )}
-            </div>
-          </div>
-        )}
+        {/* 
+          Settings Summary removed - scraper settings are now deprecated.
+          Settings are configured at the Source level instead.
+        */}
 
         {/* Current Platform indicator */}
         {scraper.currentPlatform && (

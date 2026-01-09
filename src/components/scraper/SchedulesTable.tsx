@@ -9,14 +9,112 @@ import {
   Trash2,
   Calendar,
   Target,
+  Settings,
+  MoreVertical,
 } from 'lucide-react';
+import { useState } from 'react';
 import { format } from 'date-fns';
+
+// Actions dropdown component for schedule row
+function ScheduleActions({
+  schedule,
+  onEdit,
+  onDelete,
+  onTrigger,
+  triggeringId,
+  isTriggering,
+}: {
+  schedule: ScrapeSchedule;
+  onEdit?: (schedule: ScrapeSchedule) => void;
+  onDelete?: (schedule: ScrapeSchedule) => void;
+  onTrigger?: (scheduleId: string, withSettings?: boolean) => void;
+  triggeringId?: string | null;
+  isTriggering?: boolean;
+}) {
+  const [showMenu, setShowMenu] = useState(false);
+
+  return (
+    <div className="flex items-center justify-end gap-1">
+      {onTrigger && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onTrigger(schedule._id)}
+          disabled={triggeringId === schedule._id && isTriggering}
+          title="Run Now"
+        >
+          <Play className={`h-4 w-4 ${triggeringId === schedule._id && isTriggering ? 'animate-pulse' : ''}`} />
+        </Button>
+      )}
+      {onEdit && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onEdit(schedule)}
+          title="Edit"
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+      )}
+      
+      {/* More actions dropdown */}
+      <div className="relative">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowMenu(!showMenu)}
+          title="More actions"
+        >
+          <MoreVertical className="h-4 w-4" />
+        </Button>
+        
+        {showMenu && (
+          <>
+            <div
+              className="fixed inset-0 z-10"
+              onClick={() => setShowMenu(false)}
+            />
+            <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-surface-800 rounded-lg shadow-lg border border-surface-200 dark:border-surface-700 py-1 z-20">
+              {onTrigger && (
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    onTrigger(schedule._id, true);
+                  }}
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-surface-50 dark:hover:bg-surface-700 flex items-center gap-2"
+                >
+                  <Settings className="h-4 w-4" />
+                  Run with Settings...
+                </button>
+              )}
+              {onDelete && (
+                <>
+                  <hr className="my-1 border-surface-200 dark:border-surface-700" />
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      onDelete(schedule);
+                    }}
+                    className="w-full px-3 py-2 text-left text-sm text-error-600 hover:bg-error-50 dark:hover:bg-error-900/20 flex items-center gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete Schedule
+                  </button>
+                </>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface SchedulesTableProps {
   schedules: ScrapeSchedule[];
   onEdit?: (schedule: ScrapeSchedule) => void;
   onDelete?: (schedule: ScrapeSchedule) => void;
-  onTrigger?: (scheduleId: string) => void;
+  onTrigger?: (scheduleId: string, withSettings?: boolean) => void;
   triggeringId?: string | null;
   isTriggering?: boolean;
 }
@@ -129,39 +227,14 @@ export function SchedulesTable({
 
                   {/* Actions */}
                   <td className="px-4 py-3">
-                    <div className="flex items-center justify-end gap-1">
-                      {onTrigger && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onTrigger(schedule._id)}
-                          disabled={triggeringId === schedule._id && isTriggering}
-                          title="Run Now"
-                        >
-                          <Play className={`h-4 w-4 ${triggeringId === schedule._id && isTriggering ? 'animate-pulse' : ''}`} />
-                        </Button>
-                      )}
-                      {onEdit && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onEdit(schedule)}
-                          title="Edit"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {onDelete && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onDelete(schedule)}
-                          title="Delete"
-                        >
-                          <Trash2 className="h-4 w-4 text-error-500" />
-                        </Button>
-                      )}
-                    </div>
+                    <ScheduleActions
+                      schedule={schedule}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      onTrigger={onTrigger}
+                      triggeringId={triggeringId}
+                      isTriggering={isTriggering}
+                    />
                   </td>
                 </tr>
               );

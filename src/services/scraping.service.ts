@@ -14,6 +14,9 @@ import type {
   QueueStats,
   QueueFilters,
   QueuedCommand,
+  TriggerSourceScrapeDto,
+  TriggerScheduleWithOverridesDto,
+  ExecutionScrapeSettings,
 } from '@/types/scraping';
 import { ApiResponse, PaginatedResponse } from '@/types';
 
@@ -73,9 +76,10 @@ export const scrapingService = {
     await api.delete(`${BASE_URL}/schedules/${id}`);
   },
 
-  async triggerSchedule(id: string): Promise<TriggerScheduleResponse> {
+  async triggerSchedule(id: string, overrides?: TriggerScheduleWithOverridesDto): Promise<TriggerScheduleResponse> {
     const response = await api.post<ApiResponse<TriggerScheduleResponse>>(
-      `${BASE_URL}/schedules/${id}/run`
+      `${BASE_URL}/schedules/${id}/run`,
+      overrides || {}
     );
     return response.data.data;
   },
@@ -113,6 +117,48 @@ export const scrapingService = {
 
   async removeTarget(scheduleId: string, targetId: string): Promise<void> {
     await api.delete(`${BASE_URL}/schedules/${scheduleId}/targets/${targetId}`);
+  },
+
+  // ============================================
+  // Source Settings & Manual Scrape (New Architecture)
+  // ============================================
+
+  /**
+   * Get source with its default scrape settings
+   */
+  async getSource(id: string): Promise<ScrapeTarget> {
+    const response = await api.get<ApiResponse<ScrapeTarget>>(
+      `${BASE_URL}/sources/${id}`
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Update source settings including default scrape settings
+   */
+  async updateSourceSettings(
+    id: string,
+    scrapeSettings: ExecutionScrapeSettings
+  ): Promise<ScrapeTarget> {
+    const response = await api.patch<ApiResponse<ScrapeTarget>>(
+      `${BASE_URL}/sources/${id}`,
+      { scrapeSettings }
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Trigger manual scrape for a source with optional setting overrides
+   */
+  async triggerSourceScrape(
+    sourceId: string,
+    overrides?: TriggerSourceScrapeDto
+  ): Promise<{ commandId: string; sessionId: string; status: string }> {
+    const response = await api.post<ApiResponse<{ commandId: string; sessionId: string; status: string }>>(
+      `${BASE_URL}/sources/${sourceId}/scrape`,
+      overrides || {}
+    );
+    return response.data.data;
   },
 
   // ============================================

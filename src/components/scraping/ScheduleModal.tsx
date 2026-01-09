@@ -4,18 +4,24 @@ import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { CronBuilder } from './CronBuilder';
+import { ScrapeSettingsForm, DEFAULT_EXECUTION_SETTINGS } from './ScrapeSettingsForm';
 import {
   ScrapeSchedule,
+  ScrapeTarget,
   CreateScrapeScheduleDto,
   UpdateScrapeScheduleDto,
   DEFAULT_RETRY_SETTINGS,
+  SourceScrapeOverride,
+  ExecutionScrapeSettings,
 } from '@/types/scraping';
-import { Info } from 'lucide-react';
+import { Info, ChevronDown, ChevronUp, Settings } from 'lucide-react';
 
 interface ScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   schedule?: ScrapeSchedule | null;
+  /** Targets for this schedule (for target override configuration) */
+  targets?: ScrapeTarget[];
   onSubmit: (data: any) => Promise<any>;
   isSubmitting?: boolean;
 }
@@ -38,6 +44,7 @@ export function ScheduleModal({
   isOpen,
   onClose,
   schedule,
+  targets = [],
   onSubmit,
   isSubmitting,
 }: ScheduleModalProps) {
@@ -48,6 +55,9 @@ export function ScheduleModal({
   const [enabled, setEnabled] = useState(true);
   const [showRetrySettings, setShowRetrySettings] = useState(false);
   const [retrySettings, setRetrySettings] = useState(DEFAULT_RETRY_SETTINGS);
+  const [showTargetOverrides, setShowTargetOverrides] = useState(false);
+  const [targetOverrides, setTargetOverrides] = useState<SourceScrapeOverride[]>([]);
+  const [expandedTarget, setExpandedTarget] = useState<string | null>(null);
 
   useEffect(() => {
     if (schedule) {
@@ -57,6 +67,7 @@ export function ScheduleModal({
       setTimezone(schedule.timezone);
       setEnabled(schedule.enabled);
       setRetrySettings(schedule.retrySettings);
+      setTargetOverrides(schedule.targetOverrides || []);
     } else {
       setName('');
       setDescription('');
@@ -64,6 +75,7 @@ export function ScheduleModal({
       setTimezone('America/New_York');
       setEnabled(true);
       setRetrySettings(DEFAULT_RETRY_SETTINGS);
+      setTargetOverrides([]);
     }
   }, [schedule, isOpen]);
 
@@ -77,10 +89,41 @@ export function ScheduleModal({
       timezone,
       enabled,
       retrySettings,
+      targetOverrides: targetOverrides.length > 0 ? targetOverrides : undefined,
     };
 
     await onSubmit(data);
     onClose();
+  };
+
+  const getTargetOverride = (targetId: string): ExecutionScrapeSettings => {
+    const existing = targetOverrides.find((o) => o.sourceId === targetId);
+    return existing || DEFAULT_EXECUTION_SETTINGS;
+  };
+
+  const hasTargetOverride = (targetId: string): boolean => {
+    return targetOverrides.some((o) => o.sourceId === targetId);
+  };
+
+  const toggleTargetOverride = (targetId: string, enabled: boolean) => {
+    if (enabled) {
+      if (!hasTargetOverride(targetId)) {
+        setTargetOverrides([
+          ...targetOverrides,
+          { sourceId: targetId, ...DEFAULT_EXECUTION_SETTINGS },
+        ]);
+      }
+    } else {
+      setTargetOverrides(targetOverrides.filter((o) => o.sourceId !== targetId));
+    }
+  };
+
+  const updateTargetOverride = (targetId: string, settings: ExecutionScrapeSettings) => {
+    setTargetOverrides(
+      targetOverrides.map((o) =>
+        o.sourceId === targetId ? { ...o, ...settings } : o
+      )
+    );
   };
 
   const isEdit = !!schedule;
@@ -267,6 +310,101 @@ export function ScheduleModal({
             </div>
           )}
         </div>
+
+        {/* Target Overrides (only show when editing with targets) */}
+        {isEdit && targets.length > 0 && (
+          <div className="border border-surface-200 dark:border-surface-700 rounded-lg">
+            <button
+              type="button"
+              onClick={() => setShowTargetOverrides(!showTargetOverrides)}
+              className="w-full px-4 py-3 flex items-center justify-between hover:bg-surface-50 dark:hover:bg-surface-800 rounded-lg"
+            >
+              <div className="flex items-center gap-2">
+                <Settings className="h-4 w-4 text-surface-500" />
+                <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
+                  Per-Source Scrape Settings
+                </span>
+                {targetOverrides.length > 0 && (
+                  <span className="px-2 py-0.5 text-xs bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full">
+                    {targetOverrides.length} override{targetOverrides.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-surface-500">
+                {showTargetOverrides ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </span>
+            </button>
+
+            {showTargetOverrides && (
+              <div className="px-4 pb-4 space-y-3 border-t border-surface-200 dark:border-surface-700 pt-4">
+                {/* Info Box */}
+                <div className="flex items-start gap-2 p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+                  <Info className="h-4 w-4 text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-sm text-primary-700 dark:text-primary-300">
+                    Override default scrape settings for specific sources in this schedule.
+                    Sources without overrides will use their own default settings.
+                  </p>
+                </div>
+
+                {/* Target List */}
+                <div className="space-y-2">
+                  {targets.map((target) => (
+                    <div
+                      key={target._id}
+                      className="border border-surface-200 dark:border-surface-700 rounded-lg"
+                    >
+                      <div className="flex items-center justify-between p-3">
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={hasTargetOverride(target._id)}
+                            onChange={(e) => toggleTargetOverride(target._id, e.target.checked)}
+                            className="w-4 h-4 rounded"
+                          />
+                          <div>
+                            <p className="text-sm font-medium text-surface-900 dark:text-white">
+                              {target.targetName}
+                            </p>
+                            <p className="text-xs text-surface-500 truncate max-w-[200px]">
+                              {target.url}
+                            </p>
+                          </div>
+                        </div>
+                        {hasTargetOverride(target._id) && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedTarget(
+                                expandedTarget === target._id ? null : target._id
+                              )
+                            }
+                            className="p-1 rounded hover:bg-surface-100 dark:hover:bg-surface-700"
+                          >
+                            {expandedTarget === target._id ? (
+                              <ChevronUp className="h-4 w-4 text-surface-500" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4 text-surface-500" />
+                            )}
+                          </button>
+                        )}
+                      </div>
+
+                      {hasTargetOverride(target._id) && expandedTarget === target._id && (
+                        <div className="px-3 pb-3 border-t border-surface-100 dark:border-surface-700 pt-3">
+                          <ScrapeSettingsForm
+                            settings={getTargetOverride(target._id)}
+                            onChange={(settings) => updateTargetOverride(target._id, settings)}
+                            compact
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex justify-end gap-3 pt-4 border-t">

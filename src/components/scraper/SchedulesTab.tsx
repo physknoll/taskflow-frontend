@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useScrapingSchedules, useScrapingQueue } from '@/hooks/useScraping';
+import { useScrapingSchedules, useScrapingQueue, useScrapingSchedule } from '@/hooks/useScraping';
 import {
   ScheduleCard,
   ScheduleModal,
   QueueStatusPanel,
+  ScrapeOverrideModal,
 } from '@/components/scraping';
 import { SchedulesTable } from './SchedulesTable';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -16,6 +17,7 @@ import {
   ScrapeSchedule,
   CreateScrapeScheduleDto,
   UpdateScrapeScheduleDto,
+  ExecutionScrapeSettings,
 } from '@/types/scraping';
 import { canManageLinkedIn } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/authStore';
@@ -64,6 +66,10 @@ export function SchedulesTab() {
   const [confirmDelete, setConfirmDelete] = useState<ScrapeSchedule | null>(null);
   const [triggeringId, setTriggeringId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table'); // Default to table
+  const [runWithSettingsSchedule, setRunWithSettingsSchedule] = useState<ScrapeSchedule | null>(null);
+
+  // Fetch targets for the schedule being edited
+  const { targets: editingScheduleTargets } = useScrapingSchedule(editingSchedule?._id || '');
 
   const canManage = canManageLinkedIn(user?.role);
 
@@ -84,10 +90,28 @@ export function SchedulesTab() {
     setConfirmDelete(null);
   };
 
-  const handleTriggerSchedule = async (id: string) => {
+  const handleTriggerSchedule = async (id: string, withSettings = false) => {
+    if (withSettings) {
+      const schedule = schedules.find((s) => s._id === id);
+      if (schedule) {
+        setRunWithSettingsSchedule(schedule);
+      }
+      return;
+    }
+    
     setTriggeringId(id);
     try {
       await triggerSchedule(id);
+    } finally {
+      setTriggeringId(null);
+    }
+  };
+
+  const handleTriggerWithOverrides = async (overrides?: ExecutionScrapeSettings) => {
+    if (!runWithSettingsSchedule) return;
+    setTriggeringId(runWithSettingsSchedule._id);
+    try {
+      await triggerSchedule(runWithSettingsSchedule._id, overrides ? { globalOverrides: overrides } : undefined);
     } finally {
       setTriggeringId(null);
     }
@@ -258,6 +282,7 @@ export function SchedulesTab() {
               onEdit={() => setEditingSchedule(schedule)}
               onDelete={() => setConfirmDelete(schedule)}
               onTrigger={() => handleTriggerSchedule(schedule._id)}
+              onTriggerWithSettings={() => setRunWithSettingsSchedule(schedule)}
               onViewDetails={() => setEditingSchedule(schedule)}
               isTriggering={triggeringId === schedule._id && isTriggering}
             />
@@ -292,8 +317,19 @@ export function SchedulesTab() {
         isOpen={!!editingSchedule}
         onClose={() => setEditingSchedule(null)}
         schedule={editingSchedule}
+        targets={editingScheduleTargets}
         onSubmit={handleUpdateSchedule}
         isSubmitting={isUpdating}
+      />
+
+      {/* Run with Settings Modal */}
+      <ScrapeOverrideModal
+        isOpen={!!runWithSettingsSchedule}
+        onClose={() => setRunWithSettingsSchedule(null)}
+        targetName={runWithSettingsSchedule?.name || ''}
+        onConfirm={handleTriggerWithOverrides}
+        isLoading={isTriggering}
+        type="schedule"
       />
 
       {/* Delete Confirmation Modal */}

@@ -6,7 +6,7 @@ import { ScraperCard, ConnectionCodeModal } from '@/components/linkedin';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
-import { LinkedInScraper, UpdateLinkedInScraperSettingsDto, LinkedInScrapingMode } from '@/types';
+import { LinkedInScraper } from '@/types';
 import { canManageLinkedIn } from '@/lib/permissions';
 import { useAuthStore } from '@/stores/authStore';
 import {
@@ -14,6 +14,7 @@ import {
   Monitor,
   RefreshCw,
   AlertTriangle,
+  Info,
 } from 'lucide-react';
 
 export function ScrapersTab() {
@@ -25,8 +26,6 @@ export function ScrapersTab() {
     refetch,
     generateConnectionCode,
     isGeneratingCode,
-    updateSettings,
-    isUpdatingSettings,
     revokeScraper,
     isRevoking,
     deleteScraper,
@@ -34,17 +33,10 @@ export function ScrapersTab() {
   } = useLinkedInScrapers();
 
   const [showConnectModal, setShowConnectModal] = useState(false);
-  const [settingsModal, setSettingsModal] = useState<LinkedInScraper | null>(null);
   const [confirmRevoke, setConfirmRevoke] = useState<LinkedInScraper | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<LinkedInScraper | null>(null);
 
   const canManage = canManageLinkedIn(user?.role);
-
-  const handleUpdateSettings = async (settings: UpdateLinkedInScraperSettingsDto) => {
-    if (!settingsModal) return;
-    await updateSettings(settingsModal._id, settings);
-    setSettingsModal(null);
-  };
 
   const handleRevoke = async () => {
     if (!confirmRevoke) return;
@@ -143,7 +135,6 @@ export function ScrapersTab() {
             <ScraperCard
               key={scraper._id}
               scraper={scraper}
-              onSettings={() => setSettingsModal(scraper)}
               onRevoke={() => setConfirmRevoke(scraper)}
               onDelete={() => setConfirmDelete(scraper)}
             />
@@ -159,114 +150,13 @@ export function ScrapersTab() {
         isGenerating={isGeneratingCode}
       />
 
-      {/* Settings Modal */}
-      <Modal
-        isOpen={!!settingsModal}
-        onClose={() => setSettingsModal(null)}
-        title={`Settings: ${settingsModal?.name}`}
-        size="md"
-      >
-        {settingsModal && (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-                Scraping Mode
-              </label>
-              <select
-                value={settingsModal.settings.scrapingMode}
-                onChange={(e) =>
-                  setSettingsModal({
-                    ...settingsModal,
-                    settings: {
-                      ...settingsModal.settings,
-                      scrapingMode: e.target.value as LinkedInScrapingMode,
-                    },
-                  })
-                }
-                className="w-full px-4 py-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-800"
-              >
-                <option value="conservative">Conservative (Safer, slower)</option>
-                <option value="balanced">Balanced (Recommended)</option>
-                <option value="aggressive">Aggressive (Faster, riskier)</option>
-              </select>
-              <p className="mt-1 text-xs text-surface-500">
-                Conservative mode is recommended for new accounts.
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-                Max Posts Per Scrape
-              </label>
-              <input
-                type="number"
-                min={5}
-                max={50}
-                value={settingsModal.settings.maxPostsPerScrape}
-                onChange={(e) =>
-                  setSettingsModal({
-                    ...settingsModal,
-                    settings: {
-                      ...settingsModal.settings,
-                      maxPostsPerScrape: parseInt(e.target.value) || 20,
-                    },
-                  })
-                }
-                className="w-full px-4 py-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-800"
-              />
-            </div>
-
-            <div className="space-y-3">
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={settingsModal.settings.enableCommentScraping}
-                  onChange={(e) =>
-                    setSettingsModal({
-                      ...settingsModal,
-                      settings: {
-                        ...settingsModal.settings,
-                        enableCommentScraping: e.target.checked,
-                      },
-                    })
-                  }
-                  className="w-4 h-4 rounded"
-                />
-                <span className="text-sm">Enable comment scraping</span>
-              </label>
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  checked={settingsModal.settings.enableScreenshots}
-                  onChange={(e) =>
-                    setSettingsModal({
-                      ...settingsModal,
-                      settings: {
-                        ...settingsModal.settings,
-                        enableScreenshots: e.target.checked,
-                      },
-                    })
-                  }
-                  className="w-4 h-4 rounded"
-                />
-                <span className="text-sm">Enable screenshots</span>
-              </label>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button variant="outline" onClick={() => setSettingsModal(null)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={() => handleUpdateSettings(settingsModal.settings)}
-                isLoading={isUpdatingSettings}
-              >
-                Save Settings
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
+      {/* Deprecation Notice for Scraper Settings */}
+      {/* 
+        NOTE: Scraper-level settings have been deprecated.
+        Settings are now configured at the Source level (default settings)
+        or passed as overrides when triggering scrapes.
+        See: ScrapeSettingsForm component and Source edit page.
+      */}
 
       {/* Revoke Confirmation Modal */}
       <Modal

@@ -20,6 +20,52 @@ export interface ScrapeRetrySettings {
 }
 
 // ============================================
+// Execution Scrape Settings (New Architecture)
+// ============================================
+
+export type ScrapingMode = 'conservative' | 'balanced' | 'aggressive';
+
+/**
+ * Scrape settings that can be configured on Sources (as defaults)
+ * or passed as overrides when triggering scrapes
+ */
+export interface ExecutionScrapeSettings {
+  maxItems?: number;           // 1-100
+  enableComments?: boolean;
+  enableScreenshots?: boolean;
+  scrapingMode?: ScrapingMode;
+}
+
+/**
+ * Per-source override configuration for schedule target overrides
+ */
+export interface SourceScrapeOverride extends ExecutionScrapeSettings {
+  sourceId: string;
+}
+
+/**
+ * Global overrides when running a schedule manually
+ */
+export interface ScheduleGlobalOverrides extends ExecutionScrapeSettings {}
+
+/**
+ * Trigger manual scrape request body
+ */
+export interface TriggerSourceScrapeDto {
+  maxItems?: number;
+  enableComments?: boolean;
+  enableScreenshots?: boolean;
+  scrapingMode?: ScrapingMode;
+}
+
+/**
+ * Run schedule request body with global overrides
+ */
+export interface TriggerScheduleWithOverridesDto {
+  globalOverrides?: ScheduleGlobalOverrides;
+}
+
+// ============================================
 // Platform-Specific Settings
 // ============================================
 
@@ -74,6 +120,7 @@ export interface ScrapeSchedule {
   timezone: string;
   enabled: boolean;
   retrySettings: ScrapeRetrySettings;
+  targetOverrides?: SourceScrapeOverride[];
   nextRunAt?: string;
   lastRunAt?: string;
   lastRunStatus: ScheduleRunStatus;
@@ -97,6 +144,8 @@ export interface ScrapeTarget {
   targetName: string;
   linkedInProfileId?: string;
   settings: ScrapeTargetSettings;
+  /** Default scrape settings for this source (new architecture) */
+  scrapeSettings?: ExecutionScrapeSettings;
   priority: ScrapingPriority;
   enabled: boolean;
   lastScrapedAt?: string;
@@ -195,6 +244,7 @@ export interface UpdateScrapeScheduleDto {
   timezone?: string;
   enabled?: boolean;
   retrySettings?: Partial<ScrapeRetrySettings>;
+  targetOverrides?: SourceScrapeOverride[];
 }
 
 export interface UpdateScrapeTargetDto {
