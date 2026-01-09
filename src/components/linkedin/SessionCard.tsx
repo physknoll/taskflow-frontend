@@ -54,7 +54,8 @@ const triggerTypeLabels = {
 };
 
 export function SessionCard({ session, onClick, compact = false }: SessionCardProps) {
-  const TargetIcon = targetTypeIcons[session.targetType];
+  // Fallback to FileText icon if targetType is unknown (prevents React Error #130)
+  const TargetIcon = targetTypeIcons[session.targetType] || FileText;
   const statusInfo = statusConfig[session.status] || statusConfig.pending;
   const StatusIcon = statusInfo.icon;
 
