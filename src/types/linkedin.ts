@@ -120,6 +120,7 @@ export interface LinkedInProfile {
   clientId?: string | { _id: string; name: string };
   // New API fields
   platform?: ScrapingPlatform;
+  siteType?: string;
   sourceType?: SourceType;
   platformId?: string;
   status?: SourceStatus;

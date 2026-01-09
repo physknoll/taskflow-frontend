@@ -122,8 +122,8 @@ export function ProfilesTable({
           bValue = getDisplayName(b).toLowerCase();
           break;
         case 'profileType':
-          aValue = a.profileType || '';
-          bValue = b.profileType || '';
+          aValue = a.siteType || a.platform || '';
+          bValue = b.siteType || b.platform || '';
           break;
         case 'totalPostsCollected':
           aValue = getTotalItems(a);
@@ -231,7 +231,7 @@ export function ProfilesTable({
           <thead className="bg-surface-50 dark:bg-surface-800 border-b border-surface-200 dark:border-surface-700">
             <tr>
               <SortHeader field="displayName" label="Source" className="min-w-[250px]" />
-              <SortHeader field="profileType" label="Type" />
+              <SortHeader field="profileType" label="Site Type" />
               <SortHeader field="priority" label="Priority" />
               <SortHeader field="totalPostsCollected" label="Items" />
               <SortHeader field="intervalMinutes" label="Interval" />
@@ -285,17 +285,19 @@ export function ProfilesTable({
                   </div>
                 </td>
 
-                {/* Type */}
+                {/* Site Type */}
                 <td className="px-4 py-3">
-                  {profile.profileType ? (
-                    <Badge variant={profileTypeColors[profile.profileType]} size="sm">
-                      {profileTypeLabels[profile.profileType]}
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary" size="sm">
-                      {profile.sourceType || 'Profile'}
-                    </Badge>
-                  )}
+                  <Badge 
+                    variant={
+                      profile.siteType === 'linkedin' ? 'primary' :
+                      profile.siteType === 'website' ? 'secondary' :
+                      'secondary'
+                    } 
+                    size="sm"
+                    className="capitalize"
+                  >
+                    {profile.siteType || profile.platform || 'Unknown'}
+                  </Badge>
                 </td>
 
                 {/* Priority */}
