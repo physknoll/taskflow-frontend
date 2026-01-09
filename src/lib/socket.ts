@@ -16,10 +16,15 @@ export const initializeSocket = (token: string): Socket => {
     auth: {
       token,
     },
-    transports: ['websocket', 'polling'],
+    // Start with polling, then upgrade to websocket (required for Railway/proxies)
+    transports: ['polling', 'websocket'],
+    upgrade: true,
     reconnection: true,
     reconnectionAttempts: 5,
     reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 20000,
+    withCredentials: true,
   });
 
   socket.on('connect', () => {
