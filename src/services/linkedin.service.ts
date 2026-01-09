@@ -70,11 +70,12 @@ export const linkedinService = {
   async getScrapers(): Promise<LinkedInScrapersResponse> {
     const response = await api.get<{
       success: boolean;
-      data: { scrapers: LinkedInScraper[] };
+      data: LinkedInScraper[];
     }>(`${BASE_URL}/scrapers`);
     
-    // Map scrapers to component-expected format
-    const scrapers = response.data.data.scrapers.map(mapScraperResponse);
+    // API returns data as array directly, not nested in { scrapers: [...] }
+    const scrapersData = Array.isArray(response.data.data) ? response.data.data : [];
+    const scrapers = scrapersData.map(mapScraperResponse);
     const onlineCount = scrapers.filter(s => s.isOnlineNow || s.status === 'online').length;
     
     return { scrapers, onlineCount };
