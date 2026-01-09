@@ -33,9 +33,7 @@ export { DateRangePicker } from './DateRangePicker';
 export { CodeInput } from './CodeInput';
 export type { CodeInputProps } from './CodeInput';
 
-export { LinkifiedText } from './LinkifiedText';
-
-export { TagInput } from './TagInput';export { ColorPicker, PRESET_COLORS } from './ColorPicker';
+export { LinkifiedText } from './LinkifiedText';export { TagInput } from './TagInput';export { ColorPicker, PRESET_COLORS } from './ColorPicker';
 
 export { Toggle, toggleVariants } from './Toggle';
 export type { ToggleProps } from './Toggle';

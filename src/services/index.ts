@@ -19,6 +19,7 @@ export { conversationsService } from './conversations.service';
 export { integrationsService } from './integrations.service';
 export { calendarService } from './calendar.service';
 export { linkedinService } from './linkedin.service';
+export { scrapingService } from './scraping.service';
 export {
   kbSourcesService,
   useKBSources,

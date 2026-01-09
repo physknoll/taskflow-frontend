@@ -98,3 +98,12 @@ export {
   useLinkedInSessionPosts,
 } from './useLinkedIn';
 
+// Multi-Platform Scraping hooks
+export {
+  scrapingKeys,
+  useScrapingSchedules,
+  useScrapingSchedule,
+  useScrapingQueue,
+  useScrapingQueueStats,
+} from './useScraping';
+

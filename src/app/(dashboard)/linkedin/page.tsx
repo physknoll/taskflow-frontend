@@ -25,6 +25,7 @@ import {
   XCircle,
   Clock,
   AlertTriangle,
+  Calendar,
 } from 'lucide-react';
 
 export default function LinkedInDashboardPage() {
@@ -268,7 +269,7 @@ export default function LinkedInDashboardPage() {
       </Card>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Link href="/linkedin/scrapers">
           <Card hover className="h-full">
             <CardContent className="p-4 text-center">
@@ -308,6 +309,15 @@ export default function LinkedInDashboardPage() {
               <Activity className="h-8 w-8 mx-auto mb-2 text-primary-500" />
               <p className="font-medium text-surface-900 dark:text-white">Session History</p>
               <p className="text-xs text-surface-500">View all sessions</p>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href="/linkedin/schedules">
+          <Card hover className="h-full">
+            <CardContent className="p-4 text-center">
+              <Calendar className="h-8 w-8 mx-auto mb-2 text-primary-500" />
+              <p className="font-medium text-surface-900 dark:text-white">Schedules</p>
+              <p className="text-xs text-surface-500">Automated scraping</p>
             </CardContent>
           </Card>
         </Link>
