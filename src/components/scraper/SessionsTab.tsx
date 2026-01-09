@@ -188,7 +188,7 @@ export function SessionsTab() {
             ))}
           </select>
 
-          {/* Profile */}
+          {/* Source */}
           <select
             value={profileId}
             onChange={(e) => {
@@ -197,10 +197,10 @@ export function SessionsTab() {
             }}
             className="px-4 py-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-800 text-surface-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
-            <option value="">All Profiles</option>
+            <option value="">All Sources</option>
             {profiles.map((profile) => (
               <option key={profile._id} value={profile._id}>
-                {profile.displayName}
+                {profile.name || profile.displayName}
               </option>
             ))}
           </select>

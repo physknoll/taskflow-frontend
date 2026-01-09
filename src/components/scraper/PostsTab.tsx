@@ -145,7 +145,7 @@ export function PostsTab() {
             ))}
           </select>
 
-          {/* Profile */}
+          {/* Source */}
           <select
             value={profileId}
             onChange={(e) => {
@@ -154,10 +154,10 @@ export function PostsTab() {
             }}
             className="px-4 py-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-800 text-surface-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
-            <option value="">All Profiles</option>
+            <option value="">All Sources</option>
             {profiles.map((profile) => (
               <option key={profile._id} value={profile._id}>
-                {profile.displayName}
+                {profile.name || profile.displayName}
               </option>
             ))}
           </select>
@@ -315,11 +315,11 @@ export function PostsTab() {
                   <p className="text-sm text-surface-500">{selectedPost.author.headline}</p>
                 )}
                 <p className="text-xs text-surface-400 mt-1">
-                  {selectedPost.linkedinTimestamp} • {selectedPost.activityType}
+                  {selectedPost.linkedinTimestamp} • {selectedPost.itemType || selectedPost.activityType}
                 </p>
               </div>
               <a
-                href={selectedPost.postUrl}
+                href={selectedPost.url || selectedPost.postUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 text-primary-600 hover:text-primary-700"
@@ -332,7 +332,9 @@ export function PostsTab() {
             {/* Content */}
             <div className="p-4 bg-surface-50 dark:bg-surface-700/50 rounded-lg">
               <p className="whitespace-pre-wrap text-surface-700 dark:text-surface-300">
-                {selectedPost.content}
+                {typeof selectedPost.content === 'object' 
+                  ? (selectedPost.content as any).body || (selectedPost.content as any).preview || ''
+                  : selectedPost.content}
               </p>
             </div>
 
@@ -378,18 +380,18 @@ export function PostsTab() {
             <div className="flex items-center gap-6 py-4 border-t border-b border-surface-200 dark:border-surface-700">
               <div className="flex items-center gap-2">
                 <ThumbsUp className="h-5 w-5 text-primary-500" />
-                <span className="font-semibold">{selectedPost.engagement.reactions.toLocaleString()}</span>
-                <span className="text-sm text-surface-500">reactions</span>
+                <span className="font-semibold">{((selectedPost.engagement as any).likes || (selectedPost.engagement as any).reactions || 0).toLocaleString()}</span>
+                <span className="text-sm text-surface-500">likes</span>
               </div>
               <div className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-primary-500" />
-                <span className="font-semibold">{selectedPost.engagement.comments.toLocaleString()}</span>
+                <span className="font-semibold">{(selectedPost.engagement.comments || 0).toLocaleString()}</span>
                 <span className="text-sm text-surface-500">comments</span>
               </div>
               <div className="flex items-center gap-2">
                 <Repeat2 className="h-5 w-5 text-primary-500" />
-                <span className="font-semibold">{selectedPost.engagement.reposts.toLocaleString()}</span>
-                <span className="text-sm text-surface-500">reposts</span>
+                <span className="font-semibold">{((selectedPost.engagement as any).shares || (selectedPost.engagement as any).reposts || 0).toLocaleString()}</span>
+                <span className="text-sm text-surface-500">shares</span>
               </div>
             </div>
 
@@ -398,18 +400,18 @@ export function PostsTab() {
               <div>
                 <p className="text-surface-500">First Seen</p>
                 <p className="font-medium">
-                  {format(new Date(selectedPost.firstSeenAt), 'MMM d, yyyy h:mm a')}
+                  {selectedPost.firstSeenAt || selectedPost.createdAt ? format(new Date(selectedPost.firstSeenAt || selectedPost.createdAt), 'MMM d, yyyy h:mm a') : 'Unknown'}
                 </p>
               </div>
               <div>
                 <p className="text-surface-500">Last Scraped</p>
                 <p className="font-medium">
-                  {formatDistanceToNow(new Date(selectedPost.lastScrapedAt), { addSuffix: true })}
+                  {selectedPost.lastScrapedAt ? formatDistanceToNow(new Date(selectedPost.lastScrapedAt), { addSuffix: true }) : 'Unknown'}
                 </p>
               </div>
               <div>
                 <p className="text-surface-500">Status</p>
-                <p className="font-medium capitalize">{selectedPost.actionStatus}</p>
+                <p className="font-medium capitalize">{selectedPost.status || selectedPost.actionStatus}</p>
               </div>
               <div>
                 <p className="text-surface-500">Engagement Velocity</p>
@@ -497,7 +499,7 @@ export function PostsTab() {
               </div>
               <div className="flex items-center gap-3">
                 <a
-                  href={screenshotPost.postUrl}
+                  href={screenshotPost.url || screenshotPost.postUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"

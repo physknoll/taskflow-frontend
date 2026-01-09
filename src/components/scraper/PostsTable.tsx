@@ -68,7 +68,7 @@ export function PostsTable({ posts, onAction, onViewDetails, onViewScreenshot }:
                 {/* Author */}
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <SiteIcon url={post.postUrl} size="sm" />
+                    <SiteIcon url={post.url || post.postUrl || ''} size="sm" />
                     <div className="min-w-0">
                       <p className="font-medium text-surface-900 dark:text-white truncate max-w-[150px]">
                         {post.author.name}
@@ -85,7 +85,9 @@ export function PostsTable({ posts, onAction, onViewDetails, onViewScreenshot }:
                 {/* Content */}
                 <td className="px-4 py-3">
                   <p className="text-sm text-surface-700 dark:text-surface-300 line-clamp-2 max-w-[300px]">
-                    {post.content || '(No content)'}
+                    {typeof post.content === 'object' 
+                      ? ((post.content as any).preview || (post.content as any).body || '(No content)')
+                      : (post.content || '(No content)')}
                   </p>
                 </td>
 
@@ -106,30 +108,32 @@ export function PostsTable({ posts, onAction, onViewDetails, onViewScreenshot }:
                   <div className="flex items-center gap-3 text-xs text-surface-500">
                     <span className="flex items-center gap-1">
                       <ThumbsUp className="h-3 w-3" />
-                      {post.engagement.reactions.toLocaleString()}
+                      {((post.engagement as any).likes ?? (post.engagement as any).reactions ?? 0).toLocaleString()}
                     </span>
                     <span className="flex items-center gap-1">
                       <MessageCircle className="h-3 w-3" />
-                      {post.engagement.comments.toLocaleString()}
+                      {(post.engagement.comments ?? 0).toLocaleString()}
                     </span>
                     <span className="flex items-center gap-1">
                       <Repeat2 className="h-3 w-3" />
-                      {post.engagement.reposts.toLocaleString()}
+                      {((post.engagement as any).shares ?? (post.engagement as any).reposts ?? 0).toLocaleString()}
                     </span>
                   </div>
                 </td>
 
                 {/* Status */}
                 <td className="px-4 py-3">
-                  <Badge variant={statusVariants[post.actionStatus]} size="sm">
-                    {post.actionStatus}
+                  <Badge variant={statusVariants[(post.status || post.actionStatus) as LinkedInActionStatus] || 'secondary'} size="sm">
+                    {post.status || post.actionStatus}
                   </Badge>
                 </td>
 
                 {/* Age */}
                 <td className="px-4 py-3">
                   <span className="text-sm text-surface-500">
-                    {formatDistanceToNow(new Date(post.firstSeenAt), { addSuffix: true })}
+                    {(post.firstSeenAt || post.createdAt) 
+                      ? formatDistanceToNow(new Date(post.firstSeenAt || post.createdAt), { addSuffix: true })
+                      : 'Unknown'}
                   </span>
                 </td>
 
@@ -157,7 +161,7 @@ export function PostsTable({ posts, onAction, onViewDetails, onViewScreenshot }:
                       </Button>
                     )}
                     <a
-                      href={post.postUrl}
+                      href={post.url || post.postUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 rounded-lg text-surface-500 hover:text-primary-600 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"

@@ -1,6 +1,6 @@
 'use client';
 
-import { LinkedInPost, LinkedInActionStatus } from '@/types';
+import { LinkedInPost, LinkedInActionStatus, ItemContent, ItemEngagement, LinkedInPostEngagement, ScrapingPlatform, ItemStatus, ItemAuthor } from '@/types';
 import { linkedinService } from '@/services/linkedin.service';
 import { useAuthStore } from '@/stores/authStore';
 import { Badge } from '@/components/ui/Badge';
@@ -38,22 +38,34 @@ interface PostCardProps {
 }
 
 const actionStatusConfig: Record<
-  LinkedInActionStatus,
+  LinkedInActionStatus | ItemStatus,
   { label: string; variant: 'secondary' | 'primary' | 'success' | 'warning' }
 > = {
   new: { label: 'New', variant: 'primary' },
   reviewed: { label: 'Reviewed', variant: 'secondary' },
   actioned: { label: 'Actioned', variant: 'success' },
   skipped: { label: 'Skipped', variant: 'warning' },
+  // New API statuses
+  actionable: { label: 'Actionable', variant: 'warning' },
+  archived: { label: 'Archived', variant: 'secondary' },
 };
 
-const mediaTypeIcons = {
+const mediaTypeIcons: Record<string, typeof ImageIcon | null> = {
   image: ImageIcon,
   video: Video,
   document: FileText,
   poll: BarChart2,
   carousel: ImageIcon,
+  text: null,
   none: null,
+};
+
+// Platform labels
+const platformLabels: Record<ScrapingPlatform, string> = {
+  linkedin: 'LinkedIn',
+  reddit: 'Reddit',
+  youtube: 'YouTube',
+  website: 'Website',
 };
 
 export function PostCard({ post, onAction, onViewDetails, onViewScreenshot, compact = false }: PostCardProps) {
@@ -61,21 +73,118 @@ export function PostCard({ post, onAction, onViewDetails, onViewScreenshot, comp
   const [screenshotError, setScreenshotError] = useState(false);
   const { token } = useAuthStore();
 
-  const MediaIcon = post.mediaType ? mediaTypeIcons[post.mediaType] : null;
+  // Get content - handle both new API (object) and legacy (string) formats
+  const getContent = (): { body: string; preview: string } => {
+    if (typeof post.content === 'object' && post.content !== null) {
+      const itemContent = post.content as ItemContent;
+      return {
+        body: itemContent.body || '',
+        preview: itemContent.preview || itemContent.body || '',
+      };
+    }
+    return {
+      body: post.content as string || '',
+      preview: post.contentPreview || (post.content as string) || '',
+    };
+  };
+
+  // Get engagement stats - handle both new API (likes/shares) and legacy (reactions/reposts) formats
+  const getEngagement = () => {
+    const engagement = post.engagement;
+    // Check if it has new API fields
+    if ('likes' in engagement || 'shares' in engagement) {
+      const itemEngagement = engagement as ItemEngagement;
+      return {
+        likes: itemEngagement.likes ?? 0,
+        comments: itemEngagement.comments ?? 0,
+        shares: itemEngagement.shares ?? 0,
+      };
+    }
+    // Legacy format
+    const legacyEngagement = engagement as LinkedInPostEngagement;
+    return {
+      likes: legacyEngagement.reactions ?? 0,
+      comments: legacyEngagement.comments ?? 0,
+      shares: legacyEngagement.reposts ?? 0,
+    };
+  };
+
+  // Get URL - check new API first, then legacy
+  const getUrl = () => post.url || post.postUrl;
+
+  // Get action status - check new API (status) first, then legacy (actionStatus)
+  const getActionStatus = (): LinkedInActionStatus | ItemStatus => {
+    return (post.status as ItemStatus) || post.actionStatus || 'new';
+  };
+
+  // Get author avatar - handle both new and legacy structures
+  const getAuthorAvatarUrl = () => {
+    const author = post.author as ItemAuthor;
+    if (author.metadata?.avatarUrl) {
+      return author.metadata.avatarUrl;
+    }
+    return author.avatarUrl;
+  };
+
+  // Get author headline - handle both new and legacy structures
+  const getAuthorHeadline = () => {
+    const author = post.author as ItemAuthor;
+    if (author.metadata?.headline) {
+      return author.metadata.headline;
+    }
+    return author.headline;
+  };
+
+  // Get media type - handle new API content.mediaType
+  const getMediaType = () => {
+    if (typeof post.content === 'object' && post.content !== null) {
+      return (post.content as ItemContent).mediaType;
+    }
+    return post.mediaType;
+  };
+
+  // Get timestamp display
+  const getTimestamp = () => post.linkedinTimestamp || '';
+
+  // Get activity/item type
+  const getActivityType = () => post.itemType || post.activityType || '';
+
+  // Get first seen date
+  const getFirstSeenAt = () => post.firstSeenAt || post.createdAt;
+
+  const content = getContent();
+  const engagement = getEngagement();
+  const itemUrl = getUrl();
+  const actionStatus = getActionStatus();
+  const authorAvatarUrl = getAuthorAvatarUrl();
+  const authorHeadline = getAuthorHeadline();
+  const mediaType = getMediaType();
+  const MediaIcon = mediaType && mediaTypeIcons[mediaType] ? mediaTypeIcons[mediaType] : null;
   const hasScreenshot = !!post.screenshotPath && !screenshotError;
   const screenshotUrl = post.screenshotPath ? linkedinService.getScreenshotUrl(post._id, token || undefined) : null;
 
   const getProfileInfo = () => {
-    if (typeof post.profileId === 'string') {
+    if (typeof post.profileId === 'string' || typeof post.sourceId === 'string') {
       return { displayName: post.author.name, profileType: null };
     }
-    return {
-      displayName: post.profileId.displayName,
-      profileType: post.profileId.profileType,
-    };
+    if (post.profileId && typeof post.profileId === 'object') {
+      return {
+        displayName: post.profileId.displayName || post.profileId.name,
+        profileType: post.profileId.profileType,
+      };
+    }
+    return { displayName: post.author.name, profileType: null };
   };
 
   const { profileType } = getProfileInfo();
+
+  // Get external link label based on platform
+  const getExternalLinkLabel = () => {
+    if (post.platform) {
+      return platformLabels[post.platform];
+    }
+    return 'LinkedIn';
+  };
 
   return (
     <Card hover className={cn('h-full', compact && 'shadow-sm')}>
@@ -85,7 +194,7 @@ export function PostCard({ post, onAction, onViewDetails, onViewScreenshot, comp
           <Avatar
             firstName={post.author.name}
             lastName=""
-            src={post.author.avatarUrl}
+            src={authorAvatarUrl}
             size={compact ? 'sm' : 'md'}
           />
           <div className="flex-1 min-w-0">
@@ -99,22 +208,28 @@ export function PostCard({ post, onAction, onViewDetails, onViewScreenshot, comp
                   Trending
                 </Badge>
               )}
+              {/* Show platform badge for non-LinkedIn content */}
+              {post.platform && post.platform !== 'linkedin' && (
+                <Badge variant="outline" size="sm">
+                  {platformLabels[post.platform]}
+                </Badge>
+              )}
             </div>
-            {post.author.headline && (
+            {authorHeadline && (
               <p className="text-xs text-surface-500 dark:text-surface-400 truncate">
-                {post.author.headline}
+                {authorHeadline}
               </p>
             )}
             <p className="text-xs text-surface-400 dark:text-surface-500">
-              {post.linkedinTimestamp} • {post.activityType}
+              {getTimestamp()} {getActivityType() && `• ${getActivityType()}`}
             </p>
           </div>
           <div className="flex items-center gap-2">
             <Badge
-              variant={actionStatusConfig[post.actionStatus].variant}
+              variant={actionStatusConfig[actionStatus]?.variant || 'secondary'}
               size="sm"
             >
-              {actionStatusConfig[post.actionStatus].label}
+              {actionStatusConfig[actionStatus]?.label || actionStatus}
             </Badge>
             {onAction && (
               <div className="relative">
@@ -177,12 +292,12 @@ export function PostCard({ post, onAction, onViewDetails, onViewScreenshot, comp
               compact ? 'line-clamp-2 text-sm' : 'line-clamp-4'
             )}
           >
-            {post.contentPreview || post.content}
+            {content.preview || content.body}
           </p>
           {MediaIcon && (
             <div className="mt-2 flex items-center gap-1 text-xs text-surface-500">
               <MediaIcon className="h-3 w-3" />
-              <span className="capitalize">{post.mediaType}</span>
+              <span className="capitalize">{mediaType}</span>
             </div>
           )}
         </div>
@@ -225,15 +340,15 @@ export function PostCard({ post, onAction, onViewDetails, onViewScreenshot, comp
         <div className="flex items-center gap-4 py-3 border-t border-surface-200 dark:border-surface-700">
           <div className="flex items-center gap-1 text-sm text-surface-600 dark:text-surface-400">
             <ThumbsUp className="h-4 w-4" />
-            <span>{post.engagement.reactions.toLocaleString()}</span>
+            <span>{engagement.likes.toLocaleString()}</span>
           </div>
           <div className="flex items-center gap-1 text-sm text-surface-600 dark:text-surface-400">
             <MessageCircle className="h-4 w-4" />
-            <span>{post.engagement.comments.toLocaleString()}</span>
+            <span>{engagement.comments.toLocaleString()}</span>
           </div>
           <div className="flex items-center gap-1 text-sm text-surface-600 dark:text-surface-400">
             <Repeat2 className="h-4 w-4" />
-            <span>{post.engagement.reposts.toLocaleString()}</span>
+            <span>{engagement.shares.toLocaleString()}</span>
           </div>
           {post.engagementVelocity !== undefined && post.engagementVelocity > 0 && (
             <div className="flex items-center gap-1 text-sm text-warning-600 dark:text-warning-400">
@@ -267,7 +382,10 @@ export function PostCard({ post, onAction, onViewDetails, onViewScreenshot, comp
         {/* Actions */}
         <div className="flex items-center justify-between pt-3 border-t border-surface-200 dark:border-surface-700">
           <p className="text-xs text-surface-500">
-            First seen {formatDistanceToNow(new Date(post.firstSeenAt), { addSuffix: true })}
+            {getFirstSeenAt() 
+              ? `First seen ${formatDistanceToNow(new Date(getFirstSeenAt()), { addSuffix: true })}`
+              : ''
+            }
           </p>
           <div className="flex items-center gap-2">
             {onViewDetails && (
@@ -275,15 +393,17 @@ export function PostCard({ post, onAction, onViewDetails, onViewScreenshot, comp
                 View Details
               </Button>
             )}
-            <a
-              href={post.postUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
-            >
-              <ExternalLink className="h-3 w-3" />
-              LinkedIn
-            </a>
+            {itemUrl && (
+              <a
+                href={itemUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+              >
+                <ExternalLink className="h-3 w-3" />
+                {getExternalLinkLabel()}
+              </a>
+            )}
           </div>
         </div>
       </CardContent>

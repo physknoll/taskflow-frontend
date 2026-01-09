@@ -21,26 +21,29 @@ import {
 import toast from 'react-hot-toast';
 
 // ============================================
-// Query Keys
+// Query Keys - Updated for unified scraping API
 // ============================================
 
 export const linkedinKeys = {
-  all: ['linkedin'] as const,
+  all: ['scraping'] as const,
   stats: () => [...linkedinKeys.all, 'stats'] as const,
   timeline: (days: number) => [...linkedinKeys.all, 'timeline', days] as const,
   engagement: (limit: number) => [...linkedinKeys.all, 'engagement', limit] as const,
   scrapers: () => [...linkedinKeys.all, 'scrapers'] as const,
   scraper: (id: string) => [...linkedinKeys.all, 'scraper', id] as const,
-  profiles: (filters: LinkedInProfileFilters) => [...linkedinKeys.all, 'profiles', filters] as const,
-  profile: (id: string) => [...linkedinKeys.all, 'profile', id] as const,
-  posts: (filters: LinkedInPostFilters) => [...linkedinKeys.all, 'posts', filters] as const,
-  post: (id: string) => [...linkedinKeys.all, 'post', id] as const,
+  profiles: (filters: LinkedInProfileFilters) => [...linkedinKeys.all, 'sources', filters] as const,
+  profile: (id: string) => [...linkedinKeys.all, 'source', id] as const,
+  posts: (filters: LinkedInPostFilters) => [...linkedinKeys.all, 'items', filters] as const,
+  post: (id: string) => [...linkedinKeys.all, 'item', id] as const,
   trendingPosts: (limit: number) => [...linkedinKeys.all, 'trending', limit] as const,
   actionablePosts: (limit: number) => [...linkedinKeys.all, 'actionable', limit] as const,
   sessions: (filters: LinkedInSessionFilters) => [...linkedinKeys.all, 'sessions', filters] as const,
   session: (id: string) => [...linkedinKeys.all, 'session', id] as const,
-  sessionPosts: (sessionId: string) => [...linkedinKeys.all, 'session', sessionId, 'posts'] as const,
+  sessionPosts: (sessionId: string) => [...linkedinKeys.all, 'session', sessionId, 'items'] as const,
 };
+
+// Alias for new API naming convention
+export const scrapingKeys = linkedinKeys;
 
 // ============================================
 // Dashboard Stats Hooks
@@ -53,6 +56,9 @@ export function useLinkedInStats() {
     refetchInterval: 30000, // Poll every 30 seconds
   });
 }
+
+// Alias for new naming
+export const useScrapingStats = useLinkedInStats;
 
 export function useLinkedInTimeline(days: number = 7) {
   return useQuery({
@@ -141,6 +147,9 @@ export function useLinkedInScrapers() {
   };
 }
 
+// Alias for new naming
+export const useScrapers = useLinkedInScrapers;
+
 export function useLinkedInScraper(id: string) {
   return useQuery({
     queryKey: linkedinKeys.scraper(id),
@@ -149,8 +158,11 @@ export function useLinkedInScraper(id: string) {
   });
 }
 
+// Alias for new naming
+export const useScraper = useLinkedInScraper;
+
 // ============================================
-// Profile Hooks
+// Profile/Source Hooks
 // ============================================
 
 export function useLinkedInProfiles(filters: LinkedInProfileFilters = {}) {
@@ -165,22 +177,25 @@ export function useLinkedInProfiles(filters: LinkedInProfileFilters = {}) {
     mutationFn: (data: AddLinkedInProfileDto) => linkedinService.addProfile(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: linkedinKeys.all });
-      toast.success('Profile added');
+      toast.success('Source added');
     },
     onError: (error: any) => {
       const code = error.response?.data?.code;
       switch (code) {
         case 'MAX_PROFILES_REACHED':
-          toast.error('Maximum profiles reached. Remove some or upgrade your plan.');
+        case 'MAX_SOURCES_REACHED':
+          toast.error('Maximum sources reached. Remove some or upgrade your plan.');
           break;
         case 'PROFILE_ALREADY_EXISTS':
-          toast.error('This profile is already being monitored.');
+        case 'SOURCE_ALREADY_EXISTS':
+          toast.error('This source is already being monitored.');
           break;
         case 'INVALID_LINKEDIN_URL':
-          toast.error('Please enter a valid LinkedIn profile or company URL.');
+        case 'INVALID_URL':
+          toast.error('Please enter a valid URL.');
           break;
         default:
-          toast.error(error.response?.data?.message || 'Failed to add profile');
+          toast.error(error.response?.data?.message || 'Failed to add source');
       }
     },
   });
@@ -191,13 +206,13 @@ export function useLinkedInProfiles(filters: LinkedInProfileFilters = {}) {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: linkedinKeys.all });
       if (result.errors.length > 0) {
-        toast.success(`Added ${result.added.length} profiles. ${result.errors.length} failed.`);
+        toast.success(`Added ${result.added.length} sources. ${result.errors.length} failed.`);
       } else {
-        toast.success(`Added ${result.added.length} profiles`);
+        toast.success(`Added ${result.added.length} sources`);
       }
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to add profiles');
+      toast.error(error.response?.data?.message || 'Failed to add sources');
     },
   });
 
@@ -206,10 +221,10 @@ export function useLinkedInProfiles(filters: LinkedInProfileFilters = {}) {
       linkedinService.updateProfile(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: linkedinKeys.all });
-      toast.success('Profile updated');
+      toast.success('Source updated');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update profile');
+      toast.error(error.response?.data?.message || 'Failed to update source');
     },
   });
 
@@ -217,10 +232,10 @@ export function useLinkedInProfiles(filters: LinkedInProfileFilters = {}) {
     mutationFn: (id: string) => linkedinService.deleteProfile(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: linkedinKeys.all });
-      toast.success('Profile deleted');
+      toast.success('Source deleted');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to delete profile');
+      toast.error(error.response?.data?.message || 'Failed to delete source');
     },
   });
 
@@ -245,24 +260,38 @@ export function useLinkedInProfiles(filters: LinkedInProfileFilters = {}) {
 
   return {
     profiles: data?.data || [],
+    // Alias for new naming
+    sources: data?.data || [],
     pagination: data?.pagination,
     isLoading,
     error,
     refetch,
     addProfile: addMutation.mutateAsync,
+    // Alias for new naming
+    addSource: addMutation.mutateAsync,
     isAdding: addMutation.isPending,
     addProfilesBulk: bulkAddMutation.mutateAsync,
+    addSourcesBulk: bulkAddMutation.mutateAsync,
     isBulkAdding: bulkAddMutation.isPending,
     updateProfile: (id: string, data: UpdateLinkedInProfileDto) =>
       updateMutation.mutateAsync({ id, data }),
+    // Alias for new naming
+    updateSource: (id: string, data: UpdateLinkedInProfileDto) =>
+      updateMutation.mutateAsync({ id, data }),
     isUpdating: updateMutation.isPending,
     deleteProfile: deleteMutation.mutateAsync,
+    // Alias for new naming
+    deleteSource: deleteMutation.mutateAsync,
     isDeleting: deleteMutation.isPending,
     triggerScrape: (profileId: string, scraperId?: string) => 
       scrapeMutation.mutateAsync({ profileId, scraperId }),
     isScraping: scrapeMutation.isPending,
   };
 }
+
+// Alias for new naming
+export const useSources = useLinkedInProfiles;
+export const useScrapingSources = useLinkedInProfiles;
 
 export function useLinkedInProfile(id: string) {
   return useQuery({
@@ -272,6 +301,9 @@ export function useLinkedInProfile(id: string) {
   });
 }
 
+// Alias for new naming
+export const useSource = useLinkedInProfile;
+
 export function useLinkedInCSVUpload() {
   const queryClient = useQueryClient();
 
@@ -280,9 +312,9 @@ export function useLinkedInCSVUpload() {
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: linkedinKeys.all });
       if (result.skipped > 0) {
-        toast.success(`Imported ${result.created} profiles. ${result.skipped} skipped.`);
+        toast.success(`Imported ${result.created} sources. ${result.skipped} skipped.`);
       } else {
-        toast.success(`Imported ${result.created} profiles`);
+        toast.success(`Imported ${result.created} sources`);
       }
     },
     onError: (error: any) => {
@@ -296,7 +328,7 @@ export function useLinkedInCSVUpload() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'linkedin-profiles-template.csv';
+      a.download = 'scraping-sources-template.csv';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -316,7 +348,7 @@ export function useLinkedInCSVUpload() {
 }
 
 // ============================================
-// Post Hooks
+// Post/Item Hooks
 // ============================================
 
 export function useLinkedInPosts(filters: LinkedInPostFilters = {}) {
@@ -333,15 +365,17 @@ export function useLinkedInPosts(filters: LinkedInPostFilters = {}) {
       linkedinService.updatePostAction(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: linkedinKeys.all });
-      toast.success('Post status updated');
+      toast.success('Item status updated');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to update post');
+      toast.error(error.response?.data?.message || 'Failed to update item');
     },
   });
 
   return {
     posts: data?.data || [],
+    // Alias for new naming
+    items: data?.data || [],
     pagination: data?.pagination,
     isLoading,
     error,
@@ -352,6 +386,10 @@ export function useLinkedInPosts(filters: LinkedInPostFilters = {}) {
   };
 }
 
+// Alias for new naming
+export const useItems = useLinkedInPosts;
+export const useScrapingItems = useLinkedInPosts;
+
 export function useLinkedInPost(id: string) {
   return useQuery({
     queryKey: linkedinKeys.post(id),
@@ -359,6 +397,9 @@ export function useLinkedInPost(id: string) {
     enabled: !!id,
   });
 }
+
+// Alias for new naming
+export const useItem = useLinkedInPost;
 
 export function useLinkedInTrendingPosts(limit: number = 10) {
   return useQuery({
@@ -368,6 +409,9 @@ export function useLinkedInTrendingPosts(limit: number = 10) {
   });
 }
 
+// Alias for new naming
+export const useTrendingItems = useLinkedInTrendingPosts;
+
 export function useLinkedInActionablePosts(limit: number = 20) {
   return useQuery({
     queryKey: linkedinKeys.actionablePosts(limit),
@@ -375,6 +419,9 @@ export function useLinkedInActionablePosts(limit: number = 20) {
     refetchInterval: 60000, // Poll every 60 seconds
   });
 }
+
+// Alias for new naming
+export const useActionableItems = useLinkedInActionablePosts;
 
 // ============================================
 // Session Hooks
@@ -395,6 +442,10 @@ export function useLinkedInSessions(filters: LinkedInSessionFilters = {}) {
   };
 }
 
+// Alias for new naming
+export const useSessions = useLinkedInSessions;
+export const useScrapingSessions = useLinkedInSessions;
+
 export function useLinkedInSession(id: string) {
   return useQuery({
     queryKey: linkedinKeys.session(id),
@@ -403,6 +454,9 @@ export function useLinkedInSession(id: string) {
   });
 }
 
+// Alias for new naming
+export const useSession = useLinkedInSession;
+
 export function useLinkedInSessionPosts(sessionId: string) {
   return useQuery({
     queryKey: linkedinKeys.sessionPosts(sessionId),
@@ -410,3 +464,6 @@ export function useLinkedInSessionPosts(sessionId: string) {
     enabled: !!sessionId,
   });
 }
+
+// Alias for new naming
+export const useSessionItems = useLinkedInSessionPosts;

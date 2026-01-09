@@ -1166,6 +1166,41 @@ export * from './linkedin';
 
 // ============================================
 // Multi-Platform Scraping Types
+// Re-export everything from scraping except ScrapingPlatform (already exported from linkedin)
 // ============================================
-export * from './scraping';
+export type {
+  ScrapingPriority,
+  ScheduleRunStatus,
+  QueuedCommandStatus,
+  ScrapeRetrySettings,
+  LinkedInTargetSettings,
+  RedditTargetSettings,
+  WebsiteTargetSettings,
+  ScrapeTargetSettings,
+  ScrapeSchedule,
+  ScrapeTarget,
+  QueuedCommand,
+  QueueStatus,
+  QueueStats,
+  ScrapeScheduleFilters,
+  QueueFilters,
+  CreateScrapeTargetDto,
+  CreateScrapeScheduleDto,
+  UpdateScrapeScheduleDto,
+  UpdateScrapeTargetDto,
+  ScrapeScheduleWithTargets,
+  CreateScheduleResponse,
+  TriggerScheduleResponse,
+  QueueResponse,
+  CronPreset,
+} from './scraping';
+export {
+  CRON_PRESETS,
+  PLATFORM_LABELS,
+  PLATFORM_COLORS,
+  DEFAULT_RETRY_SETTINGS,
+  DEFAULT_LINKEDIN_SETTINGS,
+  DEFAULT_REDDIT_SETTINGS,
+  DEFAULT_WEBSITE_SETTINGS,
+} from './scraping';
 

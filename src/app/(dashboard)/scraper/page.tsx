@@ -54,11 +54,56 @@ export default function ScraperDashboardPage() {
 
   const onlineScrapers = scrapers.filter((s) => s.isOnlineNow).length;
 
+  // Helper to get stats values - handles both new API and legacy structure
+  const getSourcesTotal = () => {
+    if (stats?.overview?.totalSources !== undefined) {
+      return stats.overview.totalSources;
+    }
+    return stats?.profiles?.total ?? 0;
+  };
+
+  const getSourcesActive = () => {
+    if (stats?.byPlatform) {
+      // Sum sources across all platforms
+      return Object.values(stats.byPlatform).reduce((sum, p) => sum + (p.sources || 0), 0);
+    }
+    return stats?.profiles?.active ?? 0;
+  };
+
+  const getItemsTotal = () => {
+    if (stats?.overview?.totalItems !== undefined) {
+      return stats.overview.totalItems;
+    }
+    return stats?.posts?.total ?? 0;
+  };
+
+  const getItemsLast24h = () => {
+    if (stats?.recentActivity?.itemsLast24h !== undefined) {
+      return stats.recentActivity.itemsLast24h;
+    }
+    return stats?.posts?.last24Hours ?? 0;
+  };
+
+  const getTrendingCount = () => {
+    return stats?.posts?.trending ?? 0;
+  };
+
+  const getPendingActionCount = () => {
+    return stats?.posts?.pendingAction ?? 0;
+  };
+
+  const getValidCookiesCount = () => {
+    return scrapers.filter(s => 
+      s.cookiesValid || 
+      s.platformCredentials?.linkedin?.cookiesValid
+    ).length;
+  };
+
   const tabs: Tab[] = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'scrapers', label: 'Scrapers', icon: Monitor, count: scrapers.length },
-    { id: 'profiles', label: 'Profiles', icon: Users, count: stats?.profiles.total },
-    { id: 'posts', label: 'Posts', icon: FileText, count: stats?.posts.total },
+    { id: 'profiles', label: 'Sources', icon: Users, count: getSourcesTotal() },
+    { id: 'posts', label: 'Items', icon: FileText, count: getItemsTotal() },
     { id: 'sessions', label: 'Sessions', icon: Activity },
     { id: 'schedules', label: 'Schedules', icon: CalendarClock },
   ];
@@ -76,7 +121,7 @@ export default function ScraperDashboardPage() {
               Scraper
             </h1>
             <p className="text-surface-500 dark:text-surface-400">
-              Monitor profiles, track posts, and analyze engagement across platforms
+              Monitor sources, track items, and analyze engagement across platforms
             </p>
           </div>
         </div>
@@ -100,35 +145,60 @@ export default function ScraperDashboardPage() {
       ) : stats ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
-            title="Profiles Monitored"
-            value={stats.profiles.total}
-            subtitle={`${stats.profiles.active} active`}
+            title="Sources Monitored"
+            value={getSourcesTotal()}
+            subtitle={`${getSourcesActive()} active`}
             icon={Users}
             variant="default"
           />
           <StatsCard
-            title="Posts Collected"
-            value={stats.posts.total.toLocaleString()}
-            subtitle={`${stats.posts.last24Hours} in last 24h`}
+            title="Items Collected"
+            value={getItemsTotal().toLocaleString()}
+            subtitle={`${getItemsLast24h()} in last 24h`}
             icon={FileText}
             variant="success"
           />
           <StatsCard
             title="Scrapers Online"
             value={`${onlineScrapers}/${scrapers.length}`}
-            subtitle={scrapersLoading ? '...' : `${scrapers.filter(s => s.cookiesValid).length} with valid cookies`}
+            subtitle={scrapersLoading ? '...' : `${getValidCookiesCount()} with valid cookies`}
             icon={Monitor}
             variant={onlineScrapers > 0 ? 'success' : 'warning'}
           />
           <StatsCard
-            title="Trending Posts"
-            value={stats.posts.trending}
-            subtitle={`${stats.posts.pendingAction} pending action`}
+            title="Trending Items"
+            value={getTrendingCount()}
+            subtitle={`${getPendingActionCount()} pending action`}
             icon={TrendingUp}
-            variant={stats.posts.trending > 0 ? 'warning' : 'default'}
+            variant={getTrendingCount() > 0 ? 'warning' : 'default'}
           />
         </div>
       ) : null}
+
+      {/* Platform Breakdown - Show if byPlatform data is available */}
+      {stats?.byPlatform && Object.keys(stats.byPlatform).length > 1 && (
+        <div className="bg-white dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700 p-4">
+          <h3 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-3">
+            Platform Breakdown
+          </h3>
+          <div className="flex flex-wrap gap-4">
+            {Object.entries(stats.byPlatform).map(([platform, platformStats]) => (
+              <div
+                key={platform}
+                className="flex items-center gap-3 px-4 py-2 bg-surface-50 dark:bg-surface-700 rounded-lg"
+              >
+                <span className="text-sm font-medium capitalize text-surface-700 dark:text-surface-300">
+                  {platform}
+                </span>
+                <div className="flex gap-3 text-xs text-surface-500">
+                  <span>{platformStats.sources} sources</span>
+                  <span>{platformStats.items} items</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Tabs Navigation */}
       <div className="flex gap-1 bg-surface-100 dark:bg-surface-800 p-1 rounded-xl w-fit overflow-x-auto">

@@ -67,11 +67,21 @@ export function SessionCard({ session, onClick, compact = false }: SessionCardPr
 
   const getTargetName = () => {
     if (session.targetId && typeof session.targetId !== 'string') {
-      return session.targetId.displayName;
+      return session.targetId.name || session.targetId.displayName;
     }
-    // Extract username from URL
-    const match = session.targetUrl.match(/linkedin\.com\/(?:in|company)\/([^/]+)/);
-    return match ? match[1] : session.targetUrl;
+    // Extract username from URL for LinkedIn
+    const linkedinMatch = session.targetUrl.match(/linkedin\.com\/(?:in|company)\/([^/]+)/);
+    if (linkedinMatch) return linkedinMatch[1];
+    // Extract subreddit for Reddit
+    const redditMatch = session.targetUrl.match(/reddit\.com\/r\/([^/]+)/);
+    if (redditMatch) return `r/${redditMatch[1]}`;
+    // Return cleaned URL as fallback
+    try {
+      const url = new URL(session.targetUrl);
+      return url.hostname.replace('www.', '');
+    } catch {
+      return session.targetUrl;
+    }
   };
 
   const formatDuration = (ms: number) => {
@@ -111,19 +121,19 @@ export function SessionCard({ session, onClick, compact = false }: SessionCardPr
           <div className="grid grid-cols-4 gap-2 py-3 border-t border-surface-200 dark:border-surface-700">
             <div className="text-center">
               <p className="text-lg font-bold text-surface-900 dark:text-white">
-                {session.results.postsFound}
+                {session.results.itemsFound ?? session.results.postsFound}
               </p>
               <p className="text-xs text-surface-500">Found</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-bold text-success-600 dark:text-success-400">
-                {session.results.newPosts}
+                {session.results.newItems ?? session.results.newPosts}
               </p>
               <p className="text-xs text-surface-500">New</p>
             </div>
             <div className="text-center">
               <p className="text-lg font-bold text-primary-600 dark:text-primary-400">
-                {session.results.updatedPosts}
+                {session.results.updatedItems ?? session.results.updatedPosts}
               </p>
               <p className="text-xs text-surface-500">Updated</p>
             </div>

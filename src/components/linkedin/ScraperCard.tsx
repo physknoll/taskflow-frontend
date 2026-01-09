@@ -1,6 +1,6 @@
 'use client';
 
-import { LinkedInScraper, LinkedInScrapingMode } from '@/types';
+import { LinkedInScraper, LinkedInScrapingMode, AgentType, ScrapingPlatform } from '@/types';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -18,6 +18,7 @@ import {
   CheckCircle,
   Clock,
   Settings,
+  Globe,
 } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { useState } from 'react';
@@ -28,6 +29,12 @@ interface ScraperCardProps {
   onRevoke?: () => void;
   onDelete?: () => void;
 }
+
+// Map agent types and platforms to icons
+const agentTypeIcons: Record<string, typeof Monitor> = {
+  chrome_extension: Chrome,
+  electron_app: Monitor,
+};
 
 const platformIcons: Record<string, typeof Monitor> = {
   darwin: Apple,
@@ -50,6 +57,14 @@ const scrapingModeColors: Record<LinkedInScrapingMode, 'success' | 'primary' | '
   aggressive: 'warning',
 };
 
+// Platform labels for display
+const platformLabels: Record<ScrapingPlatform, string> = {
+  linkedin: 'LinkedIn',
+  reddit: 'Reddit',
+  youtube: 'YouTube',
+  website: 'Website',
+};
+
 export function ScraperCard({
   scraper,
   onSettings,
@@ -58,20 +73,37 @@ export function ScraperCard({
 }: ScraperCardProps) {
   const [showMenu, setShowMenu] = useState(false);
 
-  // Get platform icon with fallback to Monitor for unknown platforms
-  const PlatformIcon = (scraper.platform && platformIcons[scraper.platform]) || Monitor;
+  // Get platform icon - check agentType first (new API), then fall back to platform (legacy)
+  const getIcon = () => {
+    if (scraper.agentType && agentTypeIcons[scraper.agentType]) {
+      return agentTypeIcons[scraper.agentType];
+    }
+    if (scraper.platform && platformIcons[scraper.platform]) {
+      return platformIcons[scraper.platform];
+    }
+    return Monitor;
+  };
+  
+  const PlatformIcon = getIcon();
   const isOnline = scraper.isOnlineNow || scraper.status === 'online';
   const isRevoked = scraper.status === 'revoked';
 
+  // Get cookie status - check new API fields first, then legacy
   const getCookieStatus = () => {
-    if (!scraper.cookiesValid) {
+    // New API structure: platformCredentials.linkedin.cookiesValid
+    const linkedinCreds = scraper.platformCredentials?.linkedin;
+    const cookiesValid = linkedinCreds?.cookiesValid ?? scraper.cookiesValid;
+    
+    if (cookiesValid === false) {
       return { icon: AlertTriangle, text: 'Cookies expired', color: 'text-error-500' };
     }
-    if (scraper.cookiesExpireAt) {
-      const expiresIn = new Date(scraper.cookiesExpireAt).getTime() - Date.now();
-      const daysUntilExpiry = Math.ceil(expiresIn / (1000 * 60 * 60 * 24));
-      if (daysUntilExpiry <= 3) {
-        return { icon: AlertTriangle, text: `Expires in ${daysUntilExpiry}d`, color: 'text-warning-500' };
+    if (cookiesValid === true) {
+      if (scraper.cookiesExpireAt) {
+        const expiresIn = new Date(scraper.cookiesExpireAt).getTime() - Date.now();
+        const daysUntilExpiry = Math.ceil(expiresIn / (1000 * 60 * 60 * 24));
+        if (daysUntilExpiry <= 3) {
+          return { icon: AlertTriangle, text: `Expires in ${daysUntilExpiry}d`, color: 'text-warning-500' };
+        }
       }
       return { icon: CheckCircle, text: 'Valid', color: 'text-success-500' };
     }
@@ -80,6 +112,25 @@ export function ScraperCard({
 
   const cookieStatus = getCookieStatus();
   const CookieStatusIcon = cookieStatus.icon;
+
+  // Get account email - check new API first, then legacy
+  const getAccountEmail = () => {
+    return scraper.platformCredentials?.linkedin?.accountEmail ?? scraper.linkedInAccountEmail;
+  };
+
+  // Get stats - check new API first, then legacy
+  const getTotalCommands = () => scraper.stats?.totalCommands ?? scraper.totalScrapeCommands ?? 0;
+  const getTotalItemsScraped = () => scraper.stats?.totalItemsScraped ?? scraper.totalPostsScraped ?? 0;
+
+  // Get agent type display text
+  const getAgentTypeDisplay = () => {
+    if (scraper.agentType) {
+      return scraper.agentType === 'chrome_extension' ? 'Chrome Extension' : 'Desktop App';
+    }
+    return scraper.platform || 'Unknown';
+  };
+
+  const accountEmail = getAccountEmail();
 
   return (
     <Card className={cn('h-full', isRevoked && 'opacity-60')}>
@@ -116,11 +167,11 @@ export function ScraperCard({
               />
             </div>
             <p className="text-sm text-surface-500 dark:text-surface-400">
-              {scraper.platform} • v{scraper.agentVersion || '?'}
+              {getAgentTypeDisplay()} • v{scraper.agentVersion || '?'}
             </p>
-            {scraper.linkedInAccountEmail && (
+            {accountEmail && (
               <p className="text-xs text-surface-400 dark:text-surface-500 truncate">
-                {scraper.linkedInAccountEmail}
+                {accountEmail}
               </p>
             )}
           </div>
@@ -191,31 +242,40 @@ export function ScraperCard({
               Revoked
             </Badge>
           )}
+          {/* Show supported platforms if available */}
+          {scraper.supportedPlatforms && scraper.supportedPlatforms.length > 1 && (
+            <Badge variant="outline" size="sm" className="flex items-center gap-1">
+              <Globe className="h-3 w-3" />
+              {scraper.supportedPlatforms.length} platforms
+            </Badge>
+          )}
         </div>
 
-        {/* Cookie Status */}
-        <div className="flex items-center gap-2 p-3 bg-surface-50 dark:bg-surface-700/50 rounded-lg mb-4">
-          <Cookie className="h-4 w-4 text-surface-500" />
-          <span className="text-sm text-surface-600 dark:text-surface-400">Cookies:</span>
-          <div className={cn('flex items-center gap-1', cookieStatus.color)}>
-            <CookieStatusIcon className="h-4 w-4" />
-            <span className="text-sm font-medium">{cookieStatus.text}</span>
+        {/* Cookie Status - only show for LinkedIn scrapers */}
+        {(scraper.platformCredentials?.linkedin || scraper.cookiesValid !== undefined) && (
+          <div className="flex items-center gap-2 p-3 bg-surface-50 dark:bg-surface-700/50 rounded-lg mb-4">
+            <Cookie className="h-4 w-4 text-surface-500" />
+            <span className="text-sm text-surface-600 dark:text-surface-400">Cookies:</span>
+            <div className={cn('flex items-center gap-1', cookieStatus.color)}>
+              <CookieStatusIcon className="h-4 w-4" />
+              <span className="text-sm font-medium">{cookieStatus.text}</span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-4 py-3 border-t border-surface-200 dark:border-surface-700">
           <div>
             <p className="text-2xl font-bold text-surface-900 dark:text-white">
-              {scraper.totalScrapeCommands}
+              {getTotalCommands()}
             </p>
             <p className="text-xs text-surface-500 dark:text-surface-400">Commands Run</p>
           </div>
           <div>
             <p className="text-2xl font-bold text-surface-900 dark:text-white">
-              {scraper.totalPostsScraped.toLocaleString()}
+              {getTotalItemsScraped().toLocaleString()}
             </p>
-            <p className="text-xs text-surface-500 dark:text-surface-400">Posts Scraped</p>
+            <p className="text-xs text-surface-500 dark:text-surface-400">Items Scraped</p>
           </div>
         </div>
 
@@ -237,7 +297,7 @@ export function ScraperCard({
           <div className="mt-3 pt-3 border-t border-surface-200 dark:border-surface-700">
             <div className="flex flex-wrap gap-2 text-xs">
               <span className="px-2 py-1 bg-surface-100 dark:bg-surface-700 rounded">
-                Max {scraper.settings.maxPostsPerScrape ?? 20} posts
+                Max {scraper.settings.maxPostsPerScrape ?? 20} items
               </span>
               {scraper.settings.enableCommentScraping && (
                 <span className="px-2 py-1 bg-surface-100 dark:bg-surface-700 rounded">
@@ -250,6 +310,15 @@ export function ScraperCard({
                 </span>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Current Platform indicator */}
+        {scraper.currentPlatform && (
+          <div className="mt-3 pt-3 border-t border-surface-200 dark:border-surface-700">
+            <p className="text-xs text-surface-500 dark:text-surface-400">
+              Currently scraping: <span className="font-medium">{platformLabels[scraper.currentPlatform] || scraper.currentPlatform}</span>
+            </p>
           </div>
         )}
       </CardContent>

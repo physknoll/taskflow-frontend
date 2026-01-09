@@ -1,6 +1,6 @@
 'use client';
 
-import { LinkedInProfile, LinkedInProfileType, LinkedInScraper } from '@/types';
+import { LinkedInProfile, LinkedInProfileType, LinkedInScraper, ScrapingPlatform, SourceStatus } from '@/types';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
@@ -20,6 +20,7 @@ import {
   ChevronDown,
   Monitor,
   Star,
+  Globe,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useState } from 'react';
@@ -50,6 +51,21 @@ const profileTypeColors: Record<LinkedInProfileType, 'primary' | 'warning' | 'se
   prospect: 'success',
 };
 
+// Platform display config
+const platformLabels: Record<ScrapingPlatform, string> = {
+  linkedin: 'LinkedIn',
+  reddit: 'Reddit',
+  youtube: 'YouTube',
+  website: 'Website',
+};
+
+const platformColors: Record<ScrapingPlatform, string> = {
+  linkedin: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  reddit: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+  youtube: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  website: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
+};
+
 export function ProfileCard({
   profile,
   onEdit,
@@ -68,7 +84,62 @@ export function ProfileCard({
   const preferredScraper = scrapers.find((s) => s._id === profile.preferredScraperId);
   const hasMultipleScrapers = onlineScrapers.length > 1;
 
+  // Get display name - check new API first (name), then legacy (displayName)
+  const getDisplayName = () => profile.name || profile.displayName || 'Unknown';
+  
+  // Get headline - check new API first (metadata.headline), then legacy (headline)
+  const getHeadline = () => profile.metadata?.headline || profile.headline;
+  
+  // Get avatar - check new API first (metadata.avatarUrl), then legacy (avatarUrl)
+  const getAvatarUrl = () => profile.metadata?.avatarUrl || profile.avatarUrl;
+  
+  // Get username/platformId
+  const getUsername = () => profile.platformId || profile.username;
+  
+  // Get last scraped at - check new API first (stats.lastScrapedAt), then legacy
+  const getLastScrapedAt = () => profile.stats?.lastScrapedAt || profile.lastScrapedAt;
+  
+  // Get total items collected - check new API first (stats.totalItemsScraped), then legacy
+  const getTotalItems = () => profile.stats?.totalItemsScraped ?? profile.totalPostsCollected ?? 0;
+  
+  // Get scrape interval - check new API first (scrapeSettings.frequency), then legacy
+  const getInterval = () => {
+    if (profile.scrapeSettings?.frequency) {
+      // Parse frequency string like "60m" or "daily"
+      const freq = profile.scrapeSettings.frequency;
+      if (freq === 'daily') return '24h';
+      if (freq === 'hourly') return '1h';
+      return freq;
+    }
+    if (profile.scrapeSchedule?.intervalMinutes) {
+      return `${profile.scrapeSchedule.intervalMinutes}m`;
+    }
+    return '-';
+  };
+  
+  // Check if monitoring is enabled - check new API first (status), then legacy
+  const isMonitoringEnabled = () => {
+    if (profile.status) {
+      return profile.status === 'active';
+    }
+    return profile.monitoringEnabled ?? true;
+  };
+
   const getStatusIcon = () => {
+    // Check new API status first
+    if (profile.status) {
+      switch (profile.status) {
+        case 'active':
+          return <CheckCircle className="h-4 w-4 text-success-500" />;
+        case 'error':
+          return <AlertCircle className="h-4 w-4 text-error-500" />;
+        case 'paused':
+          return <Pause className="h-4 w-4 text-warning-500" />;
+        default:
+          return <Clock className="h-4 w-4 text-surface-400" />;
+      }
+    }
+    // Fall back to legacy lastScrapeStatus
     switch (profile.lastScrapeStatus) {
       case 'success':
         return <CheckCircle className="h-4 w-4 text-success-500" />;
@@ -87,37 +158,62 @@ export function ProfileCard({
     return profile.clientId.name;
   };
 
+  // Get external URL label based on platform
+  const getExternalLinkLabel = () => {
+    if (profile.platform) {
+      return `View on ${platformLabels[profile.platform]}`;
+    }
+    return 'View on LinkedIn';
+  };
+
+  const displayName = getDisplayName();
+  const headline = getHeadline();
+  const avatarUrl = getAvatarUrl();
+  const username = getUsername();
+  const lastScrapedAt = getLastScrapedAt();
+  const monitoringEnabled = isMonitoringEnabled();
+
   return (
     <Card hover className="h-full">
       <CardContent className="p-5">
         {/* Header */}
         <div className="flex items-start gap-4 mb-4">
           <Avatar
-            firstName={profile.displayName}
+            firstName={displayName}
             lastName=""
-            src={profile.avatarUrl}
+            src={avatarUrl}
             size="lg"
           />
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-semibold text-surface-900 dark:text-white truncate">
-                {profile.displayName}
+                {displayName}
               </h3>
-              <Badge
-                variant={profileTypeColors[profile.profileType]}
-                size="sm"
-              >
-                {profileTypeLabels[profile.profileType]}
-              </Badge>
+              {profile.profileType && (
+                <Badge
+                  variant={profileTypeColors[profile.profileType]}
+                  size="sm"
+                >
+                  {profileTypeLabels[profile.profileType]}
+                </Badge>
+              )}
+              {/* Show platform badge for multi-platform support */}
+              {profile.platform && profile.platform !== 'linkedin' && (
+                <span className={cn('text-xs px-2 py-0.5 rounded-full', platformColors[profile.platform])}>
+                  {platformLabels[profile.platform]}
+                </span>
+              )}
             </div>
-            {profile.headline && (
+            {headline && (
               <p className="text-sm text-surface-500 dark:text-surface-400 truncate mt-1">
-                {profile.headline}
+                {headline}
               </p>
             )}
-            <p className="text-xs text-surface-400 dark:text-surface-500 mt-1">
-              @{profile.username}
-            </p>
+            {username && (
+              <p className="text-xs text-surface-400 dark:text-surface-500 mt-1">
+                @{username}
+              </p>
+            )}
           </div>
           {showActions && (
             <div className="relative">
@@ -142,7 +238,7 @@ export function ProfileCard({
                       className="w-full px-4 py-2 text-left text-sm hover:bg-surface-100 dark:hover:bg-surface-700 flex items-center gap-2"
                     >
                       <Edit className="h-4 w-4" />
-                      Edit Profile
+                      Edit Source
                     </button>
                     <button
                       onClick={() => {
@@ -151,7 +247,7 @@ export function ProfileCard({
                       }}
                       className="w-full px-4 py-2 text-left text-sm hover:bg-surface-100 dark:hover:bg-surface-700 flex items-center gap-2"
                     >
-                      {profile.monitoringEnabled ? (
+                      {monitoringEnabled ? (
                         <>
                           <Pause className="h-4 w-4" />
                           Pause Monitoring
@@ -171,7 +267,7 @@ export function ProfileCard({
                       onClick={() => setShowMenu(false)}
                     >
                       <ExternalLink className="h-4 w-4" />
-                      View on LinkedIn
+                      {getExternalLinkLabel()}
                     </a>
                     <hr className="my-1 border-surface-200 dark:border-surface-700" />
                     <button
@@ -182,7 +278,7 @@ export function ProfileCard({
                       className="w-full px-4 py-2 text-left text-sm text-error-600 hover:bg-error-50 dark:hover:bg-error-900/20 flex items-center gap-2"
                     >
                       <Trash2 className="h-4 w-4" />
-                      Delete Profile
+                      Delete Source
                     </button>
                   </div>
                 </>
@@ -195,13 +291,13 @@ export function ProfileCard({
         <div className="grid grid-cols-2 gap-4 py-3 border-t border-surface-200 dark:border-surface-700">
           <div>
             <p className="text-2xl font-bold text-surface-900 dark:text-white">
-              {profile.totalPostsCollected}
+              {getTotalItems()}
             </p>
-            <p className="text-xs text-surface-500 dark:text-surface-400">Posts Collected</p>
+            <p className="text-xs text-surface-500 dark:text-surface-400">Items Collected</p>
           </div>
           <div>
             <p className="text-2xl font-bold text-surface-900 dark:text-white">
-              {profile.scrapeSchedule.intervalMinutes}m
+              {getInterval()}
             </p>
             <p className="text-xs text-surface-500 dark:text-surface-400">Interval</p>
           </div>
@@ -212,8 +308,8 @@ export function ProfileCard({
           <div className="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400">
             {getStatusIcon()}
             <span>
-              {profile.lastScrapedAt
-                ? formatDistanceToNow(new Date(profile.lastScrapedAt), { addSuffix: true })
+              {lastScrapedAt
+                ? formatDistanceToNow(new Date(lastScrapedAt), { addSuffix: true })
                 : 'Never scraped'}
             </span>
           </div>
@@ -223,7 +319,7 @@ export function ProfileCard({
                 size="sm"
                 variant="outline"
                 onClick={() => onScrape?.()}
-                disabled={isScraping || !profile.monitoringEnabled}
+                disabled={isScraping || !monitoringEnabled}
                 className={cn(
                   'flex items-center gap-1',
                   hasMultipleScrapers && 'rounded-r-none border-r-0'
@@ -238,7 +334,7 @@ export function ProfileCard({
                     size="sm"
                     variant="outline"
                     onClick={() => setShowScrapeMenu(!showScrapeMenu)}
-                    disabled={isScraping || !profile.monitoringEnabled}
+                    disabled={isScraping || !monitoringEnabled}
                     className="rounded-l-none px-1.5"
                   >
                     <ChevronDown className="h-3 w-3" />
@@ -297,14 +393,14 @@ export function ProfileCard({
         </div>
 
         {/* Tags & Client */}
-        {(profile.tags.length > 0 || getClientName()) && (
+        {((profile.tags && profile.tags.length > 0) || getClientName()) && (
           <div className="flex flex-wrap gap-1 mt-3 pt-3 border-t border-surface-200 dark:border-surface-700">
             {getClientName() && (
               <Badge variant="secondary" size="sm">
                 {getClientName()}
               </Badge>
             )}
-            {profile.tags.map((tag) => (
+            {profile.tags?.map((tag) => (
               <Badge key={tag} variant="outline" size="sm">
                 {tag}
               </Badge>
@@ -313,7 +409,7 @@ export function ProfileCard({
         )}
 
         {/* Monitoring Status */}
-        {!profile.monitoringEnabled && (
+        {!monitoringEnabled && (
           <div className="mt-3 p-2 bg-warning-50 dark:bg-warning-900/20 rounded-lg">
             <p className="text-xs text-warning-700 dark:text-warning-400 flex items-center gap-1">
               <Pause className="h-3 w-3" />

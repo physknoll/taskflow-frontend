@@ -74,7 +74,9 @@ export function ProfilesTab() {
   };
 
   const handleToggleMonitoring = async (profile: LinkedInProfile) => {
-    await updateProfile(profile._id, { monitoringEnabled: !profile.monitoringEnabled });
+    // Handle both new API (status) and legacy (monitoringEnabled)
+    const isCurrentlyEnabled = profile.status === 'active' || profile.monitoringEnabled;
+    await updateProfile(profile._id, { monitoringEnabled: !isCurrentlyEnabled });
   };
 
   const handleTriggerScrape = async (profile: LinkedInProfile, scraperId?: string) => {
@@ -327,21 +329,21 @@ export function ProfilesTab() {
         {editProfile && (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Display Name</label>
+              <label className="block text-sm font-medium mb-1">Name</label>
               <input
                 type="text"
-                value={editProfile.displayName}
+                value={editProfile.name || editProfile.displayName || ''}
                 onChange={(e) =>
-                  setEditProfile({ ...editProfile, displayName: e.target.value })
+                  setEditProfile({ ...editProfile, displayName: e.target.value, name: e.target.value })
                 }
                 className="w-full px-4 py-2 rounded-lg border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-800"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Headline</label>
+              <label className="block text-sm font-medium mb-1">Headline/Description</label>
               <input
                 type="text"
-                value={editProfile.headline || ''}
+                value={editProfile.metadata?.headline || editProfile.headline || ''}
                 onChange={(e) =>
                   setEditProfile({ ...editProfile, headline: e.target.value })
                 }
@@ -369,12 +371,12 @@ export function ProfilesTab() {
             <div>
               <label className="block text-sm font-medium mb-1">Scrape Interval</label>
               <select
-                value={editProfile.scrapeSchedule.intervalMinutes}
+                value={editProfile.scrapeSchedule?.intervalMinutes || 60}
                 onChange={(e) =>
                   setEditProfile({
                     ...editProfile,
                     scrapeSchedule: {
-                      ...editProfile.scrapeSchedule,
+                      ...(editProfile.scrapeSchedule || {}),
                       intervalMinutes: parseInt(e.target.value),
                     },
                   })
@@ -425,10 +427,11 @@ export function ProfilesTab() {
               <Button
                 onClick={async () => {
                   await updateProfile(editProfile._id, {
-                    displayName: editProfile.displayName,
+                    displayName: editProfile.name || editProfile.displayName,
+                    name: editProfile.name || editProfile.displayName,
                     headline: editProfile.headline,
                     profileType: editProfile.profileType,
-                    intervalMinutes: editProfile.scrapeSchedule.intervalMinutes,
+                    intervalMinutes: editProfile.scrapeSchedule?.intervalMinutes || 60,
                     preferredScraperId: editProfile.preferredScraperId || null,
                   });
                   setEditProfile(null);
@@ -451,8 +454,8 @@ export function ProfilesTab() {
       >
         <div className="space-y-4">
           <p className="text-surface-600 dark:text-surface-400">
-            Are you sure you want to delete <strong>{confirmDelete?.displayName}</strong>?
-            All collected posts will be preserved but monitoring will stop.
+            Are you sure you want to delete <strong>{confirmDelete?.name || confirmDelete?.displayName}</strong>?
+            All collected items will be preserved but monitoring will stop.
           </p>
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setConfirmDelete(null)}>

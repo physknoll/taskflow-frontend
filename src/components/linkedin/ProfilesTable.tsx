@@ -93,6 +93,24 @@ export function ProfilesTable({
     }
   };
 
+  // Helper to get display name from profile (handles new and legacy API)
+  const getDisplayName = (profile: LinkedInProfile) => profile.name || profile.displayName || '';
+  
+  // Helper to get total items collected (handles new and legacy API)
+  const getTotalItems = (profile: LinkedInProfile) => profile.stats?.totalItemsScraped ?? profile.totalPostsCollected ?? 0;
+  
+  // Helper to get interval (handles new and legacy API)
+  const getInterval = (profile: LinkedInProfile) => profile.scrapeSchedule?.intervalMinutes ?? 60;
+  
+  // Helper to get last scraped at (handles new and legacy API)
+  const getLastScrapedAt = (profile: LinkedInProfile) => profile.stats?.lastScrapedAt || profile.lastScrapedAt;
+  
+  // Helper to check if monitoring is enabled (handles new and legacy API)
+  const isMonitoringEnabled = (profile: LinkedInProfile) => {
+    if (profile.status) return profile.status === 'active';
+    return profile.monitoringEnabled ?? true;
+  };
+
   const sortedProfiles = useMemo(() => {
     return [...profiles].sort((a, b) => {
       let aValue: any;
@@ -100,37 +118,39 @@ export function ProfilesTable({
 
       switch (sortField) {
         case 'displayName':
-          aValue = a.displayName.toLowerCase();
-          bValue = b.displayName.toLowerCase();
+          aValue = getDisplayName(a).toLowerCase();
+          bValue = getDisplayName(b).toLowerCase();
           break;
         case 'profileType':
-          aValue = a.profileType;
-          bValue = b.profileType;
+          aValue = a.profileType || '';
+          bValue = b.profileType || '';
           break;
         case 'totalPostsCollected':
-          aValue = a.totalPostsCollected;
-          bValue = b.totalPostsCollected;
+          aValue = getTotalItems(a);
+          bValue = getTotalItems(b);
           break;
         case 'intervalMinutes':
-          aValue = a.scrapeSchedule.intervalMinutes;
-          bValue = b.scrapeSchedule.intervalMinutes;
+          aValue = getInterval(a);
+          bValue = getInterval(b);
           break;
         case 'lastScrapedAt':
-          aValue = a.lastScrapedAt ? new Date(a.lastScrapedAt).getTime() : 0;
-          bValue = b.lastScrapedAt ? new Date(b.lastScrapedAt).getTime() : 0;
+          const aLastScraped = getLastScrapedAt(a);
+          const bLastScraped = getLastScrapedAt(b);
+          aValue = aLastScraped ? new Date(aLastScraped).getTime() : 0;
+          bValue = bLastScraped ? new Date(bLastScraped).getTime() : 0;
           break;
         case 'priority':
-          const priorityOrder = { high: 3, normal: 2, low: 1 };
-          aValue = priorityOrder[a.priority] || 0;
-          bValue = priorityOrder[b.priority] || 0;
+          const priorityOrder: Record<string, number> = { high: 3, normal: 2, low: 1 };
+          aValue = priorityOrder[a.priority || 'normal'] || 0;
+          bValue = priorityOrder[b.priority || 'normal'] || 0;
           break;
         case 'monitoringEnabled':
-          aValue = a.monitoringEnabled ? 1 : 0;
-          bValue = b.monitoringEnabled ? 1 : 0;
+          aValue = isMonitoringEnabled(a) ? 1 : 0;
+          bValue = isMonitoringEnabled(b) ? 1 : 0;
           break;
         default:
-          aValue = a.displayName;
-          bValue = b.displayName;
+          aValue = getDisplayName(a);
+          bValue = getDisplayName(b);
       }
 
       if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
@@ -172,6 +192,20 @@ export function ProfilesTable({
   );
 
   const getStatusIcon = (profile: LinkedInProfile) => {
+    // Check new API status first
+    if (profile.status) {
+      switch (profile.status) {
+        case 'active':
+          return <CheckCircle className="h-4 w-4 text-success-500" />;
+        case 'error':
+          return <AlertCircle className="h-4 w-4 text-error-500" />;
+        case 'paused':
+          return <Clock className="h-4 w-4 text-warning-500" />;
+        default:
+          return <Clock className="h-4 w-4 text-surface-400" />;
+      }
+    }
+    // Fall back to legacy lastScrapeStatus
     switch (profile.lastScrapeStatus) {
       case 'success':
         return <CheckCircle className="h-4 w-4 text-success-500" />;
@@ -196,10 +230,10 @@ export function ProfilesTable({
         <table className="w-full">
           <thead className="bg-surface-50 dark:bg-surface-800 border-b border-surface-200 dark:border-surface-700">
             <tr>
-              <SortHeader field="displayName" label="Profile" className="min-w-[250px]" />
+              <SortHeader field="displayName" label="Source" className="min-w-[250px]" />
               <SortHeader field="profileType" label="Type" />
               <SortHeader field="priority" label="Priority" />
-              <SortHeader field="totalPostsCollected" label="Posts" />
+              <SortHeader field="totalPostsCollected" label="Items" />
               <SortHeader field="intervalMinutes" label="Interval" />
               <SortHeader field="lastScrapedAt" label="Last Scraped" />
               <SortHeader field="monitoringEnabled" label="Status" />
@@ -223,15 +257,15 @@ export function ProfilesTable({
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <Avatar
-                      firstName={profile.displayName}
+                      firstName={getDisplayName(profile)}
                       lastName=""
-                      src={profile.avatarUrl}
+                      src={profile.metadata?.avatarUrl || profile.avatarUrl}
                       size="sm"
                     />
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-surface-900 dark:text-white truncate max-w-[180px]">
-                          {profile.displayName}
+                          {getDisplayName(profile)}
                         </p>
                         <a
                           href={profile.url}
@@ -242,9 +276,9 @@ export function ProfilesTable({
                           <ExternalLink className="h-3 w-3" />
                         </a>
                       </div>
-                      {profile.headline && (
+                      {(profile.metadata?.headline || profile.headline) && (
                         <p className="text-xs text-surface-500 dark:text-surface-400 truncate max-w-[200px]">
-                          {profile.headline}
+                          {profile.metadata?.headline || profile.headline}
                         </p>
                       )}
                     </div>
@@ -253,33 +287,40 @@ export function ProfilesTable({
 
                 {/* Type */}
                 <td className="px-4 py-3">
-                  <Badge variant={profileTypeColors[profile.profileType]} size="sm">
-                    {profileTypeLabels[profile.profileType]}
-                  </Badge>
+                  {profile.profileType ? (
+                    <Badge variant={profileTypeColors[profile.profileType]} size="sm">
+                      {profileTypeLabels[profile.profileType]}
+                    </Badge>
+                  ) : (
+                    <Badge variant="secondary" size="sm">
+                      {profile.sourceType || 'Profile'}
+                    </Badge>
+                  )}
                 </td>
 
                 {/* Priority */}
                 <td className="px-4 py-3">
-                  <Badge variant={priorityColors[profile.priority] || 'secondary'} size="sm">
-                    {priorityLabels[profile.priority] || profile.priority}
+                  <Badge variant={priorityColors[profile.priority || 'normal'] || 'secondary'} size="sm">
+                    {priorityLabels[profile.priority || 'normal'] || profile.priority || 'Normal'}
                   </Badge>
                 </td>
 
-                {/* Posts */}
+                {/* Items */}
                 <td className="px-4 py-3">
                   <span className="text-sm font-medium text-surface-900 dark:text-white">
-                    {profile.totalPostsCollected}
+                    {getTotalItems(profile)}
                   </span>
                 </td>
 
                 {/* Interval */}
                 <td className="px-4 py-3">
                   <span className="text-sm text-surface-600 dark:text-surface-400">
-                    {profile.scrapeSchedule.intervalMinutes >= 1440
-                      ? `${Math.floor(profile.scrapeSchedule.intervalMinutes / 1440)}d`
-                      : profile.scrapeSchedule.intervalMinutes >= 60
-                      ? `${Math.floor(profile.scrapeSchedule.intervalMinutes / 60)}h`
-                      : `${profile.scrapeSchedule.intervalMinutes}m`}
+                    {(() => {
+                      const interval = getInterval(profile);
+                      if (interval >= 1440) return `${Math.floor(interval / 1440)}d`;
+                      if (interval >= 60) return `${Math.floor(interval / 60)}h`;
+                      return `${interval}m`;
+                    })()}
                   </span>
                 </td>
 
@@ -288,16 +329,19 @@ export function ProfilesTable({
                   <div className="flex items-center gap-2">
                     {getStatusIcon(profile)}
                     <span className="text-sm text-surface-600 dark:text-surface-400">
-                      {profile.lastScrapedAt
-                        ? formatDistanceToNow(new Date(profile.lastScrapedAt), { addSuffix: true })
-                        : 'Never'}
+                      {(() => {
+                        const lastScraped = getLastScrapedAt(profile);
+                        return lastScraped
+                          ? formatDistanceToNow(new Date(lastScraped), { addSuffix: true })
+                          : 'Never';
+                      })()}
                     </span>
                   </div>
                 </td>
 
                 {/* Status */}
                 <td className="px-4 py-3">
-                  {profile.monitoringEnabled ? (
+                  {isMonitoringEnabled(profile) ? (
                     <Badge variant="success" size="sm">Active</Badge>
                   ) : (
                     <Badge variant="secondary" size="sm">Paused</Badge>
@@ -312,13 +356,13 @@ export function ProfilesTable({
                         {getClientName(profile)}
                       </Badge>
                     )}
-                    {profile.tags.slice(0, 3).map((tag) => (
+                    {(profile.tags || []).slice(0, 3).map((tag) => (
                       <Badge key={tag} variant="outline" size="sm">
                         {tag}
                       </Badge>
                     ))}
-                    {profile.tags.length > 3 && (
-                      <span className="text-xs text-surface-400">+{profile.tags.length - 3}</span>
+                    {(profile.tags || []).length > 3 && (
+                      <span className="text-xs text-surface-400">+{profile.tags!.length - 3}</span>
                     )}
                   </div>
                 </td>
@@ -334,7 +378,7 @@ export function ProfilesTable({
                             size="sm"
                             variant="ghost"
                             onClick={() => onScrape?.(profile)}
-                            disabled={scrapingProfileId === profile._id || !profile.monitoringEnabled}
+                            disabled={scrapingProfileId === profile._id || !isMonitoringEnabled(profile)}
                             className={cn('p-1.5', hasMultipleScrapers && 'rounded-r-none')}
                           >
                             <RefreshCw
@@ -349,7 +393,7 @@ export function ProfilesTable({
                               size="sm"
                               variant="ghost"
                               onClick={() => setScrapeMenuId(scrapeMenuId === profile._id ? null : profile._id)}
-                              disabled={scrapingProfileId === profile._id || !profile.monitoringEnabled}
+                              disabled={scrapingProfileId === profile._id || !isMonitoringEnabled(profile)}
                               className="p-1 rounded-l-none border-l border-surface-200 dark:border-surface-600"
                             >
                               <ChevronDown className="h-3 w-3" />
@@ -428,7 +472,7 @@ export function ProfilesTable({
                                 className="w-full px-4 py-2 text-left text-sm hover:bg-surface-100 dark:hover:bg-surface-700 flex items-center gap-2"
                               >
                                 <Edit className="h-4 w-4" />
-                                Edit Profile
+                                Edit Source
                               </button>
                               <button
                                 onClick={() => {
@@ -437,7 +481,7 @@ export function ProfilesTable({
                                 }}
                                 className="w-full px-4 py-2 text-left text-sm hover:bg-surface-100 dark:hover:bg-surface-700 flex items-center gap-2"
                               >
-                                {profile.monitoringEnabled ? (
+                                {isMonitoringEnabled(profile) ? (
                                   <>
                                     <Pause className="h-4 w-4" />
                                     Pause Monitoring
@@ -457,7 +501,7 @@ export function ProfilesTable({
                                 onClick={() => setOpenMenuId(null)}
                               >
                                 <ExternalLink className="h-4 w-4" />
-                                View on LinkedIn
+                                View Original
                               </a>
                               <hr className="my-1 border-surface-200 dark:border-surface-700" />
                               <button
@@ -468,7 +512,7 @@ export function ProfilesTable({
                                 className="w-full px-4 py-2 text-left text-sm text-error-600 hover:bg-error-50 dark:hover:bg-error-900/20 flex items-center gap-2"
                               >
                                 <Trash2 className="h-4 w-4" />
-                                Delete Profile
+                                Delete Source
                               </button>
                             </div>
                           </>
