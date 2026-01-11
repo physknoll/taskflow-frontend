@@ -186,8 +186,22 @@ export function PostCard({ post, onAction, onViewDetails, onViewScreenshot, comp
     return 'LinkedIn';
   };
 
+  // Handle card click - open details
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't trigger if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('button') ||
+      target.closest('a') ||
+      target.closest('[role="button"]')
+    ) {
+      return;
+    }
+    onViewDetails?.();
+  };
+
   return (
-    <Card hover className={cn('h-full', compact && 'shadow-sm')}>
+    <Card hover className={cn('h-full cursor-pointer', compact && 'shadow-sm')} onClick={handleCardClick}>
       <CardContent className={cn('p-5', compact && 'p-4')}>
         {/* Header */}
         <div className="flex items-start gap-3 mb-3">
@@ -388,11 +402,6 @@ export function PostCard({ post, onAction, onViewDetails, onViewScreenshot, comp
             }
           </p>
           <div className="flex items-center gap-2">
-            {onViewDetails && (
-              <Button size="sm" variant="ghost" onClick={onViewDetails}>
-                View Details
-              </Button>
-            )}
             {itemUrl && (
               <a
                 href={itemUrl}

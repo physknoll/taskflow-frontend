@@ -11,7 +11,6 @@ import {
   Repeat2,
   Camera,
   TrendingUp,
-  Eye,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -63,14 +62,15 @@ export function PostsTable({ posts, onAction, onViewDetails, onViewScreenshot }:
             {posts.map((post) => (
               <tr
                 key={post._id}
-                className="hover:bg-surface-50 dark:hover:bg-surface-800/80 transition-colors"
+                className="hover:bg-surface-50 dark:hover:bg-surface-800/80 transition-colors cursor-pointer group"
+                onClick={() => onViewDetails?.(post)}
               >
                 {/* Author */}
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <SiteIcon url={post.url || post.postUrl || ''} size="sm" />
                     <div className="min-w-0">
-                      <p className="font-medium text-surface-900 dark:text-white truncate max-w-[150px]">
+                      <p className="font-medium text-surface-900 dark:text-white truncate max-w-[150px] group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                         {post.author.name}
                       </p>
                       {post.author.headline && (
@@ -138,7 +138,7 @@ export function PostsTable({ posts, onAction, onViewDetails, onViewScreenshot }:
                 </td>
 
                 {/* Actions */}
-                <td className="px-4 py-3">
+                <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-2">
                     {post.screenshotPath && onViewScreenshot && (
                       <Button
@@ -148,16 +148,6 @@ export function PostsTable({ posts, onAction, onViewDetails, onViewScreenshot }:
                         title="View Screenshot"
                       >
                         <Camera className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {onViewDetails && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onViewDetails(post)}
-                        title="View Details"
-                      >
-                        <Eye className="h-4 w-4" />
                       </Button>
                     )}
                     <a
