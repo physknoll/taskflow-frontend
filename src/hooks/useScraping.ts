@@ -14,6 +14,7 @@ import type {
   TriggerScheduleWithOverridesDto,
   TriggerSourceScrapeDto,
   ExecutionScrapeSettings,
+  SourceUpdatePayload,
   ScrapeSessionFilters,
 } from '@/types/scraping';
 import toast from 'react-hot-toast';
@@ -224,6 +225,18 @@ export function useSourceScrape() {
     },
   });
 
+  const updateSourceMutation = useMutation({
+    mutationFn: ({ sourceId, payload }: { sourceId: string; payload: SourceUpdatePayload }) =>
+      scrapingService.updateSource(sourceId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: scrapingKeys.all });
+      toast.success('Source updated');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update source');
+    },
+  });
+
   return {
     triggerScrape: (sourceId: string, overrides?: TriggerSourceScrapeDto) =>
       triggerMutation.mutateAsync({ sourceId, overrides }),
@@ -231,7 +244,38 @@ export function useSourceScrape() {
     updateSettings: (sourceId: string, settings: ExecutionScrapeSettings) =>
       updateSettingsMutation.mutateAsync({ sourceId, settings }),
     isUpdatingSettings: updateSettingsMutation.isPending,
+    updateSource: (sourceId: string, payload: SourceUpdatePayload) =>
+      updateSourceMutation.mutateAsync({ sourceId, payload }),
+    isUpdatingSource: updateSourceMutation.isPending,
   };
+}
+
+// ============================================
+// Stats Hook (Fixed endpoint)
+// ============================================
+
+export function useScrapingStats() {
+  return useQuery({
+    queryKey: ['stats'],
+    queryFn: () => scrapingService.getStats(),
+    staleTime: 0, // Always refetch for fresh data
+  });
+}
+
+// ============================================
+// Items Hook
+// ============================================
+
+export function useScrapingItems(filters: {
+  sourceId?: string;
+  platform?: string;
+  page?: number;
+  limit?: number;
+} = {}) {
+  return useQuery({
+    queryKey: ['items', filters],
+    queryFn: () => scrapingService.getItems(filters),
+  });
 }
 
 // ============================================

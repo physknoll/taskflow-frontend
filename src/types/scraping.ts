@@ -30,10 +30,40 @@ export type ScrapingMode = 'conservative' | 'balanced' | 'aggressive';
  * or passed as overrides when triggering scrapes
  */
 export interface ExecutionScrapeSettings {
-  maxItems?: number;           // 1-100
+  maxItems?: number;           // 1-100 (default: 3)
   enableComments?: boolean;
-  enableScreenshots?: boolean;
+  enableScreenshots?: boolean; // default: true
+  intervalMinutes?: number;    // How often to scrape (when monitoring enabled)
   scrapingMode?: ScrapingMode;
+}
+
+/**
+ * Source type classification
+ */
+export type SourceType = 'own' | 'competitor' | 'industry' | 'prospect' | 'research';
+
+/**
+ * Source status
+ */
+export type SourceStatus = 'active' | 'unavailable' | 'private' | 'blocked' | 'paused';
+
+/**
+ * Full source update payload for PATCH /api/v1/scraping/sources/:id
+ */
+export interface SourceUpdatePayload {
+  // Basic info
+  name?: string;
+  description?: string;
+  tags?: string[];
+  sourceType?: SourceType;
+  
+  // Scrape settings
+  scrapeSettings?: ExecutionScrapeSettings;
+  
+  // Status
+  status?: SourceStatus;
+  monitoringEnabled?: boolean;    // Enable auto-scheduling
+  priority?: ScrapingPriority;
 }
 
 /**
@@ -326,9 +356,21 @@ export const DEFAULT_RETRY_SETTINGS: ScrapeRetrySettings = {
 };
 
 export const DEFAULT_LINKEDIN_SETTINGS: LinkedInTargetSettings = {
-  maxPosts: 20,
+  maxPosts: 3, // Updated default from 20 to 3
   activityTypes: ['posts', 'articles'],
   enableComments: true,
+  enableScreenshots: true, // New default: enabled
+  scrapingMode: 'balanced',
+};
+
+/**
+ * Default execution scrape settings for new sources
+ * Updated: maxItems default is 3, enableScreenshots default is true
+ */
+export const DEFAULT_EXECUTION_SCRAPE_SETTINGS: ExecutionScrapeSettings = {
+  maxItems: 3,
+  enableComments: true,
+  enableScreenshots: true,
   scrapingMode: 'balanced',
 };
 

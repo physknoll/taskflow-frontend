@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useLinkedInProfiles, useLinkedInScrapers } from '@/hooks/useLinkedIn';
 import { useClients } from '@/hooks/useClients';
 import { ProfileCard, ProfilesTable, AddProfileModal, CSVUploadModal, ScraperSelectModal } from '@/components/linkedin';
+import { SourceSettingsModal, type SourceForSettings } from './SourceSettingsModal';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
@@ -20,6 +21,7 @@ import {
   LayoutGrid,
   List,
   Monitor,
+  Settings,
 } from 'lucide-react';
 
 const profileTypeOptions: { value: LinkedInProfileType | ''; label: string }[] = [
@@ -46,6 +48,7 @@ export function ProfilesTab() {
   const [scrapingProfileId, setScrapingProfileId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table'); // Default to table
   const [scraperSelectProfile, setScraperSelectProfile] = useState<LinkedInProfile | null>(null);
+  const [settingsProfile, setSettingsProfile] = useState<LinkedInProfile | null>(null);
 
   const {
     profiles,
@@ -420,26 +423,38 @@ export function ProfilesTab() {
                 When set, scrapes will prefer this scraper when it&apos;s online
               </p>
             </div>
-            <div className="flex justify-end gap-3 pt-4 border-t">
-              <Button variant="outline" onClick={() => setEditProfile(null)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={async () => {
-                  await updateProfile(editProfile._id, {
-                    displayName: editProfile.name || editProfile.displayName,
-                    name: editProfile.name || editProfile.displayName,
-                    headline: editProfile.headline,
-                    profileType: editProfile.profileType,
-                    intervalMinutes: editProfile.scrapeSchedule?.intervalMinutes || 60,
-                    preferredScraperId: editProfile.preferredScraperId || null,
-                  });
+            <div className="flex justify-between gap-3 pt-4 border-t">
+              <Button 
+                variant="ghost" 
+                onClick={() => {
+                  setSettingsProfile(editProfile);
                   setEditProfile(null);
                 }}
-                isLoading={isUpdating}
               >
-                Save Changes
+                <Settings className="h-4 w-4 mr-2" />
+                Scrape Settings
               </Button>
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setEditProfile(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={async () => {
+                    await updateProfile(editProfile._id, {
+                      displayName: editProfile.name || editProfile.displayName,
+                      name: editProfile.name || editProfile.displayName,
+                      headline: editProfile.headline,
+                      profileType: editProfile.profileType,
+                      intervalMinutes: editProfile.scrapeSchedule?.intervalMinutes || 60,
+                      preferredScraperId: editProfile.preferredScraperId || null,
+                    });
+                    setEditProfile(null);
+                  }}
+                  isLoading={isUpdating}
+                >
+                  Save Changes
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -467,6 +482,14 @@ export function ProfilesTab() {
           </div>
         </div>
       </Modal>
+
+      {/* Source Settings Modal */}
+      <SourceSettingsModal
+        isOpen={!!settingsProfile}
+        onClose={() => setSettingsProfile(null)}
+        source={settingsProfile as SourceForSettings}
+        onSuccess={() => refetch()}
+      />
     </div>
   );
 }

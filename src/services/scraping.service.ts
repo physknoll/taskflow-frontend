@@ -17,6 +17,7 @@ import type {
   TriggerSourceScrapeDto,
   TriggerScheduleWithOverridesDto,
   ExecutionScrapeSettings,
+  SourceUpdatePayload,
   ScrapeSession,
   ScrapeSessionFilters,
   ScrapeSessionDetails,
@@ -141,14 +142,34 @@ export const scrapingService = {
 
   /**
    * Update source settings including default scrape settings
+   * Supports partial updates - only include fields you want to change
    */
   async updateSourceSettings(
     id: string,
-    scrapeSettings: ExecutionScrapeSettings
+    payload: SourceUpdatePayload | ExecutionScrapeSettings
+  ): Promise<ScrapeTarget> {
+    // Check if it's the old format (just scrape settings) or new full payload
+    const body = 'scrapeSettings' in payload || 'name' in payload || 'status' in payload
+      ? payload
+      : { scrapeSettings: payload };
+    
+    const response = await api.patch<ApiResponse<ScrapeTarget>>(
+      `${BASE_URL}/sources/${id}`,
+      body
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Update source with full payload (name, description, settings, etc.)
+   */
+  async updateSource(
+    id: string,
+    payload: SourceUpdatePayload
   ): Promise<ScrapeTarget> {
     const response = await api.patch<ApiResponse<ScrapeTarget>>(
       `${BASE_URL}/sources/${id}`,
-      { scrapeSettings }
+      payload
     );
     return response.data.data;
   },
@@ -279,5 +300,88 @@ export const scrapingService = {
   getSessionScreenshotUrl(sessionId: string, filename: string): string {
     const baseUrl = api.defaults.baseURL || '';
     return `${baseUrl}${BASE_URL}/sessions/${sessionId}/screenshots/${filename}`;
+  },
+
+  // ============================================
+  // Stats
+  // ============================================
+
+  /**
+   * Get scraping stats (now working correctly)
+   * Note: Set staleTime: 0 on the query to always get fresh data
+   */
+  async getStats(): Promise<{
+    overview: {
+      totalSources: number;
+      totalItems: number;
+      activeSources: number;
+    };
+    recentActivity: {
+      itemsLast24h: number;
+      itemsLast7d: number;
+      scrapesLast24h: number;
+    };
+    byPlatform: Record<string, {
+      sources: number;
+      items: number;
+    }>;
+  }> {
+    const response = await api.get<ApiResponse<{
+      overview: {
+        totalSources: number;
+        totalItems: number;
+        activeSources: number;
+      };
+      recentActivity: {
+        itemsLast24h: number;
+        itemsLast7d: number;
+        scrapesLast24h: number;
+      };
+      byPlatform: Record<string, {
+        sources: number;
+        items: number;
+      }>;
+    }>>(`${BASE_URL}/stats`);
+    return response.data.data;
+  },
+
+  // ============================================
+  // Items
+  // ============================================
+
+  /**
+   * Get scraped items with filtering
+   */
+  async getItems(filters: {
+    sourceId?: string;
+    platform?: string;
+    page?: number;
+    limit?: number;
+  } = {}): Promise<{
+    items: ScrapedItem[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      pages: number;
+    };
+  }> {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, String(value));
+      }
+    });
+
+    const response = await api.get<ApiResponse<{
+      items: ScrapedItem[];
+      pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        pages: number;
+      };
+    }>>(`${BASE_URL}/items?${params.toString()}`);
+    return response.data.data;
   },
 };

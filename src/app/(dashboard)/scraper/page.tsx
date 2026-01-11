@@ -5,6 +5,7 @@ import {
   useLinkedInStats,
   useLinkedInScrapers,
 } from '@/hooks/useLinkedIn';
+import { useScrapingEvents } from '@/hooks/useScrapingEvents';
 import { StatsCard } from '@/components/linkedin';
 import {
   OverviewTab,
@@ -28,6 +29,8 @@ import {
   CalendarClock,
   Activity,
   Scan,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 
 type TabId = 'overview' | 'scrapers' | 'profiles' | 'posts' | 'sessions' | 'schedules';
@@ -42,6 +45,9 @@ interface Tab {
 export default function ScraperDashboardPage() {
   const { data: stats, isLoading: statsLoading, refetch: refetchStats } = useLinkedInStats();
   const { scrapers, isLoading: scrapersLoading } = useLinkedInScrapers();
+  
+  // Connect to SSE for real-time updates - auto-invalidates queries on events
+  const { isConnected: sseConnected, lastEvent } = useScrapingEvents();
   
   const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [refreshing, setRefreshing] = useState(false);
@@ -125,14 +131,39 @@ export default function ScraperDashboardPage() {
             </p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          onClick={handleRefresh}
-          disabled={refreshing}
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-3">
+          {/* SSE Connection Status */}
+          <div 
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
+              sseConnected 
+                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
+                : 'bg-surface-100 text-surface-500 dark:bg-surface-800 dark:text-surface-400'
+            )}
+            title={sseConnected ? 'Real-time updates active' : 'Connecting to real-time updates...'}
+          >
+            {sseConnected ? (
+              <>
+                <Wifi className="h-3.5 w-3.5" />
+                <span>Live</span>
+              </>
+            ) : (
+              <>
+                <WifiOff className="h-3.5 w-3.5" />
+                <span>Connecting...</span>
+              </>
+            )}
+          </div>
+          
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
