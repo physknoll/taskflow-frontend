@@ -8,6 +8,7 @@ import { useKBCategories } from '@/hooks/useClients';
 import { ticketsService } from '@/services/tickets.service';
 import { BulkUploadModal, KBSourcesList } from '@/components/clients';
 import { MarkdownEditorModal } from '@/components/editor';
+import { ChatWidgetTab } from '@/components/chat-widget';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
@@ -54,7 +55,7 @@ export default function ClientDetailPage() {
   const queryClient = useQueryClient();
   const clientId = params.id as string;
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'tickets' | 'contacts' | 'documents' | 'brand'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'tickets' | 'contacts' | 'documents' | 'brand' | 'chat-widget'>('overview');
 
   // Fetch client
   const { data: client, isLoading, error } = useQuery({
@@ -106,6 +107,7 @@ export default function ClientDetailPage() {
     { id: 'contacts', label: 'Contacts', icon: Users, count: client.contacts?.length || 0 },
     { id: 'documents', label: 'Documents', icon: FileText, count: client.knowledgeBase?.documentCount || 0 },
     { id: 'brand', label: 'Brand', icon: Palette },
+    { id: 'chat-widget', label: 'Chat Widget', icon: MessageSquare },
   ];
 
   return (
@@ -258,6 +260,10 @@ export default function ClientDetailPage() {
       
       {activeTab === 'brand' && (
         <BrandTab client={client} />
+      )}
+      
+      {activeTab === 'chat-widget' && (
+        <ChatWidgetTab clientId={clientId} />
       )}
     </div>
   );

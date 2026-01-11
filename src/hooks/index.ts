@@ -73,6 +73,19 @@ export { useKBUpload } from './useKBUpload';
 // SOP hooks (Knowledge Base SOPs)
 export { useSOPs, useSOP } from './useSOPs';
 
+// Chat Widget hooks
+export {
+  chatWidgetKeys,
+  useChatWidgetConfig,
+  useSaveChatWidgetConfig,
+  useUpdateChatWidgetConfig,
+  useDeleteChatWidgetConfig,
+  useRegenerateApiKey,
+  useChatWidgetAnalytics,
+  useChatWidgetSessions,
+  useChatWidgetGeoAnalytics,
+} from './useChatWidget';
+
 // Calendar hooks
 export { useCalendar, useGoogleCalendar, EVENT_TYPE_COLORS } from './useCalendar';
 
@@ -105,6 +118,9 @@ export {
   useScrapingSchedule,
   useScrapingQueue,
   useScrapingQueueStats,
+  useSourceScrape,
+  useScrapingStats,
+  useScrapingItems,
   // Session hooks
   useScrapeSessions,
   useScrapeSession,
@@ -114,3 +130,17 @@ export {
   useScrapeSessionScreenshots,
 } from './useScraping';
 
+// Real-time Scraping Events (SSE)
+export {
+  useScrapingEvents,
+  type SSEConnectedEvent,
+  type SSEScrapeItemEvent,
+  type SSEScrapeCompleteEvent,
+  type SSEScrapeResultEvent,
+  type SSEScraperConnectedEvent,
+  type SSEScraperDisconnectedEvent,
+  type SSEEventType,
+  type ScrapingEventCallbacks,
+  type UseScrapingEventsOptions,
+  type UseScrapingEventsReturn,
+} from './useScrapingEvents';
