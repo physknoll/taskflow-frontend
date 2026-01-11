@@ -347,3 +347,144 @@ export const DEFAULT_WEBSITE_SETTINGS: WebsiteTargetSettings = {
   maxPages: 5,
   followPagination: false,
 };
+
+// ============================================
+// Scrape Session Types (Backend API)
+// ============================================
+
+export type ScrapeSessionStatus = 'pending' | 'sent' | 'in_progress' | 'success' | 'partial' | 'failed' | 'timeout';
+
+export interface ScrapeSessionResults {
+  itemsFound: number;
+  newItems: number;
+  updatedItems?: number;
+  skippedItems?: number;
+  commentsCollected?: number;
+}
+
+export interface ScrapeSessionError {
+  code: string;
+  message: string;
+  recoverable: boolean;
+}
+
+export interface ScrapeSession {
+  _id: string;
+  organizationId: string;
+  platform?: ScrapingPlatform;
+  sourceId?: string;
+  targetType?: string;
+  targetUrl: string;
+  scraperId?: string;
+  scraperName?: string;
+  commandId?: string;
+  command?: string;
+  status: ScrapeSessionStatus;
+  scheduledAt?: string;
+  sentAt?: string;
+  startedAt?: string;
+  completedAt?: string;
+  durationMs?: number;
+  results?: ScrapeSessionResults;
+  error?: ScrapeSessionError;
+  triggerType?: 'scheduled' | 'manual' | 'retry';
+  triggeredBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScrapeSessionFilters {
+  sourceId?: string;
+  scraperId?: string;
+  platform?: ScrapingPlatform;
+  status?: ScrapeSessionStatus;
+  targetType?: string;
+  triggerType?: 'scheduled' | 'manual' | 'retry';
+  page?: number;
+  limit?: number;
+}
+
+// ============================================
+// Session Details & Logs Types
+// ============================================
+
+export type SessionLogLevel = 'info' | 'warn' | 'error' | 'debug';
+
+export interface SessionLog {
+  _id: string;
+  sessionId: string;
+  level: SessionLogLevel;
+  message: string;
+  event?: string;
+  metadata?: Record<string, unknown>;
+  timestamp: string;
+}
+
+export interface SessionScreenshot {
+  _id: string;
+  sessionId: string;
+  itemId?: string;
+  filename: string;
+  url: string;
+  capturedAt: string;
+}
+
+export interface ScrapeSessionDetails {
+  session: ScrapeSession;
+  logs: SessionLog[];
+  screenshotCount: number;
+  screenshots?: SessionScreenshot[];
+}
+
+// ============================================
+// Session Items Response Types
+// ============================================
+
+export interface ScrapedItemAuthor {
+  name: string;
+  platformId?: string;
+  url?: string;
+  headline?: string;
+  avatarUrl?: string;
+}
+
+export interface ScrapedItemEngagement {
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  reactions?: number;
+  reposts?: number;
+  views?: number;
+}
+
+export interface ScrapedItem {
+  _id: string;
+  organizationId: string;
+  sourceId?: string;
+  scrapeSessionId?: string;
+  platform?: ScrapingPlatform;
+  itemType?: string;
+  platformItemId?: string;
+  externalId?: string;
+  url?: string;
+  author?: ScrapedItemAuthor;
+  content: string;
+  contentPreview?: string;
+  engagement?: ScrapedItemEngagement;
+  screenshotPath?: string;
+  firstSeenAt?: string;
+  lastScrapedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SessionItemsResponse {
+  items: ScrapedItem[];
+  session: ScrapeSession;
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    pages: number;
+  };
+}

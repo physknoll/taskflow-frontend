@@ -17,6 +17,12 @@ import type {
   TriggerSourceScrapeDto,
   TriggerScheduleWithOverridesDto,
   ExecutionScrapeSettings,
+  ScrapeSession,
+  ScrapeSessionFilters,
+  ScrapeSessionDetails,
+  SessionLog,
+  ScrapedItem,
+  SessionItemsResponse,
 } from '@/types/scraping';
 import { ApiResponse, PaginatedResponse } from '@/types';
 
@@ -200,5 +206,78 @@ export const scrapingService = {
       `${BASE_URL}/queue?status=failed`
     );
     return response.data.data;
+  },
+
+  // ============================================
+  // Session Management
+  // ============================================
+
+  async getSessions(
+    filters: ScrapeSessionFilters = {}
+  ): Promise<PaginatedResponse<ScrapeSession>> {
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, String(value));
+      }
+    });
+
+    const response = await api.get<{
+      success: boolean;
+      data: { sessions: ScrapeSession[]; pagination: any };
+    }>(`${BASE_URL}/sessions?${params.toString()}`);
+
+    return {
+      success: true,
+      data: response.data.data.sessions,
+      pagination: response.data.data.pagination,
+    };
+  },
+
+  async getSession(id: string): Promise<ScrapeSession> {
+    const response = await api.get<ApiResponse<ScrapeSession>>(
+      `${BASE_URL}/sessions/${id}`
+    );
+    return response.data.data;
+  },
+
+  async getSessionDetails(id: string): Promise<ScrapeSessionDetails> {
+    const response = await api.get<ApiResponse<ScrapeSessionDetails>>(
+      `${BASE_URL}/sessions/${id}/details`
+    );
+    return response.data.data;
+  },
+
+  async getSessionLogs(
+    id: string,
+    limit: number = 100
+  ): Promise<SessionLog[]> {
+    const response = await api.get<ApiResponse<{ logs: SessionLog[] }>>(
+      `${BASE_URL}/sessions/${id}/logs?limit=${limit}`
+    );
+    return response.data.data.logs;
+  },
+
+  async getSessionItems(
+    id: string,
+    page: number = 1,
+    limit: number = 50
+  ): Promise<SessionItemsResponse> {
+    const response = await api.get<ApiResponse<SessionItemsResponse>>(
+      `${BASE_URL}/sessions/${id}/items?page=${page}&limit=${limit}`
+    );
+    return response.data.data;
+  },
+
+  async getSessionScreenshots(id: string): Promise<string[]> {
+    const response = await api.get<ApiResponse<{ screenshots: string[] }>>(
+      `${BASE_URL}/sessions/${id}/screenshots`
+    );
+    return response.data.data.screenshots;
+  },
+
+  getSessionScreenshotUrl(sessionId: string, filename: string): string {
+    const baseUrl = api.defaults.baseURL || '';
+    return `${baseUrl}${BASE_URL}/sessions/${sessionId}/screenshots/${filename}`;
   },
 };

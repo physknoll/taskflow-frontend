@@ -1193,6 +1193,20 @@ export type {
   TriggerScheduleResponse,
   QueueResponse,
   CronPreset,
+  // Session types
+  ScrapeSessionStatus,
+  ScrapeSessionResults,
+  ScrapeSessionError,
+  ScrapeSession,
+  ScrapeSessionFilters,
+  SessionLogLevel,
+  SessionLog,
+  SessionScreenshot,
+  ScrapeSessionDetails,
+  ScrapedItemAuthor,
+  ScrapedItemEngagement,
+  ScrapedItem,
+  SessionItemsResponse,
 } from './scraping';
 export {
   CRON_PRESETS,

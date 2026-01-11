@@ -14,6 +14,7 @@ import type {
   TriggerScheduleWithOverridesDto,
   TriggerSourceScrapeDto,
   ExecutionScrapeSettings,
+  ScrapeSessionFilters,
 } from '@/types/scraping';
 import toast from 'react-hot-toast';
 
@@ -28,6 +29,13 @@ export const scrapingKeys = {
   targets: (scheduleId: string) => [...scrapingKeys.all, 'targets', scheduleId] as const,
   queue: (filters?: QueueFilters) => [...scrapingKeys.all, 'queue', filters] as const,
   queueStats: () => [...scrapingKeys.all, 'queue', 'stats'] as const,
+  // Session keys
+  sessions: (filters?: ScrapeSessionFilters) => [...scrapingKeys.all, 'sessions', filters] as const,
+  session: (id: string) => [...scrapingKeys.all, 'session', id] as const,
+  sessionDetails: (id: string) => [...scrapingKeys.all, 'session', id, 'details'] as const,
+  sessionLogs: (id: string) => [...scrapingKeys.all, 'session', id, 'logs'] as const,
+  sessionItems: (id: string, page?: number) => [...scrapingKeys.all, 'session', id, 'items', page] as const,
+  sessionScreenshots: (id: string) => [...scrapingKeys.all, 'session', id, 'screenshots'] as const,
 };
 
 // ============================================
@@ -295,5 +303,73 @@ export function useScrapingQueueStats() {
     queryKey: scrapingKeys.queueStats(),
     queryFn: () => scrapingService.getQueueStats(),
     refetchInterval: 15000, // Poll every 15 seconds
+  });
+}
+
+// ============================================
+// Session Hooks
+// ============================================
+
+export function useScrapeSessions(filters: ScrapeSessionFilters = {}) {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: scrapingKeys.sessions(filters),
+    queryFn: () => scrapingService.getSessions(filters),
+    refetchInterval: 30000, // Poll every 30 seconds
+  });
+
+  return {
+    sessions: data?.data || [],
+    pagination: data?.pagination,
+    isLoading,
+    error,
+    refetch,
+  };
+}
+
+export function useScrapeSession(id: string) {
+  return useQuery({
+    queryKey: scrapingKeys.session(id),
+    queryFn: () => scrapingService.getSession(id),
+    enabled: !!id,
+  });
+}
+
+export function useScrapeSessionDetails(id: string) {
+  return useQuery({
+    queryKey: scrapingKeys.sessionDetails(id),
+    queryFn: () => scrapingService.getSessionDetails(id),
+    enabled: !!id,
+    refetchInterval: (query) => {
+      // Poll more frequently for in-progress sessions
+      const status = query.state.data?.session?.status;
+      if (status === 'in_progress' || status === 'pending') {
+        return 5000;
+      }
+      return false;
+    },
+  });
+}
+
+export function useScrapeSessionLogs(id: string, limit: number = 100) {
+  return useQuery({
+    queryKey: scrapingKeys.sessionLogs(id),
+    queryFn: () => scrapingService.getSessionLogs(id, limit),
+    enabled: !!id,
+  });
+}
+
+export function useScrapeSessionItems(id: string, page: number = 1, limit: number = 50) {
+  return useQuery({
+    queryKey: scrapingKeys.sessionItems(id, page),
+    queryFn: () => scrapingService.getSessionItems(id, page, limit),
+    enabled: !!id,
+  });
+}
+
+export function useScrapeSessionScreenshots(id: string) {
+  return useQuery({
+    queryKey: scrapingKeys.sessionScreenshots(id),
+    queryFn: () => scrapingService.getSessionScreenshots(id),
+    enabled: !!id,
   });
 }

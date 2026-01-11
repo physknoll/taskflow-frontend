@@ -105,5 +105,12 @@ export {
   useScrapingSchedule,
   useScrapingQueue,
   useScrapingQueueStats,
+  // Session hooks
+  useScrapeSessions,
+  useScrapeSession,
+  useScrapeSessionDetails,
+  useScrapeSessionLogs,
+  useScrapeSessionItems,
+  useScrapeSessionScreenshots,
 } from './useScraping';
 

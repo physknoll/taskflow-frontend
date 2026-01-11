@@ -1,6 +1,6 @@
 'use client';
 
-import { LinkedInSession, LinkedInSessionStatus } from '@/types';
+import type { ScrapeSession, ScrapeSessionStatus } from '@/types/scraping';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { SiteIcon } from './SiteIcon';
@@ -14,11 +14,11 @@ import {
 import { format, formatDistanceToNow } from 'date-fns';
 
 interface SessionsTableProps {
-  sessions: LinkedInSession[];
-  onViewDetails?: (session: LinkedInSession) => void;
+  sessions: ScrapeSession[];
+  onViewDetails?: (session: ScrapeSession) => void;
 }
 
-const statusConfig: Record<LinkedInSessionStatus, { icon: typeof CheckCircle; color: string; variant: 'success' | 'danger' | 'warning' | 'secondary' | 'default' }> = {
+const statusConfig: Record<ScrapeSessionStatus, { icon: typeof CheckCircle; color: string; variant: 'success' | 'danger' | 'warning' | 'secondary' | 'default' }> = {
   success: { icon: CheckCircle, color: 'text-success-500', variant: 'success' },
   partial: { icon: Clock, color: 'text-warning-500', variant: 'warning' },
   failed: { icon: XCircle, color: 'text-error-500', variant: 'danger' },
@@ -78,7 +78,7 @@ export function SessionsTable({ sessions, onViewDetails }: SessionsTableProps) {
                           {session.targetUrl.replace(/https?:\/\/(www\.)?/, '').split('/')[0]}
                         </p>
                         <p className="text-xs text-surface-500 capitalize">
-                          {session.targetType}
+                          {session.targetType || session.platform || 'unknown'}
                         </p>
                       </div>
                     </div>
@@ -106,11 +106,11 @@ export function SessionsTable({ sessions, onViewDetails }: SessionsTableProps) {
                     {session.results ? (
                       <div className="flex items-center gap-2 text-xs">
                         <span className="text-success-600 dark:text-success-400">
-                          +{session.results.newPosts} new
+                          +{session.results.newItems} new
                         </span>
                         <span className="text-surface-400">•</span>
                         <span className="text-surface-500">
-                          {session.results.postsFound} found
+                          {session.results.itemsFound} found
                         </span>
                       </div>
                     ) : (
