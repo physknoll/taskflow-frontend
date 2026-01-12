@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, Palette, Shield, MessageSquare } from 'lucide-react';
+import { Settings, Palette, Shield, MessageSquare, Circle, RectangleHorizontal, Plus, X } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Toggle } from '@/components/ui/Toggle';
@@ -14,7 +14,10 @@ import {
   ChatWidgetConfigForm as ConfigFormType,
   ChatWidgetTheme,
   DEFAULT_WIDGET_CONFIG,
+  DEFAULT_PILL_MESSAGES,
+  WidgetButtonStyle,
 } from '@/types/chat-widget';
+import { cn } from '@/lib/utils';
 import { useKBCategories } from '@/hooks/useClients';
 
 interface ChatWidgetConfigFormProps {
@@ -75,6 +78,36 @@ export function ChatWidgetConfigForm({
       ...prev,
       theme: { ...prev.theme, [key]: value },
     }));
+  };
+
+  const handleButtonStyleChange = (style: WidgetButtonStyle) => {
+    setConfig((prev: ConfigFormType) => ({
+      ...prev,
+      theme: {
+        ...prev.theme,
+        buttonStyle: style,
+        // Reset to default messages when switching to pill if empty
+        pillMessages: style === 'pill' && (!prev.theme.pillMessages || prev.theme.pillMessages.length === 0)
+          ? DEFAULT_PILL_MESSAGES
+          : prev.theme.pillMessages,
+      },
+    }));
+  };
+
+  const addPillMessage = () => {
+    if (config.theme.pillMessages.length >= 10) return;
+    updateTheme('pillMessages', [...config.theme.pillMessages, '']);
+  };
+
+  const removePillMessage = (index: number) => {
+    const updated = config.theme.pillMessages.filter((_, i) => i !== index);
+    updateTheme('pillMessages', updated.length > 0 ? updated : ['']);
+  };
+
+  const updatePillMessage = (index: number, value: string) => {
+    const updated = [...config.theme.pillMessages];
+    updated[index] = value.slice(0, 50); // Max 50 chars
+    updateTheme('pillMessages', updated);
   };
 
   const toggleCategory = (category: string) => {
@@ -240,6 +273,114 @@ export function ChatWidgetConfigForm({
               className="w-full accent-primary-500"
             />
           </div>
+
+          {/* Button Style Selector */}
+          <div>
+            <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+              Button Style
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => handleButtonStyleChange('circle')}
+                className={cn(
+                  'p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2',
+                  config.theme.buttonStyle === 'circle'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                    : 'border-surface-200 dark:border-surface-700 hover:border-surface-300 dark:hover:border-surface-600'
+                )}
+              >
+                <div 
+                  className="w-12 h-12 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: config.theme.primaryColor }}
+                >
+                  <Circle className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
+                  Circle
+                </span>
+                <span className="text-xs text-surface-500">
+                  Classic round button
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleButtonStyleChange('pill')}
+                className={cn(
+                  'p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2',
+                  config.theme.buttonStyle === 'pill'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                    : 'border-surface-200 dark:border-surface-700 hover:border-surface-300 dark:hover:border-surface-600'
+                )}
+              >
+                <div 
+                  className="h-10 px-4 rounded-full flex items-center gap-2"
+                  style={{ backgroundColor: config.theme.primaryColor }}
+                >
+                  <RectangleHorizontal className="h-4 w-4 text-white" />
+                  <span className="text-white text-sm font-medium">Help</span>
+                </div>
+                <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
+                  Pill
+                </span>
+                <span className="text-xs text-surface-500">
+                  Animated with messages
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Pill Messages (only shown when pill style is selected) */}
+          {config.theme.buttonStyle === 'pill' && (
+            <div>
+              <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                Pill Messages
+              </label>
+              <p className="text-xs text-surface-500 mb-3">
+                These messages will type out one by one in the button. Max 10 messages, 50 characters each.
+              </p>
+              
+              <div className="space-y-2">
+                {config.theme.pillMessages.map((message, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      value={message}
+                      onChange={(e) => updatePillMessage(index, e.target.value)}
+                      placeholder={`Message ${index + 1}`}
+                      maxLength={50}
+                      className="flex-1"
+                    />
+                    <span className="text-xs text-surface-400 w-10 text-right">
+                      {message.length}/50
+                    </span>
+                    {config.theme.pillMessages.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removePillMessage(index)}
+                        className="text-surface-400 hover:text-red-500"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {config.theme.pillMessages.length < 10 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={addPillMessage}
+                  className="mt-2"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Message
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </Card>
 

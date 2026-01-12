@@ -3,6 +3,11 @@
 // ============================================
 
 /**
+ * Button style type for the chat widget
+ */
+export type WidgetButtonStyle = 'circle' | 'pill';
+
+/**
  * Theme configuration for the chat widget
  */
 export interface ChatWidgetTheme {
@@ -10,6 +15,8 @@ export interface ChatWidgetTheme {
   position: 'bottom-right' | 'bottom-left';
   buttonSize: number; // 40-80
   borderRadius: number; // 0-24
+  buttonStyle: WidgetButtonStyle; // 'circle' or 'pill' - defaults to 'circle'
+  pillMessages: string[]; // 1-10 messages, each max 50 characters
 }
 
 /**
@@ -292,6 +299,11 @@ export const WIDGET_ISSUE_TYPES: Record<WidgetIssueType, { label: string; color:
 };
 
 /**
+ * Default pill messages for animated button
+ */
+export const DEFAULT_PILL_MESSAGES = ['Here to help', 'Ask me anything'];
+
+/**
  * Default values for new widget configuration
  */
 export const DEFAULT_WIDGET_CONFIG: Omit<ChatWidgetConfigForm, 'allowedCategories'> = {
@@ -305,6 +317,35 @@ export const DEFAULT_WIDGET_CONFIG: Omit<ChatWidgetConfigForm, 'allowedCategorie
     position: 'bottom-right',
     buttonSize: 56,
     borderRadius: 16,
+    buttonStyle: 'circle',
+    pillMessages: DEFAULT_PILL_MESSAGES,
   },
   allowedDomains: [],
+};
+
+/**
+ * Validate theme configuration
+ */
+export const validateTheme = (theme: ChatWidgetTheme): string[] => {
+  const errors: string[] = [];
+  
+  if (theme.buttonStyle === 'pill') {
+    const validMessages = theme.pillMessages.filter(m => m.trim().length > 0);
+    
+    if (validMessages.length === 0) {
+      errors.push('At least one pill message is required');
+    }
+    
+    if (theme.pillMessages.length > 10) {
+      errors.push('Maximum 10 pill messages allowed');
+    }
+    
+    theme.pillMessages.forEach((msg, i) => {
+      if (msg.length > 50) {
+        errors.push(`Message ${i + 1} exceeds 50 character limit`);
+      }
+    });
+  }
+  
+  return errors;
 };

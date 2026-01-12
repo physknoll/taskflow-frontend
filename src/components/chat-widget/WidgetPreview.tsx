@@ -1,6 +1,7 @@
 'use client';
 
-import { ChatWidgetTheme } from '@/types/chat-widget';
+import { useState, useEffect, useRef } from 'react';
+import { ChatWidgetTheme, DEFAULT_PILL_MESSAGES } from '@/types/chat-widget';
 import { MessageCircle, X, Send } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -143,18 +144,145 @@ export function WidgetPreview({
           isRight ? 'right-4' : 'left-4'
         )}
       >
-        <button
-          className="flex items-center justify-center text-white shadow-lg transition-transform hover:scale-105"
-          style={{
-            backgroundColor: 'var(--widget-primary)',
-            width: 'var(--widget-button-size)',
-            height: 'var(--widget-button-size)',
-            borderRadius: '50%',
-          }}
-        >
-          <MessageCircle className="h-6 w-6" />
-        </button>
+        {theme.buttonStyle === 'pill' ? (
+          <PillButton theme={theme} />
+        ) : (
+          <button
+            className="flex items-center justify-center text-white shadow-lg transition-transform hover:scale-105"
+            style={{
+              backgroundColor: 'var(--widget-primary)',
+              width: 'var(--widget-button-size)',
+              height: 'var(--widget-button-size)',
+              borderRadius: '50%',
+              background: `linear-gradient(165deg, 
+                color-mix(in srgb, ${theme.primaryColor} 100%, white 18%) 0%,
+                ${theme.primaryColor} 45%,
+                color-mix(in srgb, ${theme.primaryColor} 100%, black 12%) 100%)`,
+              boxShadow: `
+                0 6px 20px rgba(0, 0, 0, 0.28),
+                0 2px 6px rgba(0, 0, 0, 0.15),
+                inset 0 1px 1px rgba(255, 255, 255, 0.25)`,
+            }}
+          >
+            <MessageCircle className="h-6 w-6" />
+          </button>
+        )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Animated pill button with typewriter effect
+ */
+function PillButton({ theme }: { theme: ChatWidgetTheme }) {
+  const [displayText, setDisplayText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const animationRef = useRef<{
+    charIndex: number;
+    messageIndex: number;
+    interval: NodeJS.Timeout | null;
+    timeout: NodeJS.Timeout | null;
+  }>({ charIndex: 0, messageIndex: 0, interval: null, timeout: null });
+
+  const messages = theme.pillMessages?.length > 0 
+    ? theme.pillMessages.filter(m => m.trim().length > 0)
+    : DEFAULT_PILL_MESSAGES;
+
+  useEffect(() => {
+    // Clear any existing animations
+    if (animationRef.current.interval) {
+      clearInterval(animationRef.current.interval);
+    }
+    if (animationRef.current.timeout) {
+      clearTimeout(animationRef.current.timeout);
+    }
+
+    // Reset state
+    animationRef.current = { charIndex: 0, messageIndex: 0, interval: null, timeout: null };
+    setDisplayText('');
+    setIsTyping(true);
+
+    // Start animation after initial delay
+    animationRef.current.timeout = setTimeout(() => {
+      startTyping();
+    }, 500);
+
+    return () => {
+      if (animationRef.current.interval) {
+        clearInterval(animationRef.current.interval);
+      }
+      if (animationRef.current.timeout) {
+        clearTimeout(animationRef.current.timeout);
+      }
+    };
+  }, [theme.pillMessages, theme.buttonStyle]);
+
+  const startTyping = () => {
+    const ref = animationRef.current;
+    
+    ref.interval = setInterval(() => {
+      const currentMessage = messages[ref.messageIndex];
+      
+      if (ref.charIndex < currentMessage.length) {
+        setDisplayText(currentMessage.substring(0, ref.charIndex + 1));
+        ref.charIndex++;
+      } else {
+        // Pause at end of message
+        clearInterval(ref.interval!);
+        
+        // Move to next message after pause
+        ref.timeout = setTimeout(() => {
+          if (ref.messageIndex < messages.length - 1) {
+            ref.messageIndex++;
+            ref.charIndex = 0;
+            setDisplayText('');
+            startTyping();
+          } else {
+            // Loop back to first message
+            ref.messageIndex = 0;
+            ref.charIndex = 0;
+            setDisplayText('');
+            startTyping();
+          }
+        }, 2000);
+      }
+    }, 50);
+  };
+
+  return (
+    <button
+      className="flex items-center text-white shadow-lg transition-transform hover:scale-105"
+      style={{
+        height: theme.buttonSize,
+        minWidth: theme.buttonSize,
+        borderRadius: theme.buttonSize / 2,
+        padding: '0 20px 0 16px',
+        gap: 12,
+        background: `linear-gradient(165deg, 
+          color-mix(in srgb, ${theme.primaryColor} 100%, white 18%) 0%,
+          ${theme.primaryColor} 45%,
+          color-mix(in srgb, ${theme.primaryColor} 100%, black 12%) 100%)`,
+        border: `1px solid color-mix(in srgb, ${theme.primaryColor} 75%, black)`,
+        boxShadow: `
+          0 6px 20px rgba(0, 0, 0, 0.28),
+          0 2px 6px rgba(0, 0, 0, 0.15),
+          inset 0 1px 1px rgba(255, 255, 255, 0.25)`,
+      }}
+    >
+      <MessageCircle className="h-6 w-6 flex-shrink-0" />
+      <span 
+        className="text-sm font-medium whitespace-nowrap"
+        style={{ textShadow: '0 1px 2px rgba(0,0,0,0.2)' }}
+      >
+        {displayText}
+      </span>
+      {isTyping && displayText.length < (messages[animationRef.current.messageIndex]?.length || 0) && (
+        <span 
+          className="w-0.5 h-4 bg-white animate-pulse"
+          style={{ marginLeft: -8 }}
+        />
+      )}
+    </button>
   );
 }
