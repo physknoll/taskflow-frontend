@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { MessageSquare, AlertCircle, Copy, Check } from 'lucide-react';
+import { MessageSquare, AlertCircle, Copy, Check, BookOpen } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -11,6 +11,7 @@ import { WidgetPreview } from './WidgetPreview';
 import { EmbedCodeDisplay } from './EmbedCodeDisplay';
 import { ApiKeySection } from './ApiKeySection';
 import { WidgetAnalyticsSection } from './WidgetAnalyticsSection';
+import { SetupGuideModal } from './SetupGuideModal';
 import {
   useChatWidgetConfig,
   useSaveChatWidgetConfig,
@@ -50,6 +51,9 @@ export function ChatWidgetTab({ clientId }: ChatWidgetTabProps) {
   // New API key display modal
   const [newApiKey, setNewApiKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  
+  // Setup guide modal
+  const [showSetupGuide, setShowSetupGuide] = useState(false);
 
   const isNewWidget = !existingConfig && !error;
   const isConfigured = !!existingConfig;
@@ -131,15 +135,24 @@ export function ChatWidgetTab({ clientId }: ChatWidgetTabProps) {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-semibold text-surface-900 dark:text-white mb-1">
-          Chat Widget
-        </h2>
-        <p className="text-surface-500">
-          {isConfigured
-            ? 'Configure your AI-powered chat widget for this client\'s website.'
-            : 'Set up an AI chat widget powered by this client\'s knowledge base.'}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold text-surface-900 dark:text-white mb-1">
+            Chat Widget
+          </h2>
+          <p className="text-surface-500">
+            {isConfigured
+              ? 'Configure your AI-powered chat widget for this client\'s website.'
+              : 'Set up an AI chat widget powered by this client\'s knowledge base.'}
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => setShowSetupGuide(true)}
+        >
+          <BookOpen className="h-4 w-4 mr-2" />
+          Setup Guide
+        </Button>
       </div>
 
       {/* Configuration and Preview */}
@@ -288,6 +301,14 @@ export function ChatWidgetTab({ clientId }: ChatWidgetTabProps) {
           </div>
         </div>
       </Modal>
+
+      {/* Setup Guide Modal */}
+      <SetupGuideModal
+        isOpen={showSetupGuide}
+        onClose={() => setShowSetupGuide(false)}
+        chatWidgetId={existingConfig?.chatWidgetId}
+        apiKeyPrefix={existingConfig?.apiKeyPrefix}
+      />
     </div>
   );
 }
