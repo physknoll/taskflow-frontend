@@ -229,6 +229,7 @@ export interface LinkedInPost {
   itemType?: ItemType;
   platformItemId?: string;
   url?: string;
+  itemUrl?: string;
   author: ItemAuthor | LinkedInPostAuthor;
   content: string | ItemContent;
   status?: ItemStatus;

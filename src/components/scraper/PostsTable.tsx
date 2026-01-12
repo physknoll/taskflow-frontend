@@ -151,7 +151,7 @@ export function PostsTable({ posts, onAction, onViewDetails, onViewScreenshot }:
                       </Button>
                     )}
                     <a
-                      href={post.url || post.postUrl}
+                      href={post.itemUrl || post.url || post.postUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="p-1.5 rounded-lg text-surface-500 hover:text-primary-600 hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"

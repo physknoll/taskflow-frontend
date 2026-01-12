@@ -109,8 +109,8 @@ export function PostCard({ post, onAction, onViewDetails, onViewScreenshot, comp
     };
   };
 
-  // Get URL - check new API first, then legacy
-  const getUrl = () => post.url || post.postUrl;
+  // Get URL - check itemUrl first (API response), then other fields
+  const getUrl = () => post.itemUrl || post.url || post.postUrl;
 
   // Get action status - check new API (status) first, then legacy (actionStatus)
   const getActionStatus = (): LinkedInActionStatus | ItemStatus => {

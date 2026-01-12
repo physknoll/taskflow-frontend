@@ -319,7 +319,7 @@ export function PostsTab() {
                 </p>
               </div>
               <a
-                href={selectedPost.url || selectedPost.postUrl}
+                href={selectedPost.itemUrl || selectedPost.url || selectedPost.postUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 text-primary-600 hover:text-primary-700"
@@ -499,7 +499,7 @@ export function PostsTab() {
               </div>
               <div className="flex items-center gap-3">
                 <a
-                  href={screenshotPost.url || screenshotPost.postUrl}
+                  href={screenshotPost.itemUrl || screenshotPost.url || screenshotPost.postUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700"
