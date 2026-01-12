@@ -5,6 +5,8 @@ import { chatWidgetService } from '@/services/chat-widget.service';
 import {
   ChatWidgetConfigForm,
   WidgetSessionsQuery,
+  NeedsReviewSessionsQuery,
+  WidgetIssuesQuery,
 } from '@/types/chat-widget';
 import toast from 'react-hot-toast';
 
@@ -17,6 +19,10 @@ export const chatWidgetKeys = {
   analytics: (clientId: string) => [...chatWidgetKeys.all, 'analytics', clientId] as const,
   sessions: (clientId: string, query?: WidgetSessionsQuery) =>
     [...chatWidgetKeys.all, 'sessions', clientId, query] as const,
+  needsReview: (clientId: string, query?: NeedsReviewSessionsQuery) =>
+    [...chatWidgetKeys.all, 'needsReview', clientId, query] as const,
+  issues: (clientId: string, query?: WidgetIssuesQuery) =>
+    [...chatWidgetKeys.all, 'issues', clientId, query] as const,
   geo: (clientId: string) => [...chatWidgetKeys.all, 'geo', clientId] as const,
 };
 
@@ -152,5 +158,37 @@ export function useChatWidgetGeoAnalytics(clientId: string, enabled = true) {
     queryFn: () => chatWidgetService.getGeoAnalytics(clientId),
     enabled: !!clientId && enabled,
     staleTime: 60_000, // 1 minute
+  });
+}
+
+/**
+ * Fetch sessions that need review (received negative feedback)
+ */
+export function useChatWidgetNeedsReview(
+  clientId: string,
+  query: NeedsReviewSessionsQuery = {},
+  enabled = true
+) {
+  return useQuery({
+    queryKey: chatWidgetKeys.needsReview(clientId, query),
+    queryFn: () => chatWidgetService.getNeedsReviewSessions(clientId, query),
+    enabled: !!clientId && enabled,
+    staleTime: 30_000, // 30 seconds
+  });
+}
+
+/**
+ * Fetch widget issues (improvement tickets from session reviews)
+ */
+export function useChatWidgetIssues(
+  clientId: string,
+  query: WidgetIssuesQuery = {},
+  enabled = true
+) {
+  return useQuery({
+    queryKey: chatWidgetKeys.issues(clientId, query),
+    queryFn: () => chatWidgetService.getIssues(clientId, query),
+    enabled: !!clientId && enabled,
+    staleTime: 30_000, // 30 seconds
   });
 }

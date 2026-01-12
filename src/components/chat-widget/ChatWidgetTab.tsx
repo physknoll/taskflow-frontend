@@ -1,9 +1,20 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { MessageSquare, AlertCircle, Copy, Check, BookOpen } from 'lucide-react';
+import { 
+  MessageSquare, 
+  AlertCircle, 
+  Copy, 
+  Check, 
+  BookOpen, 
+  Settings, 
+  BarChart3, 
+  AlertTriangle,
+  FileText,
+} from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Modal } from '@/components/ui/Modal';
 import { ChatWidgetConfigForm } from './ChatWidgetConfigForm';
@@ -11,18 +22,24 @@ import { WidgetPreview } from './WidgetPreview';
 import { EmbedCodeDisplay } from './EmbedCodeDisplay';
 import { ApiKeySection } from './ApiKeySection';
 import { WidgetAnalyticsSection } from './WidgetAnalyticsSection';
+import { WidgetIssuesTab } from './WidgetIssuesTab';
 import { SetupGuideModal } from './SetupGuideModal';
 import {
   useChatWidgetConfig,
   useSaveChatWidgetConfig,
   useUpdateChatWidgetConfig,
+  useChatWidgetAnalytics,
+  useChatWidgetIssues,
 } from '@/hooks/useChatWidget';
 import { ChatWidgetConfigForm as ConfigFormType, DEFAULT_WIDGET_CONFIG } from '@/types/chat-widget';
 import { useAuthStore } from '@/stores/authStore';
+import { cn } from '@/lib/utils';
 
 interface ChatWidgetTabProps {
   clientId: string;
 }
+
+type InnerTab = 'configuration' | 'analytics' | 'issues';
 
 /**
  * Main tab component for Chat Widget configuration and analytics
@@ -31,12 +48,21 @@ export function ChatWidgetTab({ clientId }: ChatWidgetTabProps) {
   const { user } = useAuthStore();
   const canManage = user?.role === 'owner' || user?.role === 'manager';
 
+  // Inner tab state
+  const [activeTab, setActiveTab] = useState<InnerTab>('configuration');
+
   // Fetch existing config
   const {
     data: existingConfig,
     isLoading,
     error,
   } = useChatWidgetConfig(clientId);
+
+  // Fetch analytics for needs review count badge
+  const { data: analytics } = useChatWidgetAnalytics(clientId, !!existingConfig);
+  
+  // Fetch issues count for badge
+  const { data: issuesData } = useChatWidgetIssues(clientId, { limit: 1 }, !!existingConfig);
 
   // Mutations
   const saveMutation = useSaveChatWidgetConfig(clientId);
@@ -57,6 +83,10 @@ export function ChatWidgetTab({ clientId }: ChatWidgetTabProps) {
 
   const isNewWidget = !existingConfig && !error;
   const isConfigured = !!existingConfig;
+
+  // Badge counts
+  const needsReviewCount = analytics?.feedback?.sessionsNeedingReview || 0;
+  const openIssuesCount = issuesData?.total || 0;
 
   // Handle config changes from form
   const handleConfigChange = useCallback((config: ConfigFormType) => {
@@ -92,6 +122,28 @@ export function ChatWidgetTab({ clientId }: ChatWidgetTabProps) {
       console.error('Failed to copy:', err);
     }
   };
+
+  // Tab definitions
+  const tabs = [
+    { 
+      id: 'configuration' as InnerTab, 
+      label: 'Configuration', 
+      icon: Settings,
+    },
+    { 
+      id: 'analytics' as InnerTab, 
+      label: 'Analytics', 
+      icon: BarChart3,
+      badge: needsReviewCount > 0 ? needsReviewCount : undefined,
+      badgeVariant: 'warning' as const,
+    },
+    { 
+      id: 'issues' as InnerTab, 
+      label: 'Issues', 
+      icon: FileText,
+      badge: openIssuesCount > 0 ? openIssuesCount : undefined,
+    },
+  ];
 
   if (isLoading) {
     return (
@@ -133,7 +185,7 @@ export function ChatWidgetTab({ clientId }: ChatWidgetTabProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -155,93 +207,130 @@ export function ChatWidgetTab({ clientId }: ChatWidgetTabProps) {
         </Button>
       </div>
 
-      {/* Configuration and Preview */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Configuration Form */}
-        <div>
-          {canManage ? (
-            <ChatWidgetConfigForm
-              clientId={clientId}
-              initialConfig={existingConfig || undefined}
-              onConfigChange={handleConfigChange}
-              onSave={handleSave}
-              isSaving={saveMutation.isPending || updateMutation.isPending}
-              isNewWidget={!isConfigured}
-            />
-          ) : (
-            <Card className="p-6">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-medium text-surface-900 dark:text-white">
-                    View Only
-                  </p>
-                  <p className="text-sm text-surface-500 mt-1">
-                    You need Owner or Manager permissions to configure the chat widget.
-                  </p>
-                </div>
-              </div>
-              {existingConfig && (
-                <div className="mt-6 pt-6 border-t border-surface-200 dark:border-surface-700 space-y-4">
-                  <div>
-                    <p className="text-sm text-surface-500">Status</p>
-                    <p className="font-medium text-surface-900 dark:text-white">
-                      {existingConfig.isActive ? 'Enabled' : 'Disabled'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-surface-500">Bot Name</p>
-                    <p className="font-medium text-surface-900 dark:text-white">
-                      {existingConfig.botName}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-surface-500">Greeting</p>
-                    <p className="font-medium text-surface-900 dark:text-white">
-                      {existingConfig.greeting}
-                    </p>
-                  </div>
-                </div>
+      {/* Inner Tab Navigation */}
+      <div className="border-b border-surface-200 dark:border-surface-700">
+        <nav className="flex gap-6">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                'flex items-center gap-2 pb-3 text-sm font-medium border-b-2 transition-colors',
+                activeTab === tab.id
+                  ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                  : 'border-transparent text-surface-500 hover:text-surface-700 dark:hover:text-surface-300'
               )}
-            </Card>
-          )}
-        </div>
-
-        {/* Right: Live Preview */}
-        <div className="lg:sticky lg:top-6 self-start">
-          <h3 className="font-medium text-surface-900 dark:text-white mb-3">
-            Live Preview
-          </h3>
-          <WidgetPreview
-            greeting={formConfig.greeting}
-            placeholderText={formConfig.placeholderText}
-            botName={formConfig.botName}
-            botAvatarUrl={formConfig.botAvatarUrl}
-            theme={formConfig.theme}
-            isActive={formConfig.isActive}
-          />
-        </div>
+            >
+              <tab.icon className="h-4 w-4" />
+              {tab.label}
+              {tab.badge !== undefined && (
+                <Badge 
+                  variant={tab.badgeVariant === 'warning' ? 'primary' : 'secondary'} 
+                  size="sm"
+                  className={cn(
+                    tab.badgeVariant === 'warning' && 'bg-amber-500 text-white'
+                  )}
+                >
+                  {tab.badge}
+                </Badge>
+              )}
+            </button>
+          ))}
+        </nav>
       </div>
 
-      {/* Embed Code and API Key (only if configured) */}
-      {isConfigured && existingConfig && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <EmbedCodeDisplay chatWidgetId={existingConfig.chatWidgetId} />
-          <ApiKeySection
-            clientId={clientId}
-            apiKeyPrefix={existingConfig.apiKeyPrefix}
-            canRegenerate={canManage}
-          />
+      {/* Tab Content */}
+      {activeTab === 'configuration' && (
+        <div className="space-y-8">
+          {/* Configuration and Preview */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Left: Configuration Form */}
+            <div>
+              {canManage ? (
+                <ChatWidgetConfigForm
+                  clientId={clientId}
+                  initialConfig={existingConfig || undefined}
+                  onConfigChange={handleConfigChange}
+                  onSave={handleSave}
+                  isSaving={saveMutation.isPending || updateMutation.isPending}
+                  isNewWidget={!isConfigured}
+                />
+              ) : (
+                <Card className="p-6">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-surface-900 dark:text-white">
+                        View Only
+                      </p>
+                      <p className="text-sm text-surface-500 mt-1">
+                        You need Owner or Manager permissions to configure the chat widget.
+                      </p>
+                    </div>
+                  </div>
+                  {existingConfig && (
+                    <div className="mt-6 pt-6 border-t border-surface-200 dark:border-surface-700 space-y-4">
+                      <div>
+                        <p className="text-sm text-surface-500">Status</p>
+                        <p className="font-medium text-surface-900 dark:text-white">
+                          {existingConfig.isActive ? 'Enabled' : 'Disabled'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-surface-500">Bot Name</p>
+                        <p className="font-medium text-surface-900 dark:text-white">
+                          {existingConfig.botName}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-surface-500">Greeting</p>
+                        <p className="font-medium text-surface-900 dark:text-white">
+                          {existingConfig.greeting}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </Card>
+              )}
+            </div>
+
+            {/* Right: Live Preview */}
+            <div className="lg:sticky lg:top-6 self-start">
+              <h3 className="font-medium text-surface-900 dark:text-white mb-3">
+                Live Preview
+              </h3>
+              <WidgetPreview
+                greeting={formConfig.greeting}
+                placeholderText={formConfig.placeholderText}
+                botName={formConfig.botName}
+                botAvatarUrl={formConfig.botAvatarUrl}
+                theme={formConfig.theme}
+                isActive={formConfig.isActive}
+              />
+            </div>
+          </div>
+
+          {/* Embed Code and API Key (only if configured) */}
+          {isConfigured && existingConfig && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <EmbedCodeDisplay chatWidgetId={existingConfig.chatWidgetId} />
+              <ApiKeySection
+                clientId={clientId}
+                apiKeyPrefix={existingConfig.apiKeyPrefix}
+                canRegenerate={canManage}
+              />
+            </div>
+          )}
         </div>
       )}
 
-      {/* Analytics Section */}
-      <div>
-        <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-4">
-          Analytics
-        </h3>
+      {activeTab === 'analytics' && (
         <WidgetAnalyticsSection clientId={clientId} isConfigured={isConfigured} />
-      </div>
+      )}
+
+      {activeTab === 'issues' && (
+        <WidgetIssuesTab clientId={clientId} />
+      )}
 
       {/* New API Key Modal */}
       <Modal

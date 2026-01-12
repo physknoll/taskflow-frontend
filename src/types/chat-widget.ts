@@ -64,6 +64,16 @@ export interface RegenerateKeyResponse {
 }
 
 /**
+ * Feedback metrics for analytics
+ */
+export interface WidgetFeedbackStats {
+  totalPositive: number;
+  totalNegative: number;
+  sessionsNeedingReview: number;
+  sessionsReviewed: number;
+}
+
+/**
  * Widget analytics overview stats
  */
 export interface WidgetAnalytics {
@@ -71,6 +81,8 @@ export interface WidgetAnalytics {
   totalMessages: number;
   avgResponseTimeMs: number;
   lastSessionAt?: string;
+  // Feedback metrics
+  feedback?: WidgetFeedbackStats;
 }
 
 /**
@@ -93,13 +105,37 @@ export interface WidgetMessageMetadata {
 }
 
 /**
+ * Feedback for a single message
+ */
+export interface WidgetMessageFeedback {
+  messageId: string;
+  rating: 'positive' | 'negative';
+  comment?: string;
+  timestamp: string;
+}
+
+/**
+ * Session feedback data
+ */
+export interface WidgetSessionFeedback {
+  overallRating?: 'positive' | 'negative';
+  messageFeedback: WidgetMessageFeedback[];
+}
+
+/**
  * Individual message in a chat session
  */
 export interface WidgetSessionMessage {
+  _id?: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
   metadata?: WidgetMessageMetadata;
+  // Feedback on this message (if any)
+  feedback?: {
+    rating: 'positive' | 'negative';
+    comment?: string;
+  };
 }
 
 /**
@@ -139,6 +175,12 @@ export interface WidgetSession {
   context: WidgetSessionContext;
   analytics: WidgetSessionAnalytics;
   messages: WidgetSessionMessage[];
+  // Feedback data
+  feedback?: WidgetSessionFeedback;
+  // Review status
+  needsReview?: boolean;
+  reviewedAt?: string;
+  reviewTicketId?: string;
 }
 
 /**
@@ -164,7 +206,90 @@ export interface WidgetSessionsQuery {
   limit?: number;
   offset?: number;
   status?: 'active' | 'completed' | 'abandoned';
+  needsReview?: boolean;
 }
+
+/**
+ * Query parameters for needs-review sessions
+ */
+export interface NeedsReviewSessionsQuery {
+  limit?: number;
+  offset?: number;
+  includeReviewed?: boolean;
+}
+
+/**
+ * Issue type for chat widget improvement tickets
+ */
+export type WidgetIssueType = 
+  | 'missing-content'
+  | 'outdated-content'
+  | 'unclear-content'
+  | 'wrong-answer'
+  | 'slow-response';
+
+/**
+ * Widget issue (ticket created from session review)
+ */
+export interface WidgetIssue {
+  _id: string;
+  ticketNumber: string;
+  title: string;
+  description: string;
+  status: 'backlog' | 'todo' | 'in_progress' | 'in_review' | 'completed';
+  issueType: WidgetIssueType;
+  sessionId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Widget issues response
+ */
+export interface WidgetIssuesResponse {
+  tickets: WidgetIssue[];
+  total: number;
+}
+
+/**
+ * Query parameters for fetching widget issues
+ */
+export interface WidgetIssuesQuery {
+  limit?: number;
+  offset?: number;
+  status?: 'open' | 'completed' | 'all';
+}
+
+/**
+ * Issue type display configuration
+ */
+export const WIDGET_ISSUE_TYPES: Record<WidgetIssueType, { label: string; color: string; description: string }> = {
+  'missing-content': { 
+    label: 'Missing Content', 
+    color: 'orange',
+    description: 'KB lacks needed info'
+  },
+  'outdated-content': { 
+    label: 'Outdated Content', 
+    color: 'red',
+    description: 'Info is stale/wrong'
+  },
+  'unclear-content': { 
+    label: 'Unclear Content', 
+    color: 'yellow',
+    description: 'Info is confusing'
+  },
+  'wrong-answer': { 
+    label: 'Wrong Answer', 
+    color: 'red',
+    description: 'AI misinterpreted sources'
+  },
+  'slow-response': { 
+    label: 'Slow Response', 
+    color: 'gray',
+    description: 'Response too slow'
+  },
+};
 
 /**
  * Default values for new widget configuration

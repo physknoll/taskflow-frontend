@@ -16,9 +16,16 @@ import {
   Tablet,
   Globe,
   FileText,
+  ThumbsUp,
+  ThumbsDown,
+  MessageSquare,
+  AlertTriangle,
+  CheckCircle,
+  ExternalLink,
 } from 'lucide-react';
 import { WidgetSession, WidgetSessionMessage, WidgetRAGSource } from '@/types/chat-widget';
 import { formatDate, cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface SessionDetailModalProps {
   isOpen: boolean;
@@ -27,7 +34,7 @@ interface SessionDetailModalProps {
 }
 
 /**
- * Modal showing full session details including messages and RAG sources
+ * Modal showing full session details including messages, feedback, and RAG sources
  */
 export function SessionDetailModal({
   isOpen,
@@ -60,6 +67,10 @@ export function SessionDetailModal({
     }
   };
 
+  // Count feedback
+  const positiveFeedbackCount = session.messages.filter(m => m.feedback?.rating === 'positive').length;
+  const negativeFeedbackCount = session.messages.filter(m => m.feedback?.rating === 'negative').length;
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Session Details" size="lg">
       <div className="space-y-6">
@@ -68,6 +79,40 @@ export function SessionDetailModal({
           <Badge className={getStatusColor(session.status)}>
             {session.status}
           </Badge>
+
+          {/* Feedback badge */}
+          {session.feedback?.overallRating && (
+            <Badge 
+              className={cn(
+                session.feedback.overallRating === 'positive'
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                  : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+              )}
+            >
+              {session.feedback.overallRating === 'positive' ? (
+                <ThumbsUp className="h-3 w-3 mr-1" />
+              ) : (
+                <ThumbsDown className="h-3 w-3 mr-1" />
+              )}
+              {session.feedback.overallRating}
+            </Badge>
+          )}
+
+          {/* Needs review badge */}
+          {session.needsReview && !session.reviewedAt && (
+            <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+              <AlertTriangle className="h-3 w-3 mr-1" />
+              Needs Review
+            </Badge>
+          )}
+
+          {/* Reviewed badge */}
+          {session.reviewedAt && (
+            <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Reviewed
+            </Badge>
+          )}
 
           <div className="flex items-center gap-1 text-sm text-surface-500">
             <Clock className="h-4 w-4" />
@@ -93,8 +138,31 @@ export function SessionDetailModal({
           </div>
         </div>
 
+        {/* Linked Ticket Alert */}
+        {session.reviewTicketId && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <FileText className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <div>
+                <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
+                  Improvement Ticket Created
+                </p>
+                <p className="text-xs text-blue-700 dark:text-blue-300">
+                  An AI review has generated a ticket for this session
+                </p>
+              </div>
+            </div>
+            <Link href={`/tickets/${session.reviewTicketId}`}>
+              <Button variant="outline" size="sm">
+                View Ticket
+                <ExternalLink className="h-3 w-3 ml-1" />
+              </Button>
+            </Link>
+          </div>
+        )}
+
         {/* Analytics */}
-        <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
           <div className="bg-surface-50 dark:bg-surface-800 rounded-lg p-3">
             <p className="text-2xl font-bold text-surface-900 dark:text-white">
               {session.analytics.messageCount}
@@ -110,10 +178,22 @@ export function SessionDetailModal({
             <p className="text-xs text-surface-500">Avg Response</p>
           </div>
           <div className="bg-surface-50 dark:bg-surface-800 rounded-lg p-3">
-            <p className="text-2xl font-bold text-surface-900 dark:text-white">
-              {session.messages.filter((m: WidgetSessionMessage) => m.metadata?.ragSources?.length).length}
-            </p>
-            <p className="text-xs text-surface-500">KB Citations</p>
+            <div className="flex items-center justify-center gap-1">
+              <ThumbsUp className="h-4 w-4 text-green-500" />
+              <p className="text-2xl font-bold text-surface-900 dark:text-white">
+                {positiveFeedbackCount}
+              </p>
+            </div>
+            <p className="text-xs text-surface-500">Positive</p>
+          </div>
+          <div className="bg-surface-50 dark:bg-surface-800 rounded-lg p-3">
+            <div className="flex items-center justify-center gap-1">
+              <ThumbsDown className="h-4 w-4 text-red-500" />
+              <p className="text-2xl font-bold text-surface-900 dark:text-white">
+                {negativeFeedbackCount}
+              </p>
+            </div>
+            <p className="text-xs text-surface-500">Negative</p>
           </div>
         </div>
 
@@ -135,6 +215,8 @@ function MessageItem({ message }: { message: WidgetSessionMessage }) {
   const [showSources, setShowSources] = useState(false);
   const isUser = message.role === 'user';
   const hasSources = message.metadata?.ragSources && message.metadata.ragSources.length > 0;
+  const hasNegativeFeedback = message.feedback?.rating === 'negative';
+  const hasPositiveFeedback = message.feedback?.rating === 'positive';
 
   return (
     <div
@@ -164,14 +246,50 @@ function MessageItem({ message }: { message: WidgetSessionMessage }) {
       >
         <div
           className={cn(
-            'inline-block rounded-lg px-4 py-2 text-sm',
+            'inline-block rounded-lg px-4 py-2 text-sm relative',
             isUser
               ? 'bg-primary-500 text-white'
-              : 'bg-surface-100 dark:bg-surface-700 text-surface-900 dark:text-white'
+              : 'bg-surface-100 dark:bg-surface-700 text-surface-900 dark:text-white',
+            // Highlight negative feedback messages
+            hasNegativeFeedback && !isUser && 'ring-2 ring-red-400 dark:ring-red-500 bg-red-50 dark:bg-red-900/20'
           )}
         >
           {message.content}
+          
+          {/* Feedback indicator */}
+          {(hasPositiveFeedback || hasNegativeFeedback) && !isUser && (
+            <div
+              className={cn(
+                'absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center',
+                hasPositiveFeedback 
+                  ? 'bg-green-500' 
+                  : 'bg-red-500'
+              )}
+            >
+              {hasPositiveFeedback ? (
+                <ThumbsUp className="h-3 w-3 text-white" />
+              ) : (
+                <ThumbsDown className="h-3 w-3 text-white" />
+              )}
+            </div>
+          )}
         </div>
+
+        {/* User feedback comment */}
+        {message.feedback?.comment && (
+          <div className={cn(
+            'mt-2 p-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700',
+            isUser ? 'text-right' : 'text-left'
+          )}>
+            <div className="flex items-center gap-1 text-xs text-amber-700 dark:text-amber-300 mb-1">
+              <MessageSquare className="h-3 w-3" />
+              User Feedback
+            </div>
+            <p className="text-sm text-amber-900 dark:text-amber-100">
+              &ldquo;{message.feedback.comment}&rdquo;
+            </p>
+          </div>
+        )}
 
         {/* Metadata */}
         <div

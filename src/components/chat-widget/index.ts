@@ -5,3 +5,5 @@ export { EmbedCodeDisplay } from './EmbedCodeDisplay';
 export { ApiKeySection } from './ApiKeySection';
 export { WidgetAnalyticsSection } from './WidgetAnalyticsSection';
 export { SessionDetailModal } from './SessionDetailModal';
+export { SetupGuideModal } from './SetupGuideModal';
+export { WidgetIssuesTab } from './WidgetIssuesTab';

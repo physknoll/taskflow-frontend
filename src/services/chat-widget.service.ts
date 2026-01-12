@@ -8,6 +8,9 @@ import {
   WidgetSession,
   WidgetSessionsResponse,
   WidgetSessionsQuery,
+  NeedsReviewSessionsQuery,
+  WidgetIssuesResponse,
+  WidgetIssuesQuery,
   GeoData,
 } from '@/types/chat-widget';
 import { ApiResponse } from '@/types';
@@ -115,6 +118,46 @@ export const chatWidgetService = {
   async getGeoAnalytics(clientId: string): Promise<GeoData[]> {
     const response = await api.get<ApiResponse<GeoData[]>>(
       `/chat-widget/clients/${clientId}/analytics/geo`
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Get sessions that need review (received negative feedback)
+   */
+  async getNeedsReviewSessions(
+    clientId: string,
+    query: NeedsReviewSessionsQuery = {}
+  ): Promise<WidgetSessionsResponse> {
+    const params = new URLSearchParams();
+    if (query.limit) params.append('limit', String(query.limit));
+    if (query.offset) params.append('offset', String(query.offset));
+    if (query.includeReviewed !== undefined) {
+      params.append('includeReviewed', String(query.includeReviewed));
+    }
+
+    const response = await api.get<ApiResponse<WidgetSessionsResponse>>(
+      `/chat-widget/clients/${clientId}/analytics/sessions/needs-review?${params.toString()}`
+    );
+    return response.data.data;
+  },
+
+  /**
+   * Get improvement tickets created from chat widget session reviews
+   */
+  async getIssues(
+    clientId: string,
+    query: WidgetIssuesQuery = {}
+  ): Promise<WidgetIssuesResponse> {
+    const params = new URLSearchParams();
+    if (query.limit) params.append('limit', String(query.limit));
+    if (query.offset) params.append('offset', String(query.offset));
+    if (query.status && query.status !== 'all') {
+      params.append('status', query.status);
+    }
+
+    const response = await api.get<ApiResponse<WidgetIssuesResponse>>(
+      `/chat-widget/clients/${clientId}/issues?${params.toString()}`
     );
     return response.data.data;
   },

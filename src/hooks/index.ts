@@ -84,6 +84,8 @@ export {
   useChatWidgetAnalytics,
   useChatWidgetSessions,
   useChatWidgetGeoAnalytics,
+  useChatWidgetNeedsReview,
+  useChatWidgetIssues,
 } from './useChatWidget';
 
 // Calendar hooks
