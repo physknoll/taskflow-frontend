@@ -22,15 +22,17 @@ export interface IUserMinimal {
   jobTitle?: string;
 }
 
-// DTO for creating a new user (extends RegisterDto with all fields)
+// DTO for inviting a new team member
+// Note: Password is NOT included - invited users set their own password via email link
 export interface CreateUserDto {
   email: string;
-  password: string;
   firstName: string;
   lastName: string;
   role: 'manager' | 'employee' | 'client_viewer';
   // Required for client_viewer role
   clientId?: string;
+  // Optional: array of client IDs the user can access
+  assignedClients?: string[];
   // Per-user permission settings
   permissions?: IUserPermissions;
 }

@@ -45,13 +45,14 @@ import {
 import { Dropdown, DropdownItem, DropdownDivider } from '@/components/ui/Dropdown';
 import { formatDate, cn } from '@/lib/utils';
 
-const createUserSchema = z.object({
+// Schema for inviting a new team member (no password - user sets via email link)
+const inviteUserSchema = z.object({
   email: z.string().email('Valid email required'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   role: z.enum(['manager', 'employee', 'client_viewer']),
   clientId: z.string().optional(),
+  assignedClients: z.array(z.string()).optional(),
   permissions: z.object({
     canCreateTickets: z.boolean().optional(),
     ticketVisibility: z.enum(['assigned_only', 'all']).optional(),
@@ -61,7 +62,7 @@ const createUserSchema = z.object({
   { message: 'Client is required for Client Viewer role', path: ['clientId'] }
 );
 
-type CreateUserForm = z.infer<typeof createUserSchema>;
+type InviteUserForm = z.infer<typeof inviteUserSchema>;
 
 // Toggle component for permission settings
 function PermissionToggle({
@@ -138,16 +139,16 @@ export default function TeamPage() {
     queryFn: () => clientsService.getClients({ isActive: true }),
   });
 
-  const createMutation = useMutation({
+  const inviteMutation = useMutation({
     mutationFn: (data: CreateUserDto) => usersService.createUser(data),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('User created successfully');
+      toast.success(`Invitation sent to ${variables.email}. They'll receive an email to set up their account.`);
       setCreateModalOpen(false);
       reset();
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || 'Failed to create user');
+      toast.error(error.response?.data?.message || 'Failed to send invitation');
     },
   });
 
@@ -231,8 +232,8 @@ export default function TeamPage() {
     setValue,
     watch,
     formState: { errors },
-  } = useForm<CreateUserForm>({
-    resolver: zodResolver(createUserSchema),
+  } = useForm<InviteUserForm>({
+    resolver: zodResolver(inviteUserSchema),
     defaultValues: {
       role: 'employee',
       permissions: {
@@ -249,11 +250,10 @@ export default function TeamPage() {
 
   const users = data?.data || [];
 
-  const onSubmit = (data: CreateUserForm) => {
-    // Build the create user payload
+  const onSubmit = (data: InviteUserForm) => {
+    // Build the invite user payload (no password - user sets via email link)
     const payload: CreateUserDto = {
       email: data.email,
-      password: data.password,
       firstName: data.firstName,
       lastName: data.lastName,
       role: data.role,
@@ -274,8 +274,16 @@ export default function TeamPage() {
       };
     }
 
-    createMutation.mutate(payload);
+    // Add assignedClients if provided
+    if (data.assignedClients && data.assignedClients.length > 0) {
+      payload.assignedClients = data.assignedClients;
+    }
+
+    inviteMutation.mutate(payload);
   };
+
+  // Check if current user can invite (owner or manager)
+  const canInvite = currentUser?.role === 'owner' || currentUser?.role === 'manager';
 
   return (
     <div className="space-y-6">
@@ -301,10 +309,12 @@ export default function TeamPage() {
             onChange={setRoleFilter}
           />
         </div>
-        <Button onClick={() => setCreateModalOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Member
-        </Button>
+        {canInvite && (
+          <Button onClick={() => setCreateModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Invite Member
+          </Button>
+        )}
       </div>
 
       {/* Team Grid */}
@@ -502,14 +512,14 @@ export default function TeamPage() {
         </div>
       )}
 
-      {/* Create User Modal */}
+      {/* Invite Team Member Modal */}
       <Modal
         isOpen={createModalOpen}
         onClose={() => {
           setCreateModalOpen(false);
           reset();
         }}
-        title="Add Team Member"
+        title="Invite Team Member"
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
@@ -533,15 +543,6 @@ export default function TeamPage() {
             label="Email"
             placeholder="john@example.com"
             error={errors.email?.message}
-          />
-
-          <Input
-            {...register('password')}
-            type="password"
-            label="Password"
-            placeholder="••••••••"
-            error={errors.password?.message}
-            helperText="At least 8 characters"
           />
 
           <Select
@@ -671,9 +672,17 @@ export default function TeamPage() {
             >
               Cancel
             </Button>
-            <Button type="submit" isLoading={createMutation.isPending}>
-              Create User
+            <Button type="submit" isLoading={inviteMutation.isPending}>
+              Send Invitation
             </Button>
+          </div>
+
+          {/* Info about invitation flow */}
+          <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+            <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-blue-700 dark:text-blue-300">
+              The user will receive an email with a link to set up their password and complete their account registration.
+            </p>
           </div>
         </form>
       </Modal>

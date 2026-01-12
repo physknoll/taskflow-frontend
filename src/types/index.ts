@@ -638,18 +638,19 @@ export interface LoginDto {
   password: string;
 }
 
+// Used when admin invites a new team member (no password - user sets via email link)
 export interface RegisterDto {
   email: string;
-  password: string;
   firstName: string;
   lastName: string;
   role: 'manager' | 'employee' | 'client_viewer';
   // Required for client_viewer role
   clientId?: string;
+  // Optional: array of client IDs the user can access
+  assignedClients?: string[];
   // Per-user permission settings
   permissions?: IUserPermissions;
 }
-
 // ============================================
 // Signup/Registration Types
 // ============================================
