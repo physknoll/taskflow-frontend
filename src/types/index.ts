@@ -651,6 +651,7 @@ export interface RegisterDto {
   // Per-user permission settings
   permissions?: IUserPermissions;
 }
+
 // ============================================
 // Signup/Registration Types
 // ============================================
@@ -1219,3 +1220,7 @@ export {
   DEFAULT_WEBSITE_SETTINGS,
 } from './scraping';
 
+// ============================================
+// Chat Widget Types
+// ============================================
+export * from './chat-widget';
